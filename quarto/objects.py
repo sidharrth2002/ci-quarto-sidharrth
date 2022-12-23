@@ -4,7 +4,7 @@
 import numpy as np
 from abc import abstractmethod
 import copy
-
+from gym import spaces
 
 class Player(object):
 
@@ -302,3 +302,28 @@ class Quarto(object):
         Return the state of the game
         '''
         return str(self.__board)
+
+class QuartoScape:
+    '''Gym environment for Quarto'''
+    def __init__(self):
+        self.game = Quarto()
+        self.action_space = spaces.Discrete(2)
+        self.observation_space = spaces.Discrete(2)
+        self.reward_range = (-1, 1)
+
+    def step(self, action):
+        if action == 0:
+            self.game.select(self.game.get_players()[self.game.get_current_player()].choose_piece())
+        else:
+            x, y = self.game.get_players()[self.game.get_current_player()].place_piece()
+            self.game.place(x, y)
+        winner = self.game.check_winner()
+        if winner == -1:
+            reward = 0
+        else:
+            reward = 1
+        return self.game.state(), reward, self.game.check_finished(), {}
+
+    def reset(self):
+        self.game = Quarto()
+        return self.game.state()
