@@ -1,6 +1,7 @@
 # Free for personal or classroom use; see 'LICENSE.md' for details.
 # https://github.com/squillero/computational-intelligence
 
+import random
 import numpy as np
 from abc import abstractmethod
 import copy
@@ -62,6 +63,9 @@ class Quarto(object):
 
     def set_players(self, players):
         self.__players = players
+
+    def get_players(self):
+        return self.__players
 
     def select(self, pieceIndex: int) -> bool:
         '''
@@ -293,6 +297,7 @@ class Quarto(object):
             while not piece_ok:
                 x, y = self.__players[self.__current_player].place_piece()
                 piece_ok = self.place(x, y)
+            print(self.state())
             winner = self.check_winner()
         self.print()
         return winner
@@ -303,19 +308,55 @@ class Quarto(object):
         '''
         return str(self.__board)
 
+    def state_as_array(self) -> np.ndarray:
+        '''
+        Return the state of the game as a numpy array
+        '''
+        return self.__board
+
+    def get_current_player(self) -> int:
+        '''
+        Return the current player
+        '''
+        return self.__current_player
+
+class RandomPlayer(Player):
+    """Random player"""
+
+    def __init__(self, quarto: Quarto):
+        super().__init__(quarto)
+
+    def choose_piece(self, state=None):
+        return random.randint(0, 15)
+
+    def place_piece(self, state=None):
+        return random.randint(0, 3), random.randint(0, 3)
+
 class QuartoScape:
-    '''Gym environment for Quarto'''
+    '''Custom gym environment for Quarto'''
     def __init__(self):
         self.game = Quarto()
-        self.action_space = spaces.Discrete(2)
-        self.observation_space = spaces.Discrete(2)
+        self.action_space = spaces.Discrete(3)
+        self.observation_space = spaces.Box(
+            low=0, high=1, shape=(self.game.BOARD_SIDE, self.game.BOARD_SIDE, 16), dtype=np.int
+        )
         self.reward_range = (-1, 1)
+        self.main_player = None
+
+    def set_main_player(self, player):
+        self.main_player = player
+        self.game.set_players((player, RandomPlayer(self.game)))
+        return True
 
     def step(self, action):
         if action == 0:
-            self.game.select(self.game.get_players()[self.game.get_current_player()].choose_piece())
+            print(self.game.get_players())
+            self.game.select(self.game.get_players()[self.game.get_current_player()].choose_piece(self.game.state_as_array()))
         else:
-            x, y = self.game.get_players()[self.game.get_current_player()].place_piece()
+            print('Current player')
+            print(self.game.get_current_player())
+            print(self.game.get_players())
+            x, y = self.game.get_players()[self.game.get_current_player()].place_piece(self.game.state_as_array())
             self.game.place(x, y)
         winner = self.game.check_winner()
         if winner == -1:
@@ -326,4 +367,6 @@ class QuartoScape:
 
     def reset(self):
         self.game = Quarto()
-        return self.game.state()
+        self.game.set_players((self.main_player, RandomPlayer(self.game)))
+        print(self.game.state_as_array())
+        return self.game.state_as_array()
