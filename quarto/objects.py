@@ -37,6 +37,7 @@ class Quarto(object):
 
     MAX_PLAYERS = 2
     BOARD_SIDE = 4
+    MAX_PIECES = 16
 
     def __init__(self) -> None:
         self.__board = np.ones(shape=(self.BOARD_SIDE, self.BOARD_SIDE), dtype=int) * -1
@@ -314,11 +315,36 @@ class Quarto(object):
         '''
         return self.__board
 
-    def get_current_player(self) -> int:
+    def get_current_player(self):
         '''
         Return the current player
         '''
         return self.__current_player
+
+    def check_if_draw(self):
+        '''
+        Check if the game is a draw
+        '''
+        return self.check_finished() and self.check_winner() < 0
+
+    def check_if_move_valid(self, piece: int, x: int, y: int):
+        '''
+        Check if a move is valid
+        '''
+        # piece out of range
+        if piece < 0 or piece >= self.MAX_PIECES:
+            return False
+        if x < 0 or x >= self.BOARD_SIDE:
+            return False
+        if y < 0 or y >= self.BOARD_SIDE:
+            return False
+        # move to position already occupied
+        if self.__board[x, y] >= 0:
+            return False
+        # if the next piece chosen is empty, then the move is invalid
+        if self.__pieces[piece] == -1:
+            return False
+        return True
 
 class RandomPlayer(Player):
     """Random player"""
@@ -336,10 +362,8 @@ class QuartoScape:
     '''Custom gym environment for Quarto'''
     def __init__(self):
         self.game = Quarto()
-        self.action_space = spaces.Discrete(3)
-        self.observation_space = spaces.Box(
-            low=0, high=1, shape=(self.game.BOARD_SIDE, self.game.BOARD_SIDE, 16), dtype=np.int
-        )
+        self.action_space = spaces.MultiDiscrete([16, 16, 16])
+        self.observation_space = spaces.MultiDiscrete([17] * 17)
         self.reward_range = (-1, 1)
         self.main_player = None
 
@@ -349,21 +373,28 @@ class QuartoScape:
         return True
 
     def step(self, action):
-        if action == 0:
-            print(self.game.get_players())
-            self.game.select(self.game.get_players()[self.game.get_current_player()].choose_piece(self.game.state_as_array()))
-        else:
-            print('Current player')
-            print(self.game.get_current_player())
-            print(self.game.get_players())
-            x, y = self.game.get_players()[self.game.get_current_player()].place_piece(self.game.state_as_array())
+        # position is the position the previous piece should be moved to
+        # chosen next piece is the piece the agent chooses for the next player to move
+        x, y, chosen_next_piece = action
+        self.next_piece = chosen_next_piece
+        if self.game.check_if_move_valid(chosen_next_piece, x, y):
             self.game.place(x, y)
-        winner = self.game.check_winner()
-        if winner == -1:
-            reward = 0
+            self.game.select(chosen_next_piece)
+            self.game.print()
+            if self.game.check_winner() == 0:
+                reward = 1
+                return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
+            elif self.game.check_if_draw():
+                reward = 0.5
+                return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
+            else:
+                reward = 0
+            return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
         else:
-            reward = 1
-        return self.game.state(), reward, self.game.check_finished(), {}
+            reward = -1
+
+        return self.game.state_as_array(), reward, self.game.check_finished(), {}
+
 
     def reset(self):
         self.game = Quarto()

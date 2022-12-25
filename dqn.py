@@ -40,22 +40,32 @@ class DQNAgent:
         Output nodes are the Q-values for each action (each output node is an action)
         '''
         model = Sequential()
-        print(self.env.observation_space.shape)
-        print('SAMPLING ACTION')
-        print(self.env.action_space.sample())
-        model.add(Dense(24, input_dim=self.env.observation_space.shape[0] * self.env.observation_space.shape[1], activation='relu', kernel_initializer='he_uniform'))
+        print('OBSERVATION SPACE')
+        # print(len(self.env.action_space.nvec))
+        model.add(Dense(24, input_dim=self.env.observation_space.shape[0], activation='relu', kernel_initializer='he_uniform'))
         model.add(Dense(48, activation='relu', kernel_initializer='he_uniform'))
-        model.add(Dense(self.env.action_space.n, activation='linear', kernel_initializer='he_uniform'))
+        model.add(Dense(len(self.env.action_space.nvec), activation='linear', kernel_initializer='he_uniform'))
         model.compile(loss='mse', metrics=['accuracy'], optimizer=Adam(lr=0.001))
-        print(model.summary())
+        # print(model.summary())
         return model
+
+    def get_position(self, element, list):
+        if element in list:
+            return list.index(element)
+        else:
+            return -1
 
     def make_prediction(self, state):
         '''Make a prediction using the network'''
-        print('PREDICTION')
-        print('part 1')
-        print(self.model.predict(state.reshape([1, state.shape[0] * state.shape[1]])))
-        return self.model.predict(state.reshape([1, state.shape[0] * state.shape[1]]))[0]
+        # prediction X is the position of the single 1 in the state
+        print(list(state.flatten()))
+        pred_X = [self.get_position(i, list(state.flatten())) for i in range(1, 17)]
+        print('PRED X')
+        print(pred_X)
+        # print('NEW SHAPE')
+        # print(state.shape[0] * state.shape[0])
+        return self.model.predict(pred_X)[0]
+        # return self.model.predict(state.reshape([1, state.shape[0] * state.shape[0]]))[0]
 
     def decay_lr(self, lr, decay_rate, decay_step):
         return lr * (1 / (1 + decay_rate * decay_step))
@@ -90,17 +100,16 @@ class DQNAgent:
 
         self.model.fit(np.array(X), np.array(Y), batch_size=batch_size, verbose=0, shuffle=False)
 
-    def choose_piece(self, state: Any) -> int:
-        '''Choose piece to play based on the current state'''
+    def choose_piece(self, state: Any):
+        '''Choose piece for the next guy to play'''
         pred = self.make_prediction(state)
-        print('PREDICTION')
-        print(pred)
-        return round(pred[0])
+        return pred[2]
 
-    def place_piece(self, state: Any) -> int:
+    def place_piece(self, state: Any):
         '''Choose position to move piece to based on the current state'''
         pred = self.make_prediction(state)
-        return round(pred[1]), round(pred[2])
+        coordinates = pred[0], pred[1]
+        return (coordinates % 4, coordinates // 4)
 
     def run(self):
         '''Run training of agent for x episodes'''
@@ -123,36 +132,15 @@ class DQNAgent:
             while not done:
                 steps_to_update_target_model += 1
                 # self.env.render()
-                if random.random() <= self.epsilon:
-                    action = self.env.action_space.sample()
-                else:
-                    print('Making prediction')
-                    print(state)
-                    action = self.make_prediction(state)
-                    action = np.argmax(action)
-                new_state, reward, done, _ = self.env.step(action)
-                episode_reward += reward
-                replay_memory.append((state, action, reward, new_state, done))
-                state = new_state
+                # if random.random() <= self.epsilon:
+                #     action = self.env.action_space.sample()
+                #     x, y, piece = action
+                # else:
+                #     print('Making prediction')
+                #     print(state)
+                #     action = self.make_prediction(state)
+                #     x, y, piece = action
 
-                if steps_to_update_target_model % 4 == 0 or done:
-                    self.train(replay_memory, batch_size=64)
-
-                observation = new_state
-                total_training_reward += reward
-
-                if done:
-                    print(f'Episode: {episode}, Reward: {episode_reward}')
-                    total_training_reward += 1
-
-                    if steps_to_update_target_model >= 100:
-                        self.target_model.set_weights(self.model.get_weights())
-                        print('Updated target model')
-                        steps_to_update_target_model = 0
-                    break
-            epsilon = self.decay_lr(epsilon, 0.001, episode)
-
-        self.env.close()
 
 agent = DQNAgent(env)
 agent.run()
