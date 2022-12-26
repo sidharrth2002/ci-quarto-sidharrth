@@ -1,4 +1,6 @@
 from collections import deque
+import math
+import os
 import random
 from typing import Any
 import gym
@@ -23,7 +25,6 @@ class DQNAgent:
     def __init__(self, env):
         self.env = env
         self.env.set_main_player(self)
-        print(self.env.game.get_players())
         # main model updated every x steps
         self.model = self._build_model()
         # target model updated every y steps
@@ -33,20 +34,36 @@ class DQNAgent:
         self.lr = 0.7
         self.epsilon = 0.7
 
+    def get_all_actions(self):
+        '''
+        Return tuples from (0, 0, 0) to (15, 15, 15)
+        Element 1 is position x
+        Element 2 is position y
+        Element 3 is piece chosen for next player
+        '''
+        tuples = []
+        for i in range(0, 16):
+            for j in range(0, 16):
+                for k in range(0, 16):
+                    tuples.append((i, j, k))
+        return tuples
+
     def _build_model(self):
         '''
         Architecture of network:
         Input nodes are the state of the board
-        Output nodes are the Q-values for each action (each output node is an action)
+        Output nodes are the Q-values for each potential action (each output node is an action)
+        An action is made up of (x, y, piece chosen for next player)
+        There are 16 * 16 * 16 possible actions and the mapping is found in get_all_actions()
         '''
         model = Sequential()
         print('OBSERVATION SPACE')
-        # print(len(self.env.action_space.nvec))
+        print(len(self.env.action_space.nvec))
         model.add(Dense(24, input_dim=self.env.observation_space.shape[0], activation='relu', kernel_initializer='he_uniform'))
         model.add(Dense(48, activation='relu', kernel_initializer='he_uniform'))
-        model.add(Dense(len(self.env.action_space.nvec), activation='linear', kernel_initializer='he_uniform'))
+        model.add(Dense(16 * 16 * 16, activation='softmax', kernel_initializer='he_uniform'))
         model.compile(loss='mse', metrics=['accuracy'], optimizer=Adam(lr=0.001))
-        # print(model.summary())
+        print(model.summary())
         return model
 
     def get_position(self, element, list):
@@ -55,20 +72,27 @@ class DQNAgent:
         else:
             return -1
 
-    def make_prediction(self, state):
+    def make_prediction(self, state, chosen_piece=None):
         '''Make a prediction using the network'''
         # prediction X is the position of the single 1 in the state
-        print(list(state.flatten()))
-        pred_X = [self.get_position(i, list(state.flatten())) for i in range(1, 17)]
-        print('PRED X')
-        print(pred_X)
-        # print('NEW SHAPE')
-        # print(state.shape[0] * state.shape[0])
-        return self.model.predict(pred_X)[0]
-        # return self.model.predict(state.reshape([1, state.shape[0] * state.shape[0]]))[0]
+        pred_X = [self.get_position(i, list(state.flatten())) for i in range(0, 16)]
+        pred_X.append(chosen_piece)
+        # print('SHAPEEEE')
+        # print(np.array([pred_X]).shape)
+        # print(np.array([pred_X]))
+        return self.model.predict(np.array([pred_X]))[0]
 
     def decay_lr(self, lr, decay_rate, decay_step):
         return lr * (1 / (1 + decay_rate * decay_step))
+
+    def abbellire(self, state, action):
+        '''
+        Beautify the state for network input
+        When in Italy, do as the Italians do
+        '''
+        X = [self.get_position(i, list(state.flatten())) for i in range(0, 16)]
+        X.append(action[2])
+        return np.array([X])
 
     def train(self, replay_memory, batch_size):
         '''Train the network'''
@@ -77,11 +101,15 @@ class DQNAgent:
 
         batch_size = 64 * 2
         minibatch = random.sample(replay_memory, batch_size)
-        current_states = np.array([transition[0] for transition in minibatch])
+        # current_states = [transition[0] for transition in minibatch]
+        current_states = np.array([self.abbellire(state, action) for state, action, reward, new_current_state, done in minibatch])
+        # print('CURRENT STATES')
+        # print(current_states.shape)
         current_qs = self.model.predict(current_states)
-        print('CURRENT QS')
-        print(current_qs)
-        new_current_states = np.array([transition[3] for transition in minibatch])
+        # print('CURRENT QS')
+        # print(current_qs.shape)
+        # new_current_states = np.array([transition[3] for transition in minibatch])
+        new_current_states = np.array([self.abbellire(new_current_state, action) for state, action, reward, new_current_state, done in minibatch])
         future_qs = self.target_model.predict(new_current_states)
 
         X = []
@@ -93,12 +121,15 @@ class DQNAgent:
             else:
                 new_q = reward
 
-            current_qs[index][action] = (1 - self.lr) * current_qs[index][action] + self.lr * new_q
+            current_qs[index][0][action[0] + action[1] * 16 + action[2] * 16 * 16] = new_q
 
-            X.append(current_state)
+            X.append(self.abbellire(current_state, action))
             Y.append(current_qs[index])
 
-        self.model.fit(np.array(X), np.array(Y), batch_size=batch_size, verbose=0, shuffle=False)
+        X = np.array(X).reshape(batch_size, 17)
+        Y = np.array(Y).reshape(batch_size, 16 * 16 * 16)
+        print(X.shape)
+        self.model.fit(X, Y, batch_size=batch_size, verbose=0, shuffle=False)
 
     def choose_piece(self, state: Any):
         '''Choose piece for the next guy to play'''
@@ -111,36 +142,81 @@ class DQNAgent:
         coordinates = pred[0], pred[1]
         return (coordinates % 4, coordinates // 4)
 
+    def zero_out_invalid_actions(self, current_piece, prediction):
+        '''Zero out invalid moves'''
+        # zero out invalid moves
+        all_actions = self.get_all_actions()
+        for i in range(len(prediction)):
+            action = all_actions[i]
+            if not self.env.game.check_if_move_valid(current_piece, action[0], action[1], action[2]):
+                prediction[i] = -math.inf
+
+        return prediction
+
+
     def run(self):
         '''Run training of agent for x episodes'''
         # ensure both model and target model have same set of weights at the start
         self.target_model.set_weights(self.model.get_weights())
 
         replay_memory = deque(maxlen=5000)
-
+        state = self.env.reset()
         # number of episodes to train for
         num_episodes = 100
 
         steps_to_update_target_model = 0
 
         for episode in range(num_episodes):
+            if episode == 1:
+                os.system('exit')
             total_training_reward = 0
             print(f'Episode: {episode}')
             state = self.env.reset()
             done = False
-            episode_reward = 0
+            # initialise chosen piece with a random piece
+            # in reality, the opponent will choose a piece for you
+            chosen_piece = random.randint(1, 16)
             while not done:
                 steps_to_update_target_model += 1
-                # self.env.render()
-                # if random.random() <= self.epsilon:
-                #     action = self.env.action_space.sample()
-                #     x, y, piece = action
-                # else:
-                #     print('Making prediction')
-                #     print(state)
-                #     action = self.make_prediction(state)
-                #     x, y, piece = action
 
+                if random.random() < self.epsilon:
+                    action = self.env.action_space.sample()
+                    while not self.env.game.check_if_move_valid(chosen_piece, action[0], action[1], action[2]):
+                        action = self.env.action_space.sample()
+                else:
+                    prediction = self.make_prediction(state, chosen_piece)
+                    prediction = self.zero_out_invalid_actions(chosen_piece, prediction)
+                    action = np.argmax(prediction)
+                    # action = np.argmax(self.make_prediction(state, chosen_piece))
+                    # get action at index of action
+                    action = self.get_all_actions()[action]
+
+                new_state, reward, done, _ = self.env.step(action, chosen_piece)
+                replay_memory.append((state, action, reward, new_state, done))
+
+                if done:
+                    print('GAME OVER')
+
+                if steps_to_update_target_model % 4 == 0 or done:
+                    self.train(replay_memory, 64)
+
+                state = new_state
+                total_training_reward += reward
+
+                if done:
+                    print(f'Total reward: {total_training_reward} at episode {episode} after {steps_to_update_target_model} steps')
+                    total_training_reward += 1
+
+                    if steps_to_update_target_model >= 100:
+                        self.target_model.set_weights(self.model.get_weights())
+                        steps_to_update_target_model = 0
+                    break
+
+                chosen_piece = action[2]
+
+            self.epsilon = self.decay_lr(self.lr, 0.0001, episode)
+        self.env.close()
+        self.model.save('model.h5')
 
 agent = DQNAgent(env)
 agent.run()

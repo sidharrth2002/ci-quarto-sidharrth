@@ -1,6 +1,7 @@
 # Free for personal or classroom use; see 'LICENSE.md' for details.
 # https://github.com/squillero/computational-intelligence
 
+import itertools
 import random
 import numpy as np
 from abc import abstractmethod
@@ -84,6 +85,7 @@ class Quarto(object):
         if self.__placeable(x, y):
             self.__board[y, x] = self.__selected_piece_index
             return True
+        print("Invalid move: ", x, y)
         return False
 
     def __placeable(self, x: int, y: int) -> bool:
@@ -288,17 +290,17 @@ class Quarto(object):
         '''
         winner = -1
         while winner < 0 and not self.check_finished():
-            self.print()
+            # self.print()
             piece_ok = False
             while not piece_ok:
                 piece_ok = self.select(self.__players[self.__current_player].choose_piece())
             piece_ok = False
             self.__current_player = (self.__current_player + 1) % self.MAX_PLAYERS
-            self.print()
+            # self.print()
             while not piece_ok:
                 x, y = self.__players[self.__current_player].place_piece()
                 piece_ok = self.place(x, y)
-            print(self.state())
+            # print(self.state())
             winner = self.check_winner()
         self.print()
         return winner
@@ -327,7 +329,7 @@ class Quarto(object):
         '''
         return self.check_finished() and self.check_winner() < 0
 
-    def check_if_move_valid(self, piece: int, x: int, y: int):
+    def check_if_move_valid(self, piece: int, x: int, y: int, next_piece: int):
         '''
         Check if a move is valid
         '''
@@ -339,10 +341,13 @@ class Quarto(object):
         if y < 0 or y >= self.BOARD_SIDE:
             return False
         # move to position already occupied
-        if self.__board[x, y] >= 0:
+        if self.__board[y, x] > -1:
             return False
         # if the next piece chosen is empty, then the move is invalid
-        if self.__pieces[piece] == -1:
+        # if self.__pieces[next_piece] == -1:
+        #     return False
+        # chosen piece already in the board
+        if next_piece in list(itertools.chain(*self.__board)):
             return False
         return True
 
@@ -372,14 +377,15 @@ class QuartoScape:
         self.game.set_players((player, RandomPlayer(self.game)))
         return True
 
-    def step(self, action):
+    def step(self, action, chosen_piece):
         # position is the position the previous piece should be moved to
         # chosen next piece is the piece the agent chooses for the next player to move
         x, y, chosen_next_piece = action
         self.next_piece = chosen_next_piece
-        if self.game.check_if_move_valid(chosen_next_piece, x, y):
+        if self.game.check_if_move_valid(chosen_piece, x, y, chosen_next_piece):
+            print(f"Valid move, piece {chosen_piece} placed at {x}, {y}")
+            self.game.select(chosen_piece)
             self.game.place(x, y)
-            self.game.select(chosen_next_piece)
             self.game.print()
             if self.game.check_winner() == 0:
                 reward = 1
@@ -391,6 +397,7 @@ class QuartoScape:
                 reward = 0
             return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
         else:
+            print("Invalid move, fuck off")
             reward = -1
 
         return self.game.state_as_array(), reward, self.game.check_finished(), {}
@@ -399,5 +406,5 @@ class QuartoScape:
     def reset(self):
         self.game = Quarto()
         self.game.set_players((self.main_player, RandomPlayer(self.game)))
-        print(self.game.state_as_array())
+        # print(self.game.state_as_array())
         return self.game.state_as_array()
