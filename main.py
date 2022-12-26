@@ -4,6 +4,7 @@
 import logging
 import argparse
 import random
+from dqn import DQNAgent
 import quarto
 
 class RandomPlayer(quarto.Player):
@@ -12,10 +13,10 @@ class RandomPlayer(quarto.Player):
     def __init__(self, quarto: quarto.Quarto):
         super().__init__(quarto)
 
-    def choose_piece(self):
+    def choose_piece(self, piece_to_be_chosen: int = None):
         return random.randint(0, 15)
 
-    def place_piece(self):
+    def place_piece(self, piece_to_be_placed: int = None):
         return random.randint(0, 3), random.randint(0, 3)
 
 class HumanPlayer(quarto.Player):
@@ -77,7 +78,7 @@ class ReinforcementPlayer(quarto.Player):
 
 def main():
     game = quarto.Quarto()
-    game.set_players((RandomPlayer(game), RandomPlayer(game)))
+    game.set_players((RandomPlayer(game), DQNAgent(game)))
     winner = game.run()
     logging.warning(f"main: Winner: player {winner}")
 

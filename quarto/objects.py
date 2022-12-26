@@ -2,6 +2,7 @@
 # https://github.com/squillero/computational-intelligence
 
 import itertools
+import logging
 import random
 import numpy as np
 from abc import abstractmethod
@@ -290,15 +291,16 @@ class Quarto(object):
         '''
         winner = -1
         while winner < 0 and not self.check_finished():
-            # self.print()
+            print("Player ", self.__current_player, "turn")
+            self.print()
             piece_ok = False
             while not piece_ok:
-                piece_ok = self.select(self.__players[self.__current_player].choose_piece())
+                piece_ok = self.select(self.__players[self.__current_player].choose_piece(self.__board, self.__selected_piece_index))
             piece_ok = False
             self.__current_player = (self.__current_player + 1) % self.MAX_PLAYERS
-            # self.print()
+            self.print()
             while not piece_ok:
-                x, y = self.__players[self.__current_player].place_piece()
+                x, y = self.__players[self.__current_player].place_piece(self.__board, self.__selected_piece_index)
                 piece_ok = self.place(x, y)
             # print(self.state())
             winner = self.check_winner()
@@ -335,24 +337,24 @@ class Quarto(object):
         '''
         # piece out of range
         if piece < 0 or piece >= self.MAX_PIECES:
-            print("piece out of range")
+            logging.debug("piece out of range")
             return False
         if x < 0 or x >= self.BOARD_SIDE:
-            print("x out of range")
+            logging.debug("x out of range")
             return False
         if y < 0 or y >= self.BOARD_SIDE:
-            print("y out of range")
+            logging.debug("y out of range")
             return False
         # move to position already occupied
         if self.__board[y, x] > -1:
-            print("move to position already occupied")
+            logging.debug("move to position already occupied")
             return False
         # if the next piece chosen is empty, then the move is invalid
         # if self.__pieces[next_piece] == -1:
         #     return False
         # chosen piece already in the board
         if next_piece in list(itertools.chain(*self.__board)):
-            print("chosen piece already in the board")
+            logging.debug("chosen piece already in the board")
             return False
         return True
 
@@ -392,7 +394,7 @@ class QuartoScape:
             self.game.select(chosen_piece)
             self.game.place(x, y)
             self.game.print()
-            if self.game.check_winner() == 0:
+            if self.game.check_winner() != -1:
                 reward = 1
                 return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
             elif self.game.check_if_draw():
