@@ -335,19 +335,24 @@ class Quarto(object):
         '''
         # piece out of range
         if piece < 0 or piece >= self.MAX_PIECES:
+            print("piece out of range")
             return False
         if x < 0 or x >= self.BOARD_SIDE:
+            print("x out of range")
             return False
         if y < 0 or y >= self.BOARD_SIDE:
+            print("y out of range")
             return False
         # move to position already occupied
         if self.__board[y, x] > -1:
+            print("move to position already occupied")
             return False
         # if the next piece chosen is empty, then the move is invalid
         # if self.__pieces[next_piece] == -1:
         #     return False
         # chosen piece already in the board
         if next_piece in list(itertools.chain(*self.__board)):
+            print("chosen piece already in the board")
             return False
         return True
 
@@ -367,7 +372,7 @@ class QuartoScape:
     '''Custom gym environment for Quarto'''
     def __init__(self):
         self.game = Quarto()
-        self.action_space = spaces.MultiDiscrete([16, 16, 16])
+        self.action_space = spaces.MultiDiscrete([4, 4, 16])
         self.observation_space = spaces.MultiDiscrete([17] * 17)
         self.reward_range = (-1, 1)
         self.main_player = None
@@ -408,3 +413,6 @@ class QuartoScape:
         self.game.set_players((self.main_player, RandomPlayer(self.game)))
         # print(self.game.state_as_array())
         return self.game.state_as_array()
+
+    def close(self):
+        print("Closing environment")
