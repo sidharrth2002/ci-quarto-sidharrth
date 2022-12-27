@@ -10,6 +10,7 @@ import numpy as np
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.initializers import HeUniform
 
 from quarto.objects import Player, Quarto, QuartoScape
 
@@ -31,7 +32,7 @@ class DQNAgent:
         # target model updated every y steps
         self.target_model = self._build_model()
         self.gamma = 0.95
-        self.min_replay_size = 1000
+        self.min_replay_size = 500
         self.lr = 0.7
         self.epsilon = 0.5
         if game is not None:
@@ -65,9 +66,11 @@ class DQNAgent:
         model = Sequential()
         print('OBSERVATION SPACE')
         print(len(self.env.action_space.nvec))
-        model.add(Dense(24, input_dim=self.env.observation_space.shape[0], activation='relu', kernel_initializer='he_uniform'))
-        model.add(Dense(48, activation='relu', kernel_initializer='he_uniform'))
-        model.add(Dense(4 * 4 * 16, activation='softmax', kernel_initializer='he_uniform'))
+        initializer = HeUniform()
+        model.add(Dense(48, input_dim=self.env.observation_space.shape[0], activation='relu', kernel_initializer=initializer))
+        model.add(Dense(24, activation='relu', kernel_initializer=initializer))
+        model.add(Dense(12, activation='relu', kernel_initializer=initializer))
+        model.add(Dense(4 * 4 * 16, activation='softmax', kernel_initializer=initializer))
         model.compile(loss='mse', metrics=['accuracy'], optimizer=Adam(lr=0.001))
         print(model.summary())
         return model
@@ -139,10 +142,11 @@ class DQNAgent:
             X.append(self.abbellire(current_state, action))
             Y.append(current_qs[index])
 
-        X = np.array(X).reshape(batch_size, 17)
+        # X = np.array(X).reshape(batch_size, 17)
+        X = np.array(X)
         Y = np.array(Y).reshape(batch_size, 4 * 4 * 16)
         print(X.shape)
-        self.model.fit(X, Y, batch_size=batch_size, verbose=2, shuffle=False, epochs=5)
+        self.model.fit(X, Y, batch_size=batch_size, verbose=2, shuffle=False, epochs=1)
 
     def choose_piece(self, state: Any, piece_chosen_for_you: int):
         '''Choose piece for the next guy to play'''
@@ -184,7 +188,7 @@ class DQNAgent:
         replay_memory = deque(maxlen=5000)
         state = self.env.reset()
         # number of episodes to train for
-        num_episodes = 500
+        num_episodes = 2000
 
         steps_to_update_target_model = 0
 
@@ -242,7 +246,7 @@ class DQNAgent:
 
                 chosen_piece = action[2]
 
-            self.epsilon = self.decay_lr(self.lr, 0.0001, episode)
+            self.lr = self.decay_lr(self.lr, 0.0001, episode)
         self.env.close()
         self.model.save('model.h5')
 
@@ -258,15 +262,28 @@ class RandomPlayer(Player):
     def place_piece(self, state=None, piece_to_be_placed: int = None):
         return random.randint(0, 3), random.randint(0, 3)
 
-
 # agent = DQNAgent(env)
 # agent.run()
 
 def main():
-    game = Quarto()
-    game.set_players((RandomPlayer(game), DQNAgent(game=game)))
-    winner = game.run()
-    logging.warning(f"main: Winner: player {winner}")
+    dq_wins = 0
+    for round in range(100):
+        game = Quarto()
+        game.set_players((RandomPlayer(game), DQNAgent(game=game)))
+        winner = game.run()
+        if winner == 1:
+            dq_wins += 1
+        logging.warning(f"main: Winner: player {winner}")
+    logging.warning(f"main: DQ wins: {dq_wins}")
+    # game = Quarto()
+    # game.set_players((RandomPlayer(game), DQNAgent(game=game)))
+    # dq_wins = 0
+    # # for round in range(100):
+    # winner = game.run()
+    # if winner == 1:
+    #     dq_wins += 1
+    # logging.warning(f"main: Winner: player {winner}")
+    # logging.warning(f"main: DQ wins: {dq_wins}")
 
 
 if __name__ == '__main__':

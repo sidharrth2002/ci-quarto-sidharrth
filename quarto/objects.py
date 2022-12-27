@@ -9,6 +9,7 @@ from abc import abstractmethod
 import copy
 from gym import spaces
 
+
 class Player(object):
 
     def __init__(self, quarto) -> None:
@@ -41,8 +42,9 @@ class Quarto(object):
     BOARD_SIDE = 4
     MAX_PIECES = 16
 
-    def __init__(self) -> None:
-        self.__board = np.ones(shape=(self.BOARD_SIDE, self.BOARD_SIDE), dtype=int) * -1
+    def __init__(self, pieces = None) -> None:
+        self.__board = np.ones(
+            shape=(self.BOARD_SIDE, self.BOARD_SIDE), dtype=int) * -1
         self.__pieces = []
         self.__pieces.append(Piece(False, False, False, False))  # 0
         self.__pieces.append(Piece(False, False, False, True))  # 1
@@ -63,6 +65,8 @@ class Quarto(object):
         self.__current_player = 0
         self.__players = ()
         self.__selected_piece_index = -1
+        if pieces is not None:
+            self.__pieces = pieces
 
     def set_players(self, players):
         self.__players = players
@@ -225,7 +229,7 @@ class Quarto(object):
         if len(high_values) == self.BOARD_SIDE or len(coloured_values) == self.BOARD_SIDE or len(
                 solid_values) == self.BOARD_SIDE or len(square_values) == self.BOARD_SIDE or len(
                     low_values
-                ) == self.BOARD_SIDE or len(noncolor_values) == self.BOARD_SIDE or len(
+        ) == self.BOARD_SIDE or len(noncolor_values) == self.BOARD_SIDE or len(
                     hollow_values) == self.BOARD_SIDE or len(circle_values) == self.BOARD_SIDE:
             return self.__current_player
         high_values = []
@@ -260,7 +264,7 @@ class Quarto(object):
         if len(high_values) == self.BOARD_SIDE or len(coloured_values) == self.BOARD_SIDE or len(
                 solid_values) == self.BOARD_SIDE or len(square_values) == self.BOARD_SIDE or len(
                     low_values
-                ) == self.BOARD_SIDE or len(noncolor_values) == self.BOARD_SIDE or len(
+        ) == self.BOARD_SIDE or len(noncolor_values) == self.BOARD_SIDE or len(
                     hollow_values) == self.BOARD_SIDE or len(circle_values) == self.BOARD_SIDE:
             return self.__current_player
         return -1
@@ -269,7 +273,8 @@ class Quarto(object):
         '''
         Check who is the winner
         '''
-        l = [self.__check_horizontal(), self.__check_vertical(), self.__check_diagonal()]
+        l = [self.__check_horizontal(), self.__check_vertical(),
+             self.__check_diagonal()]
         for elem in l:
             if elem >= 0:
                 return elem
@@ -295,12 +300,15 @@ class Quarto(object):
             self.print()
             piece_ok = False
             while not piece_ok:
-                piece_ok = self.select(self.__players[self.__current_player].choose_piece(self.__board, self.__selected_piece_index))
+                piece_ok = self.select(self.__players[self.__current_player].choose_piece(
+                    self.__board, self.__selected_piece_index))
             piece_ok = False
-            self.__current_player = (self.__current_player + 1) % self.MAX_PLAYERS
+            self.__current_player = (
+                self.__current_player + 1) % self.MAX_PLAYERS
             self.print()
             while not piece_ok:
-                x, y = self.__players[self.__current_player].place_piece(self.__board, self.__selected_piece_index)
+                x, y = self.__players[self.__current_player].place_piece(
+                    self.__board, self.__selected_piece_index)
                 piece_ok = self.place(x, y)
             # print(self.state())
             winner = self.check_winner()
@@ -358,6 +366,7 @@ class Quarto(object):
             return False
         return True
 
+
 class RandomPlayer(Player):
     """Random player"""
 
@@ -370,8 +379,10 @@ class RandomPlayer(Player):
     def place_piece(self, state=None):
         return random.randint(0, 3), random.randint(0, 3)
 
+
 class QuartoScape:
     '''Custom gym environment for Quarto'''
+
     def __init__(self):
         self.game = Quarto()
         self.action_space = spaces.MultiDiscrete([4, 4, 16])
@@ -384,6 +395,115 @@ class QuartoScape:
         self.game.set_players((player, RandomPlayer(self.game)))
         return True
 
+    def score(self, state):
+        sum = 0
+        for i in range(4):
+            sum_plane = 0
+            for j in range(4):
+                sum_row = 0
+                for k in range(4):
+                    sum_row += self.gb[j, k, i]
+                if(abs(sum_row) == 4):
+                    sum_plane += 1
+                elif(abs(sum_row) == 3):
+                    sum_plane += 0.7
+                elif(abs(sum_row) == 2):
+                    sum_plane += 0.4
+                elif(abs(sum_row) == 1):
+                    sum_plane += 0.1
+            for k in range(4):
+                sum_col = 0
+                for j in range(4):
+                    sum_col += self.gb[j, k, i]
+                if(abs(sum_col) == 4):
+                    sum_plane += 1
+                elif(abs(sum_col) == 3):
+                    sum_plane += 0.7
+                elif(abs(sum_col) == 2):
+                    sum_plane += 0.4
+                elif(abs(sum_col) == 1):
+                    sum_plane += 0.1
+            sum += sum_plane
+        # now diagonals
+        for i in range(4):
+            sum_diaga = 0
+            sum_diagb = 0
+            for k in range(4):
+                sum_diaga += self.gb[k, k, i]
+                sum_diagb += self.gb[k, 3-k, i]
+            if(abs(sum_diaga) == 4):
+                sum += 1
+            elif(abs(sum_diaga) == 3):
+                sum += 0.7
+            elif(abs(sum_diaga) == 2):
+                sum += 0.4
+            elif(abs(sum_diaga) == 1):
+                sum += 0.1
+            # second diagonal
+            if(abs(sum_diagb) == 4):
+                sum += 1
+            elif(abs(sum_diagb) == 3):
+                sum += 0.7
+            elif(abs(sum_diagb) == 2):
+                sum += 0.4
+            elif(abs(sum_diagb) == 1):
+                sum += 0.1
+        return sum
+
+    def reward(self, state, piece, action):
+        sum = 0
+        score_before_action = self.score(state)
+        cloned_quarto = Quarto(pieces=state)
+        cloned_quarto.select(piece)
+        cloned_quarto.place(action[0], action[1])
+        score_after_action = self.score(cloned_quarto.state_as_array())
+        return score_after_action - score_before_action
+
+    def change_representation(self, state):
+        '''
+        Each piece has 4 dimensions (high, coloured, solid, square)
+        '''
+        new_rep = np.zeros((4, 4, 4))
+        for i in range(4):
+            for j in range(4):
+                piece = state[i, j]
+                piece = self.env.game.__pieces[piece]
+                high = piece.high
+                coloured = piece.coloured
+                solid = piece.solid
+                square = piece.square
+                new_rep[i, j, 0] = high
+                new_rep[i, j, 1] = coloured
+                new_rep[i, j, 2] = solid
+                new_rep[i, j, 3] = square
+        print(new_rep)
+        return new_rep
+
+    # def score(self):
+    #     sum = 0
+    #     board = self.game.state_as_array()
+    #     sum_plane = 0
+    #     for i in range(4):
+    #         sum_row = 0
+    #         for j in range(4):
+    #             sum_row += board[i, j]
+    #         sum_plane += sum_row
+
+    #     for j in range(4):
+    #         sum_col = 0
+    #         for i in range(4):
+    #             sum_col += board[i, j]
+    #         sum_plane += sum_col
+
+    #     sum += sum_plane
+
+    #     for i in range(4):
+    #         sum_diaga = 0
+    #         sum_diagb = 0
+    #         for
+
+    #     return sum_plane
+
     def step(self, action, chosen_piece):
         # position is the position the previous piece should be moved to
         # chosen next piece is the piece the agent chooses for the next player to move
@@ -395,20 +515,23 @@ class QuartoScape:
             self.game.place(x, y)
             self.game.print()
             if self.game.check_winner() != -1:
+                # this move resulted in a win
                 reward = 1
-                return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
-            elif self.game.check_if_draw():
-                reward = 0.5
-                return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
+                return self.game.state_as_array(), reward, self.game.check_finished(), {}
+            # elif self.game.check_if_draw():
+            #     # this move resulted in a draw
+            #     reward = 0.5
+            #     return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
             else:
+                # this move did not result in a win or a draw
+                print('Nothing happened, reward is 0')
                 reward = 0
-            return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
-        else:
-            print("Invalid move, fuck off")
-            reward = -1
+            return self.game.state_as_array(), reward, self.game.check_finished(), {}
+        # else:
+        #     print("Invalid move, fuck off")
+        #     reward = -1
 
         return self.game.state_as_array(), reward, self.game.check_finished(), {}
-
 
     def reset(self):
         self.game = Quarto()
