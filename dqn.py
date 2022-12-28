@@ -31,15 +31,17 @@ class DQNAgent:
         self.model = self._build_model()
         # target model updated every y steps
         self.target_model = self._build_model()
-        self.gamma = 0.95
+        self.gamma = 0.618
         self.min_replay_size = 500
         self.lr = 0.7
         self.epsilon = 0.5
         if game is not None:
             self.env.game = game
 
-        if os.path.exists('model.h5'):
-            self.model.load_weights('model.h5')
+        # if os.path.exists('model.h5'):
+        #     print('Loading model')
+        #     self.model.load_weights('model.h5')
+        #     os._exit(0)
 
     def get_all_actions(self):
         '''
@@ -67,10 +69,14 @@ class DQNAgent:
         print('OBSERVATION SPACE')
         print(len(self.env.action_space.nvec))
         initializer = HeUniform()
-        model.add(Dense(48, input_dim=self.env.observation_space.shape[0], activation='relu', kernel_initializer=initializer))
+        model.add(Dense(12, input_dim=self.env.observation_space.shape[0], activation='relu', kernel_initializer=initializer))
         model.add(Dense(24, activation='relu', kernel_initializer=initializer))
-        model.add(Dense(12, activation='relu', kernel_initializer=initializer))
-        model.add(Dense(4 * 4 * 16, activation='softmax', kernel_initializer=initializer))
+        model.add(Dense(48, activation='relu', kernel_initializer=initializer))
+        model.add(Dense(96, activation='relu', kernel_initializer=initializer))
+        model.add(Dense(192, activation='relu', kernel_initializer=initializer))
+        model.add(Dense(384, activation='relu', kernel_initializer=initializer))
+        model.add(Dense(768, activation='relu', kernel_initializer=initializer))
+        model.add(Dense(4 * 4 * 16, activation='linear', kernel_initializer=initializer))
         model.compile(loss='mse', metrics=['accuracy'], optimizer=Adam(lr=0.001))
         print(model.summary())
         return model
@@ -137,22 +143,25 @@ class DQNAgent:
                 # max_future_q = reward
                 max_future_q = reward
 
+            # 0 2 5
+            # 0 + 2 * 4 + 5 * 16 = 85
+
             current_qs[index][0][action[0] + action[1] * 4 + action[2] * 16] = (1 - self.lr) * current_qs[index][0][action[0] + action[1] * 4 + action[2] * 16] + self.lr * max_future_q
 
             X.append(self.abbellire(current_state, action))
-            Y.append(current_qs[index])
+            Y.append(current_qs[index][0])
 
         # X = np.array(X).reshape(batch_size, 17)
         X = np.array(X)
         Y = np.array(Y).reshape(batch_size, 4 * 4 * 16)
         print(X.shape)
-        self.model.fit(X, Y, batch_size=batch_size, verbose=2, shuffle=False, epochs=1)
+        self.model.fit(X, Y, batch_size=batch_size, verbose=2, shuffle=True, epochs=5)
 
     def choose_piece(self, state: Any, piece_chosen_for_you: int):
         '''Choose piece for the next guy to play'''
         self.env.game.__board = state
         pred = self.make_prediction(state, piece_chosen_for_you)
-        pred = self.zero_out_invalid_actions(piece_chosen_for_you, pred)
+        pred = self.nan_out_invalid_actions(piece_chosen_for_you, pred)
         print(f'Number of valid moves: {len([i for i in pred if i != -math.inf])}')
         best_action = np.argmax(pred)
         best_action = self.get_all_actions()[best_action]
@@ -163,20 +172,20 @@ class DQNAgent:
         print(f'PIECE CHOSEN FOR YOU: {piece_chosen_for_you}')
         self.env.game.__board = state
         pred = self.make_prediction(state, piece_chosen_for_you)
-        pred = self.zero_out_invalid_actions(piece_chosen_for_you, pred)
+        pred = self.nan_out_invalid_actions(piece_chosen_for_you, pred)
         print(f'Number of valid moves: {len([i for i in pred if i != -math.inf])}')
         best_action = np.argmax(pred)
         best_action = self.get_all_actions()[best_action]
         return best_action[0], best_action[1]
 
-    def zero_out_invalid_actions(self, current_piece, prediction):
+    def nan_out_invalid_actions(self, current_piece, prediction):
         '''Zero out invalid moves'''
         # zero out invalid moves
         all_actions = self.get_all_actions()
         for i in range(len(prediction)):
             action = all_actions[i]
             if not self.env.game.check_if_move_valid(current_piece, action[0], action[1], action[2]):
-                prediction[i] = -math.inf
+                prediction[i] = np.nan
 
         return prediction
 
@@ -188,7 +197,7 @@ class DQNAgent:
         replay_memory = deque(maxlen=5000)
         state = self.env.reset()
         # number of episodes to train for
-        num_episodes = 2000
+        num_episodes = 5000
 
         steps_to_update_target_model = 0
 
@@ -214,8 +223,8 @@ class DQNAgent:
                     print(action)
                 else:
                     prediction = self.make_prediction(state, chosen_piece)
-                    prediction = self.zero_out_invalid_actions(chosen_piece, prediction)
-                    action = np.argmax(prediction)
+                    prediction = self.nan_out_invalid_actions(chosen_piece, prediction)
+                    action = np.nanargmax(prediction)
                     # action = np.argmax(self.make_prediction(state, chosen_piece))
                     # get action at index of action
                     action = self.get_all_actions()[action]
@@ -262,46 +271,46 @@ class RandomPlayer(Player):
     def place_piece(self, state=None, piece_to_be_placed: int = None):
         return random.randint(0, 3), random.randint(0, 3)
 
-# agent = DQNAgent(env)
-# agent.run()
+agent = DQNAgent(env)
+agent.run()
 
-def main():
-    dq_wins = 0
-    for round in range(100):
-        game = Quarto()
-        game.set_players((RandomPlayer(game), DQNAgent(game=game)))
-        winner = game.run()
-        if winner == 1:
-            dq_wins += 1
-        logging.warning(f"main: Winner: player {winner}")
-    logging.warning(f"main: DQ wins: {dq_wins}")
-    # game = Quarto()
-    # game.set_players((RandomPlayer(game), DQNAgent(game=game)))
-    # dq_wins = 0
-    # # for round in range(100):
-    # winner = game.run()
-    # if winner == 1:
-    #     dq_wins += 1
-    # logging.warning(f"main: Winner: player {winner}")
-    # logging.warning(f"main: DQ wins: {dq_wins}")
+# def main():
+#     dq_wins = 0
+#     for round in range(100):
+#         game = Quarto()
+#         game.set_players((RandomPlayer(game), DQNAgent(game=game)))
+#         winner = game.run()
+#         if winner == 1:
+#             dq_wins += 1
+#         logging.warning(f"main: Winner: player {winner}")
+#     logging.warning(f"main: DQ wins: {dq_wins}")
+#     # game = Quarto()
+#     # game.set_players((RandomPlayer(game), DQNAgent(game=game)))
+#     # dq_wins = 0
+#     # # for round in range(100):
+#     # winner = game.run()
+#     # if winner == 1:
+#     #     dq_wins += 1
+#     # logging.warning(f"main: Winner: player {winner}")
+#     # logging.warning(f"main: DQ wins: {dq_wins}")
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-v', '--verbose', action='count', default=0, help='increase log verbosity')
-    parser.add_argument('-d',
-                        '--debug',
-                        action='store_const',
-                        dest='verbose',
-                        const=2,
-                        help='log debug messages (same as -vv)')
-    args = parser.parse_args()
+# if __name__ == '__main__':
+#     parser = argparse.ArgumentParser()
+#     parser.add_argument('-v', '--verbose', action='count', default=0, help='increase log verbosity')
+#     parser.add_argument('-d',
+#                         '--debug',
+#                         action='store_const',
+#                         dest='verbose',
+#                         const=2,
+#                         help='log debug messages (same as -vv)')
+#     args = parser.parse_args()
 
-    if args.verbose == 0:
-        logging.getLogger().setLevel(level=logging.WARNING)
-    elif args.verbose == 1:
-        logging.getLogger().setLevel(level=logging.INFO)
-    elif args.verbose == 2:
-        logging.getLogger().setLevel(level=logging.DEBUG)
+#     if args.verbose == 0:
+#         logging.getLogger().setLevel(level=logging.WARNING)
+#     elif args.verbose == 1:
+#         logging.getLogger().setLevel(level=logging.INFO)
+#     elif args.verbose == 2:
+#         logging.getLogger().setLevel(level=logging.DEBUG)
 
-    main()
+#     main()

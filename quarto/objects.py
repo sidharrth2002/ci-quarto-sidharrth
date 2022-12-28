@@ -366,6 +366,11 @@ class Quarto(object):
             return False
         return True
 
+    def get_pieces(self):
+        '''
+        Return the pieces
+        '''
+        return self.__pieces
 
 class RandomPlayer(Player):
     """Random player"""
@@ -396,6 +401,7 @@ class QuartoScape:
         return True
 
     def score(self, state):
+        self.gb = self.change_representation(state)
         sum = 0
         for i in range(4):
             sum_plane = 0
@@ -467,16 +473,17 @@ class QuartoScape:
         for i in range(4):
             for j in range(4):
                 piece = state[i, j]
-                piece = self.env.game.__pieces[piece]
-                high = piece.high
-                coloured = piece.coloured
-                solid = piece.solid
-                square = piece.square
+                if piece == -1:
+                    continue
+                piece = self.game.get_pieces()[piece]
+                high = piece.HIGH
+                coloured = piece.COLOURED
+                solid = piece.SOLID
+                square = piece.SQUARE
                 new_rep[i, j, 0] = high
                 new_rep[i, j, 1] = coloured
                 new_rep[i, j, 2] = solid
                 new_rep[i, j, 3] = square
-        print(new_rep)
         return new_rep
 
     # def score(self):
@@ -516,7 +523,7 @@ class QuartoScape:
             self.game.print()
             if self.game.check_winner() != -1:
                 # this move resulted in a win
-                reward = 1
+                reward = self.reward(self.game.state_as_array(), chosen_piece, action)
                 return self.game.state_as_array(), reward, self.game.check_finished(), {}
             # elif self.game.check_if_draw():
             #     # this move resulted in a draw
@@ -524,8 +531,8 @@ class QuartoScape:
             #     return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
             else:
                 # this move did not result in a win or a draw
-                print('Nothing happened, reward is 0')
-                reward = 0
+                # print('Nothing happened, reward is 0')
+                reward = self.reward(self.game.state_as_array(), chosen_piece, action)
             return self.game.state_as_array(), reward, self.game.check_finished(), {}
         # else:
         #     print("Invalid move, fuck off")
