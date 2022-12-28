@@ -90,7 +90,7 @@ class Quarto(object):
         if self.__placeable(x, y):
             self.__board[y, x] = self.__selected_piece_index
             return True
-        print("Invalid move: ", x, y)
+        logging.debug("Invalid move: ", x, y)
         return False
 
     def __placeable(self, x: int, y: int) -> bool:
@@ -296,8 +296,8 @@ class Quarto(object):
         '''
         winner = -1
         while winner < 0 and not self.check_finished():
-            print("Player ", self.__current_player, "turn")
-            self.print()
+            logging.info("Player ", self.__current_player, "turn")
+            # self.print()
             piece_ok = False
             while not piece_ok:
                 piece_ok = self.select(self.__players[self.__current_player].choose_piece(
@@ -305,14 +305,14 @@ class Quarto(object):
             piece_ok = False
             self.__current_player = (
                 self.__current_player + 1) % self.MAX_PLAYERS
-            self.print()
+            # self.print()
             while not piece_ok:
                 x, y = self.__players[self.__current_player].place_piece(
                     self.__board, self.__selected_piece_index)
                 piece_ok = self.place(x, y)
             # print(self.state())
             winner = self.check_winner()
-        self.print()
+        # self.print()
         return winner
 
     def state(self) -> str:
@@ -517,13 +517,15 @@ class QuartoScape:
         x, y, chosen_next_piece = action
         self.next_piece = chosen_next_piece
         if self.game.check_if_move_valid(chosen_piece, x, y, chosen_next_piece):
-            print(f"Valid move, piece {chosen_piece} placed at {x}, {y}")
+            logging.info(f"Valid move, piece {chosen_piece} placed at {x}, {y}")
             self.game.select(chosen_piece)
             self.game.place(x, y)
-            self.game.print()
+            # self.game.print()
             if self.game.check_winner() != -1:
                 # this move resulted in a win
                 reward = self.reward(self.game.state_as_array(), chosen_piece, action)
+                # bonus
+                reward += 1000
                 return self.game.state_as_array(), reward, self.game.check_finished(), {}
             # elif self.game.check_if_draw():
             #     # this move resulted in a draw
