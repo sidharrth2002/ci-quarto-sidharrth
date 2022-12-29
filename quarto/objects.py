@@ -382,7 +382,7 @@ class Quarto(object):
             self.__board[y, x] = piece
             self.__selected_piece_index = next_piece
             self.__current_player = (self.__current_player + 1) % self.MAX_PLAYERS
-            return True
+            return self
         return False
 
     def get_pieces(self):

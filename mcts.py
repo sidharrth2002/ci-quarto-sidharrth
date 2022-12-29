@@ -5,6 +5,7 @@ import math
 import random
 
 import numpy as np
+from dqn import RandomPlayer
 
 from quarto.objects import Quarto
 
@@ -76,9 +77,7 @@ class MonteCarloTreeSearch:
     '''
     Solve using Monte Carlo Tree Search
     '''
-    def __init__(self, env, model, epsilon=0.1, max_depth=1000):
-        self.env = env
-        self.model = model
+    def __init__(self, epsilon=0.1, max_depth=1000):
         self.epsilon = epsilon
         self.max_depth = max_depth
         self.Q = defaultdict(int)
@@ -213,3 +212,22 @@ class MonteCarloTreeSearch:
     def reward(self, board: Quarto):
         if not board.check_is_game_over():
             return 0
+
+# Training while playing
+tree = MonteCarloTreeSearch()
+board = Quarto()
+random_player = RandomPlayer()
+chosen_piece = random_player.choose_piece(board)
+while True:
+    # random player moves
+    chosen_location = random_player.place_piece(board, chosen_piece)
+    board.select(chosen_piece)
+    board.place(**chosen_location)
+    if board.check_is_game_over():
+        break
+    # monte carlo tree search moves
+    for _ in range(20):
+        tree.do_rollout(board)
+    board = tree.choose(board)
+    if board.check_is_game_over():
+        break
