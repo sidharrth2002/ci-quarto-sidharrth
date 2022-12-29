@@ -9,6 +9,7 @@ from abc import abstractmethod
 import copy
 from gym import spaces
 
+from quarto.objects import *
 
 class Player(object):
 
@@ -280,6 +281,13 @@ class Quarto(object):
                 return elem
         return -1
 
+    def check_is_game_over(self) -> bool:
+        '''
+        Check if the game is over
+        '''
+        return self.check_winner() >= 0 or self.check_finished()
+
+
     def check_finished(self) -> bool:
         '''
         Check who is the loser
@@ -366,11 +374,41 @@ class Quarto(object):
             return False
         return True
 
+    def make_move(self, piece: int, x: int, y: int, next_piece: int):
+        '''
+        Make a move
+        '''
+        if self.check_if_move_valid(piece, x, y, next_piece):
+            self.__board[y, x] = piece
+            self.__selected_piece_index = next_piece
+            self.__current_player = (self.__current_player + 1) % self.MAX_PLAYERS
+            return True
+        return False
+
     def get_pieces(self):
         '''
         Return the pieces
         '''
         return self.__pieces
+
+    def board_to_string(self):
+        string = ''
+        for row in self.__board:
+            for elem in row:
+                string += str(elem) + ' '
+        return string
+
+    def string_to_board(self, string):
+        board = np.zeros((self.BOARD_SIDE, self.BOARD_SIDE))
+        i = 0
+        for row in board:
+            for j in range(len(row)):
+                row[j] = int(string[i])
+                i += 2
+        return board
+
+
+
 
 class RandomPlayer(Player):
     """Random player"""
@@ -516,6 +554,7 @@ class QuartoScape:
         # chosen next piece is the piece the agent chooses for the next player to move
         x, y, chosen_next_piece = action
         self.next_piece = chosen_next_piece
+        reward = 0
         if self.game.check_if_move_valid(chosen_piece, x, y, chosen_next_piece):
             logging.info(f"Valid move, piece {chosen_piece} placed at {x}, {y}")
             self.game.select(chosen_piece)
@@ -523,10 +562,10 @@ class QuartoScape:
             # self.game.print()
             if self.game.check_winner() != -1:
                 # this move resulted in a win
-                reward = self.reward(self.game.state_as_array(), chosen_piece, action)
+                # reward = self.reward(self.game.state_as_array(), chosen_piece, action)
                 # bonus
-                reward += 1000
-                return self.game.state_as_array(), reward, self.game.check_finished(), {}
+                reward = 1
+                return self.game.state_as_array(), reward, self.game.check_is_game_over(), {}
             # elif self.game.check_if_draw():
             #     # this move resulted in a draw
             #     reward = 0.5
@@ -535,7 +574,7 @@ class QuartoScape:
                 # this move did not result in a win or a draw
                 # print('Nothing happened, reward is 0')
                 reward = self.reward(self.game.state_as_array(), chosen_piece, action)
-            return self.game.state_as_array(), reward, self.game.check_finished(), {}
+                return self.game.state_as_array(), reward, self.game.check_is_game_over(), {}
         # else:
         #     print("Invalid move, fuck off")
         #     reward = -1

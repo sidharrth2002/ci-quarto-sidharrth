@@ -53,13 +53,13 @@ class DQNAgent:
         self.env = env
         # self.env.set_main_player(self)
         # main model updated every x steps
-        self.model = self._build_model()
+        self.model = self.build_conv_model()
         # target model updated every y steps
-        self.target_model = self._build_model()
+        self.target_model = self.build_conv_model()
         self.gamma = 0.618
         self.min_replay_size = 500
         self.lr = 0.7
-        self.epsilon = 0.8
+        self.epsilon = 0.5
         if game is not None:
             self.env.game = game
 
@@ -109,14 +109,26 @@ class DQNAgent:
         return model
 
     def build_conv_model(self):
-        model = Sequential()
-        model.add(Conv2D(32, (3, 3), input_shape=(4, 4, 4), activation='relu'))
-        model.add(MaxPooling2D(pool_size=(2, 2)))
-        model.add(Flatten())
-        model.add(Dense(16, activation='relu'))
-        model.add(Dense(4 * 4 * 16, activation='linear'))
-        model.compile(loss='mse', metrics=['accuracy'], optimizer=Adam(lr=0.001))
-        # print(model.summary())
+        '''
+        Two inputs:
+        4 x 4 x 4 board
+        1 x 4 piece
+        1 conv layer
+        1 dense layer
+        '''
+        input1 = tf.keras.Input(shape=(4, 4, 4), name='x1')
+        input2 = tf.keras.Input(shape=(1, 4), name='x2')
+        x = Conv2D(16, (2, 2), activation='relu')(input1)
+        x = MaxPooling2D((2, 2))(x)
+        x = Flatten()(x)
+        x2 = tf.keras.layers.Reshape((1, 4))(input2)
+        x2 = Dense(16, activation='relu')(x2)
+        x2 = tf.squeeze(x2, axis=1)
+        x = tf.keras.layers.concatenate([x, x2])
+        x = Dense(64, activation='relu')(x)
+        x = Dense(4 * 4 * 16, activation='linear')(x)
+        model = tf.keras.Model(inputs={'x1': input1, 'x2': input2}, outputs=x)
+        model.compile(loss=tf.keras.losses.Huber(), metrics=['mae', 'mse'], optimizer=Adam(lr=0.001))
         return model
 
     def get_position(self, element, list):
@@ -128,27 +140,45 @@ class DQNAgent:
     def make_prediction(self, state, chosen_piece=None):
         '''Make a prediction using the network'''
         # prediction X is the position of the single 1 in the state
-        pred_X = [self.get_position(i, list(state.flatten())) for i in range(0, 16)]
-        pred_X.append(chosen_piece)
+        x = self.abbellire(state, chosen_piece)
+        x = {'x1': np.array([x[0]]), 'x2': np.array([x[1]])}
+        # pred_X.append(chosen_piece)
         # # print(np.array([pred_X]))
-        return self.model.predict(np.array([pred_X]))[0]
+        return self.model.predict(x)
 
     def decay_lr(self, lr, decay_rate, decay_step):
         return lr * (1 / (1 + decay_rate * decay_step))
 
     def abbellire(self, state, chosen_piece):
-        '''
-        Beautify the state for network input
-        When in Italy, do as the Italians do
-        '''
-        X = [self.get_position(i, list(state.flatten())) for i in range(0, 16)]
-        X.append(chosen_piece)
-        return np.array([X])
+        new_rep = np.zeros((4, 4, 4))
+        for i in range(0, 4):
+            for j in range(0, 4):
+                piece = state[i][j]
+                if piece == -1:
+                    continue
+                piece = self.env.game.get_pieces()[piece]
+                high = piece.HIGH
+                coloured = piece.COLOURED
+                solid = piece.SOLID
+                square = piece.SQUARE
+                new_rep[i, j, 0] = high
+                new_rep[i, j, 1] = coloured
+                new_rep[i, j, 2] = solid
+                new_rep[i, j, 3] = square
+        x1 = new_rep
+        x2 = np.zeros((1, 4))
+        piece = self.env.game.get_pieces()[chosen_piece]
+        x2[0, 0] = piece.HIGH
+        x2[0, 1] = piece.COLOURED
+        x2[0, 2] = piece.SOLID
+        x2[0, 3] = piece.SQUARE
 
-    def create_X(self, state, chosen_piece):
-        X = [self.get_position(i, list(state.flatten())) for i in range(0, 16)]
-        X.append(chosen_piece)
-        return np.array([X])
+        return x1, x2
+
+    # def create_X(self, state, chosen_piece):
+    #     X = [self.a(i, list(state.flatten())) for i in range(0, 16)]
+    #     X.append(chosen_piece)
+    #     return np.array([X])
 
     def train(self, replay_memory, batch_size):
         '''Train the network'''
@@ -162,11 +192,12 @@ class DQNAgent:
         minibatch = random.sample(replay_memory, batch_size)
         # current_states = [transition[0] for transition in minibatch]
         # state + chosen_piece for you -> action (contains chosen_piece for next player)
-        current_states = np.array([self.abbellire(state, chosen_piece) for state, chosen_piece, action, reward, new_current_state, done in minibatch])
-        current_qs = self.model.predict(current_states.reshape(batch_size, 17))
+        current_states = [self.abbellire(state, chosen_piece) for state, chosen_piece, action, reward, new_current_state, done in minibatch]
+        print({'x1': [s[0][0] for s in current_states], 'x2': [s[1][0] for s in current_states]})
+        current_qs = self.model.predict({'x1': [s[0][0] for s in current_states], 'x2': [s[1][0] for s in current_states]})
         # new current state + chosen_piece for next player -> action (contains chosen_piece for next player)
-        new_current_states = np.array([self.abbellire(new_current_state, action[2]) for state, chosen_piece, action, reward, new_current_state, done in minibatch])
-        future_qs = self.target_model.predict(new_current_states.reshape(batch_size, 17))
+        new_current_states = [self.abbellire(new_current_state, action[2]) for state, chosen_piece, action, reward, new_current_state, done in minibatch]
+        future_qs = self.target_model.predict({'x1': [s[0] for s in new_current_states], 'x2': [s[1] for s in new_current_states]})
         # exclude invalid moves from calculation
         # future_qs = [self.nan_out_invalid_actions(batch[2][2], future_q) for batch, future_q in zip(minibatch, future_qs)]
 
@@ -186,11 +217,13 @@ class DQNAgent:
 
             current_qs[index][action[0] + action[1] * 4 + action[2] * 16] = (1 - self.lr) * current_qs[index][action[0] + action[1] * 4 + action[2] * 16] + self.lr * max_future_q
 
-            X.append(self.abbellire(current_state, chosen_piece))
+            beautified = self.abbellire(current_state, chosen_piece)
+            X.append({'x1': beautified[0], 'x2': beautified[1]})
             Y.append(current_qs[index])
 
         # X = np.array(X).reshape(batch_size, 17)
-        X = np.array(X).reshape(batch_size, 17)
+        # X = np.array(X).reshape(batch_size, 17)
+        X = np.array({'x1': [s[0] for s in X], 'x2': [s[1] for s in X]})
         Y = np.array(Y).reshape(batch_size, 4 * 4 * 16)
         self.model.fit(X, Y, batch_size=batch_size, verbose=2, shuffle=True)
 
