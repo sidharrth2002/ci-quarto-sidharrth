@@ -276,6 +276,7 @@ class Quarto(object):
         '''
         l = [self.__check_horizontal(), self.__check_vertical(),
              self.__check_diagonal()]
+        print("options: ", l)
         for elem in l:
             if elem >= 0:
                 return elem
@@ -285,12 +286,15 @@ class Quarto(object):
         '''
         Check if the game is over
         '''
+        print("Board: ", self.__board)
+        print("Winner: ", self.check_winner())
+        print("Finished: ", self.check_finished())
         return self.check_winner() >= 0 or self.check_finished()
 
 
     def check_finished(self) -> bool:
         '''
-        Check who is the loser
+        Check if the game is finished
         '''
         for row in self.__board:
             for elem in row:
@@ -341,6 +345,12 @@ class Quarto(object):
         '''
         return self.__current_player
 
+    def switch_player(self):
+        '''
+        Switch the current player
+        '''
+        self.__current_player = 1 - self.__current_player
+
     def check_if_draw(self):
         '''
         Check if the game is a draw
@@ -383,7 +393,7 @@ class Quarto(object):
             self.__selected_piece_index = next_piece
             self.__current_player = (self.__current_player + 1) % self.MAX_PLAYERS
             return self
-        return False
+        return self
 
     def get_pieces(self):
         '''

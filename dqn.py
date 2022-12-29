@@ -309,8 +309,9 @@ class DQNAgent:
         self.env.close()
         self.model.save('model.h5')
 
-agent = DQNAgent(env)
-agent.run()
+if __name__ == '__main__':
+    agent = DQNAgent(env)
+    agent.run()
 
 # def main():
 #     dq_wins = 0

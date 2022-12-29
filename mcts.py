@@ -1,5 +1,6 @@
 
 from collections import defaultdict
+import copy
 import logging
 import math
 import random
@@ -15,14 +16,17 @@ class Node:
     Node on tree
     '''
     def __init__(self, board: Quarto):
-        self.board = board
+        self.board = copy.deepcopy(board)
         self.hashed_board = self.hash_state(board)
+        self.MAX_PIECES = 16
+        self.BOARD_SIDE = 4
+
 
     def hash_state(self, board: Quarto):
         '''
         Hash the board state, current player and selected piece
         '''
-        return board.board_to_string() + '||' + str(self.__current_player) + '||' + str(self.__selected_piece_index)
+        return board.board_to_string() + '||' + str(board.get_current_player()) + '||' + str(board.get_selected_piece())
 
     def unhash_state(self, state):
         '''
@@ -50,18 +54,19 @@ class Node:
 
     def reward(self):
         board = self.board
+        print(board)
         if not board.check_is_game_over():
-            logging.info("reward: game is not over, nonterminal board")
+            print("reward: game is not over, nonterminal board")
             return None
         if board.check_winner() == board.get_current_player():
-            logging.info("reward: game is over, and you already won")
-            return None
+            print("reward: game is over, and you already won")
+            return 1
         if board.get_current_player() == (1 - board.get_current_player()):
             return 0
         if board.check_if_draw():
             logging.info('tie')
             return 0.5
-        return None
+        return 0
 
     def find_random_child(self):
         board = self.board
@@ -82,6 +87,9 @@ class MonteCarloTreeSearch:
         self.max_depth = max_depth
         self.Q = defaultdict(int)
         self.N = defaultdict(int)
+        self.children = dict()
+        self.MAX_PIECES = 16
+        self.BOARD_SIDE = 4
 
     def make_move(self, board: Quarto, x: int, y: int, piece: int, next_piece: int):
         '''
@@ -126,8 +134,10 @@ class MonteCarloTreeSearch:
         '''
         Choose best successor of node (move)
         '''
-        if node.check_is_game_over():
-            return None
+        node = Node(node)
+        if node.is_terminal():
+            print(node.state_as_array())
+            raise RuntimeError("choose called on terminal node")
 
         if node not in self.children:
             return node.find_random_child()
@@ -137,12 +147,15 @@ class MonteCarloTreeSearch:
                 return float('-inf')
             return self.Q[n] / self.N[n]
 
+        print("Children: ", self.children[node])
+
         return max(self.children[node], key=score)
 
     def do_rollout(self, board):
         '''
         Rollout from the node for one iteration
         '''
+        print('Rolling out')
         node = Node(board)
         path = self.select(node)
         leaf = path[-1]
@@ -209,25 +222,27 @@ class MonteCarloTreeSearch:
         possible_actions = [(x, y, piece, next_piece) for piece in range(self.MAX_PIECES) for x in range(self.BOARD_SIDE) for y in range(self.BOARD_SIDE) for next_piece in range(self.MAX_PIECES) if board.check_if_move_valid(piece, x, y, next_piece)]
         return board.make_move(*random.choice(possible_actions))
 
-    def reward(self, board: Quarto):
-        if not board.check_is_game_over():
-            return 0
-
 # Training while playing
 tree = MonteCarloTreeSearch()
 board = Quarto()
-random_player = RandomPlayer()
+random_player = RandomPlayer(board)
 chosen_piece = random_player.choose_piece(board)
 while True:
     # random player moves
     chosen_location = random_player.place_piece(board, chosen_piece)
     board.select(chosen_piece)
-    board.place(**chosen_location)
+    board.place(chosen_location[0], chosen_location[1])
     if board.check_is_game_over():
+        print("Game is over")
         break
     # monte carlo tree search moves
     for _ in range(20):
         tree.do_rollout(board)
     board = tree.choose(board)
     if board.check_is_game_over():
+        print("Game over")
+        print(board)
         break
+    board.switch_player()
+
+print(tree.Q.values())
