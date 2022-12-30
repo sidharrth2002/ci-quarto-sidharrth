@@ -91,6 +91,8 @@ class Quarto(object):
         if self.__placeable(x, y):
             self.__board[y, x] = self.__selected_piece_index
             return True
+        else:
+            print("Not placeable")
         logging.debug("Invalid move: ", x, y)
         return False
 
@@ -126,6 +128,12 @@ class Quarto(object):
         Get index of selected piece
         '''
         return copy.deepcopy(self.__selected_piece_index)
+
+    def set_selected_piece(self, index: int):
+        '''
+        Set index of selected piece
+        '''
+        self.__selected_piece_index = index
 
     def __check_horizontal(self) -> int:
         for i in range(self.BOARD_SIDE):
@@ -276,7 +284,6 @@ class Quarto(object):
         '''
         l = [self.__check_horizontal(), self.__check_vertical(),
              self.__check_diagonal()]
-        print("options: ", l)
         for elem in l:
             if elem >= 0:
                 return elem
@@ -286,9 +293,9 @@ class Quarto(object):
         '''
         Check if the game is over
         '''
-        print("Board: ", self.__board)
-        print("Winner: ", self.check_winner())
-        print("Finished: ", self.check_finished())
+        # print("Board: ", self.__board)
+        # print("Winner: ", self.check_winner())
+        # print("Finished: ", self.check_finished())
         return self.check_winner() >= 0 or self.check_finished()
 
 
@@ -384,16 +391,25 @@ class Quarto(object):
             return False
         return True
 
-    def make_move(self, piece: int, x: int, y: int, next_piece: int):
+    def make_move(self, piece: int, x: int, y: int, next_piece: int, newboard = False):
         '''
         Make a move
         '''
-        if self.check_if_move_valid(piece, x, y, next_piece):
-            self.__board[y, x] = piece
-            self.__selected_piece_index = next_piece
-            self.__current_player = (self.__current_player + 1) % self.MAX_PLAYERS
+        if newboard:
+            new = copy.deepcopy(self)
+            if new.check_if_move_valid(piece, x, y, next_piece):
+                new.__board[y, x] = piece
+                new.__selected_piece_index = next_piece
+                new.__current_player = (self.__current_player + 1) % self.MAX_PLAYERS
+            return new
+        else:
+            if self.check_if_move_valid(piece, x, y, next_piece):
+                self.__board[y, x] = piece
+                self.__selected_piece_index = next_piece
+                self.__current_player = (self.__current_player + 1) % self.MAX_PLAYERS
+            else:
+                print("Invalid move")
             return self
-        return self
 
     def get_pieces(self):
         '''
