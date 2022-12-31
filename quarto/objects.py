@@ -296,7 +296,8 @@ class Quarto(object):
         # print("Board: ", self.__board)
         # print("Winner: ", self.check_winner())
         # print("Finished: ", self.check_finished())
-        return self.check_winner() >= 0 or self.check_finished()
+        # print("Draw: ", self.check_if_draw())
+        return self.check_winner() >= 0 or self.check_finished() or self.check_if_draw()
 
 
     def check_finished(self) -> bool:
@@ -369,6 +370,10 @@ class Quarto(object):
         Check if a move is valid
         '''
         # piece out of range
+        if piece in self.__board.flatten():
+            logging.debug("piece already in the board")
+            return False
+
         if piece < 0 or piece >= self.MAX_PIECES:
             logging.debug("piece out of range")
             return False
@@ -378,17 +383,32 @@ class Quarto(object):
         if y < 0 or y >= self.BOARD_SIDE:
             logging.debug("y out of range")
             return False
-        # move to position already occupied
+
         if self.__board[y, x] > -1:
+            logging.debug("position y, x ", y, x, "already occupied")
+            logging.debug(self.__board)
             logging.debug("move to position already occupied")
+            logging.debug("Index of -1: ", np.where(self.__board == -1))
             return False
+
+        # move to position already occupied
         # if the next piece chosen is empty, then the move is invalid
         # if self.__pieces[next_piece] == -1:
         #     return False
         # chosen piece already in the board
-        if next_piece in list(itertools.chain(*self.__board)):
+        if next_piece in self.__board.flatten():
             logging.debug("chosen piece already in the board")
             return False
+
+        num_empty_slots = 0
+        for row in self.__board.flatten():
+            if row == -1:
+                num_empty_slots += 1
+
+        if piece == next_piece and not (num_empty_slots == 1):
+            logging.debug("piece and next_piece are the same")
+            return False
+
         return True
 
     def make_move(self, piece: int, x: int, y: int, next_piece: int, newboard = False):
@@ -401,9 +421,13 @@ class Quarto(object):
                 new.__board[y, x] = piece
                 new.__selected_piece_index = next_piece
                 new.__current_player = (self.__current_player + 1) % self.MAX_PLAYERS
+            else:
+                print("Invalid move")
+            # print("Board after: ", new.__board)
             return new
         else:
             if self.check_if_move_valid(piece, x, y, next_piece):
+                # print("Turn: ", self.__current_player)
                 self.__board[y, x] = piece
                 self.__selected_piece_index = next_piece
                 self.__current_player = (self.__current_player + 1) % self.MAX_PLAYERS
