@@ -1,16 +1,20 @@
+"""
+Sidharrth Nagappan
+
+Monte Carlo Tree Search
+"""
 
 from collections import defaultdict
 import copy
 import logging
 import math
+import pickle
 import random
 
 import numpy as np
 from dqn import RandomPlayer
 
 from quarto.objects import Quarto
-
-# TODO: Q and N dictionary key is hashed board state instead of object
 
 class Node:
     '''
@@ -60,12 +64,6 @@ class Node:
         if self.board.check_is_game_over():
             return set()
 
-        # print('finding children')
-        # c = [[self.board.get_selected_piece(), x, y, next_piece] for x in range(self.BOARD_SIDE) for y in range(self.BOARD_SIDE) for next_piece in range(self.MAX_PIECES) if self.board.check_if_move_valid(self.board.get_selected_piece(), x, y, next_piece)]
-        # print(c)
-
-        all_actions = [(self.board.get_selected_piece(), x, y, next_piece) for x in range(self.BOARD_SIDE) for y in range(self.BOARD_SIDE) for next_piece in range(self.MAX_PIECES)]
-
         new_stuff = {
             create_node(self.board.make_move(self.board.get_selected_piece(), x, y, next_piece, newboard=True)) for x in range(self.BOARD_SIDE) for y in range(self.BOARD_SIDE) for next_piece in range(self.MAX_PIECES) if self.board.check_if_move_valid(self.board.get_selected_piece(), x, y, next_piece)
         }
@@ -74,23 +72,24 @@ class Node:
 
     def reward(self):
         board = self.board
-        # print("WINNER: ", board.check_winner())
-        # print("PLAYER: ", board.get_current_player())
-        # print()board)
+        logging.debug("WINNER: ", board.check_winner())
+        logging.debug("PLAYER: ", board.get_current_player())
+        logging.debug(board)
         if not board.check_is_game_over():
             raise RuntimeError("reward called on non-terminal node")
             return None
         # print("WINNER: ", board.check_winner())
         if 1 - board.check_winner() == board.get_current_player():
             # print()"reward: game is over, and you already won")
-            raise RuntimeError("reward called on non-terminal node")
+            raise RuntimeError("reward called on unreachable node")
         if board.check_winner() == board.get_current_player():
             # print()"other guy won")
             return 0
         if board.check_if_draw():
             logging.info('tie')
             return 0.5
-        return 0
+        raise RuntimeError("nothing works")
+        # return 0
 
     def find_random_child(self):
         board = self.board
@@ -125,32 +124,25 @@ class MonteCarloTreeSearch:
         self.MAX_PIECES = 16
         self.BOARD_SIDE = 4
 
-    # def make_move(self, board: Quarto, x: int, y: int, piece: int, next_piece: int):
-    #     '''
-    #     Make move on board
-    #     '''
-    #     board.make_move(piece, x, y, next_piece)
-    #     return Quarto(board.state_as_array())
-
     def choose(self, node):
         '''
         Choose best successor of node (move)
         '''
         node = Node(node)
         if node.is_terminal():
-            # print()node.state_as_array())
+            logging.debug(node.state_as_array())
             raise RuntimeError("choose called on terminal node")
 
         if node not in self.children:
             return node.find_random_child()
 
         def score(n):
-            # print()"Before reading in choose ", n)
+            logging.debug("Before reading in choose ", n)
             if self.N[n] == 0:
                 return float('-inf')
             return self.Q[n] / self.N[n]
 
-        # print()"Children: ", self.children[node.hash_state()])
+        logging.debug("Children: ", self.children[node.hash_state()])
 
         return max(self.children[node], key=score).board
 
@@ -195,9 +187,6 @@ class MonteCarloTreeSearch:
         invert_reward = True
         while True:
             if node.is_terminal():
-                # print('Terminal node')
-                # print("Current player is: ", node.board.get_current_player())
-                # print(node.board.state_as_array())
                 reward = node.reward()
                 return 1 - reward if invert_reward else reward
             node = node.find_random_child()
@@ -207,14 +196,10 @@ class MonteCarloTreeSearch:
         '''
         Backpropagate reward
         '''
-        # print('Backpropagating')
+        logging.debug('Backpropagating')
         for node in reversed(path):
-            # print('Node: ', node)
-            # print()'Hashed node: ', node.hash_state())
             self.N[node] += 1
             self.Q[node] += reward
-            # print()'N: ', self.N)
-            # print()'Q: ', self.Q)
             reward = 1 - reward
 
     def uct_select(self, node):
@@ -226,21 +211,19 @@ class MonteCarloTreeSearch:
         log_N_vertex = math.log(self.N[node])
 
         def uct(n):
-            # print()"Before reading: ", n)
             return self.Q[n] / self.N[n] + self.epsilon * math.sqrt(log_N_vertex / self.N[n])
 
         return max(self.children[node], key=uct)
 
-    # def find_random_child(self, board: Quarto):
-    #     print('Finding random child')
-    #     if board.check_winner() >= 0 or board.check_finished():
-    #         # print()"No more moves")
-    #         return None
-    #     possible_actions = [(x, y, piece, next_piece) for piece in range(self.MAX_PIECES) for x in range(self.BOARD_SIDE) for y in range(self.BOARD_SIDE) for next_piece in range(self.MAX_PIECES) if board.check_if_move_valid(piece, x, y, next_piece)]
-    #     print("Possible actions: ", possible_actions)
-    #     return board.make_move(*random.choice(possible_actions), newboard=True)
+    def save_progress(self, filename):
+        with open(filename, 'wb') as f:
+            pickle.dump(self, f)
 
-print("Training")
+    def load_progress(self, filename):
+        with open(filename, 'rb') as f:
+            return pickle.load(f)
+
+logging.info("Training")
 # Training while playing
 tree = MonteCarloTreeSearch()
 for i in range(100):
@@ -261,21 +244,19 @@ for i in range(100):
         if board.check_is_game_over():
             print("Random player won")
             break
-        # print("After random player move: ")
-        # print(board.state_as_array())
         board.switch_player()
         # monte carlo tree search moves
         for _ in range(50):
             tree.do_rollout(board)
         board = tree.choose(board)
-        # print("After monte carlo tree search move: ")
-        # print(board.state_as_array())
         if board.check_is_game_over():
+            # TODO: check if it's a draw
             print("Monte Carlo Tree Search won")
             break
-        # board.switch_player()
+        # don't need to switch player because it's done in choose
+        # random_player needs to do it because it is not done automatically
 
-print("Testing")
+logging.info("Testing")
 for i in range(100):
     board = Quarto()
     while True:
