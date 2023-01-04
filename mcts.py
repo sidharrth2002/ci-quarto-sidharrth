@@ -16,10 +16,13 @@ from dqn import RandomPlayer
 
 from quarto.objects import Quarto
 
+logging.basicConfig(level=logging.INFO)
+
 class Node:
     '''
     Node on tree
     '''
+
     def __init__(self, board: Quarto):
         self.board = copy.deepcopy(board)
         self.hashed_board = self.hash_state()
@@ -77,16 +80,15 @@ class Node:
         logging.debug(board)
         if not board.check_is_game_over():
             raise RuntimeError("reward called on non-terminal node")
-            return None
-        # print("WINNER: ", board.check_winner())
+        # logging.debug("WINNER: ", board.check_winner())
         if 1 - board.check_winner() == board.get_current_player():
-            # print()"reward: game is over, and you already won")
+            logging.debug("game is over, and you already won")
             raise RuntimeError("reward called on unreachable node")
         if board.check_winner() == board.get_current_player():
-            # print()"other guy won")
+            logging.debug("other guy won")
             return 0
         if board.check_if_draw():
-            logging.info('tie')
+            logging.debug('tie')
             return 0.5
         raise RuntimeError("nothing works")
         # return 0
@@ -95,7 +97,8 @@ class Node:
         board = self.board
         if board.check_is_game_over():
             return None
-        pa = [[board.get_selected_piece(), x, y, next_piece] for x in range(self.BOARD_SIDE) for y in range(self.BOARD_SIDE) for next_piece in range(self.MAX_PIECES) if board.check_if_move_valid(board.get_selected_piece(), x, y, next_piece)]
+        pa = [[board.get_selected_piece(), x, y, next_piece] for x in range(self.BOARD_SIDE) for y in range(self.BOARD_SIDE)
+              for next_piece in range(self.MAX_PIECES) if board.check_if_move_valid(board.get_selected_piece(), x, y, next_piece)]
         pa = random.choice(pa)
         return create_node(board.make_move(pa[0], pa[1], pa[2], pa[3], newboard=True))
 
@@ -108,13 +111,16 @@ class Node:
     def __eq__(self, other):
         return self.hash_state() == other.hash_state() and self.board.get_current_player() == other.board.get_current_player() and self.board.get_selected_piece() == other.board.get_selected_piece()
 
+
 def create_node(content):
     return Node(content)
+
 
 class MonteCarloTreeSearch:
     '''
     Solve using Monte Carlo Tree Search
     '''
+
     def __init__(self, epsilon=0.1, max_depth=1000):
         self.epsilon = epsilon
         self.max_depth = max_depth
@@ -137,12 +143,10 @@ class MonteCarloTreeSearch:
             return node.find_random_child()
 
         def score(n):
-            logging.debug("Before reading in choose ", n)
+            logging.debug(f"Before reading in choose {n}")
             if self.N[n] == 0:
                 return float('-inf')
             return self.Q[n] / self.N[n]
-
-        logging.debug("Children: ", self.children[node.hash_state()])
 
         return max(self.children[node], key=score).board
 
@@ -150,6 +154,7 @@ class MonteCarloTreeSearch:
         '''
         Rollout from the node for one iteration
         '''
+        logging.debug("Rollout")
         node = Node(board)
         path = self.select(node)
         leaf = path[-1]
@@ -223,6 +228,7 @@ class MonteCarloTreeSearch:
         with open(filename, 'rb') as f:
             return pickle.load(f)
 
+
 logging.info("Training")
 # Training while playing
 tree = MonteCarloTreeSearch()
@@ -230,60 +236,75 @@ for i in range(100):
     board = Quarto()
     random_player = RandomPlayer(board)
     board.set_selected_piece(random_player.choose_piece(board))
-    print("Iteration: ", i)
+    logging.info(f"Iteration: {i}")
     while True:
         # random player moves
-        chosen_location = random_player.place_piece(board, board.get_selected_piece())
+        chosen_location = random_player.place_piece(
+            board, board.get_selected_piece())
         chosen_piece = random_player.choose_piece(board)
         while not board.check_if_move_valid(board.get_selected_piece(), chosen_location[0], chosen_location[1], chosen_piece):
-            chosen_location = random_player.place_piece(board, board.get_selected_piece())
+            chosen_location = random_player.place_piece(
+                board, board.get_selected_piece())
             chosen_piece = random_player.choose_piece(board)
         board.select(board.get_selected_piece())
         board.place(chosen_location[0], chosen_location[1])
         board.set_selected_piece(chosen_piece)
-        if board.check_is_game_over():
-            print("Random player won")
-            break
         board.switch_player()
+        if board.check_is_game_over():
+            if 1 - board.check_winner() == 0:
+                logging.info("Random player won")
+            else:
+                logging.info("Draw")
+            break
         # monte carlo tree search moves
         for _ in range(50):
             tree.do_rollout(board)
         board = tree.choose(board)
         if board.check_is_game_over():
             # TODO: check if it's a draw
-            print("Monte Carlo Tree Search won")
+            if 1 - board.check_winner() == 1:
+                logging.info("Monte Carlo Tree Search won")
+            else:
+                logging.info("Draw")
             break
         # don't need to switch player because it's done in choose
         # random_player needs to do it because it is not done automatically
+
+        # save progress every 20 iterations
+        if i % 20 == 0:
+            logging.debug("Saving progress")
+            tree.save_progress("progress.pkl")
 
 logging.info("Testing")
 for i in range(100):
     board = Quarto()
     while True:
         # random player moves
-        chosen_location = random_player.place_piece(board, board.get_selected_piece())
+        chosen_location = random_player.place_piece(
+            board, board.get_selected_piece())
         chosen_piece = random_player.choose_piece(board)
         while not board.check_if_move_valid(board.get_selected_piece(), chosen_location[0], chosen_location[1], chosen_piece):
-            chosen_location = random_player.place_piece(board, board.get_selected_piece())
+            chosen_location = random_player.place_piece(
+                board, board.get_selected_piece())
             chosen_piece = random_player.choose_piece(board)
         board.select(board.get_selected_piece())
         board.place(chosen_location[0], chosen_location[1])
         board.set_selected_piece(chosen_piece)
         if board.check_is_game_over():
-            print("Random player won")
+            logging.info("Random player won")
             break
-        print("After random player move: ")
-        print(board.state_as_array())
+        logging.debug("After random player move: ")
+        logging.debug(board.state_as_array())
         board.switch_player()
         # monte carlo tree search moves
         board = tree.choose(board)
-        print("After monte carlo tree search move: ")
-        print(board.state_as_array())
+        logging.debug("After monte carlo tree search move: ")
+        logging.debug(board.state_as_array())
         if board.check_is_game_over():
-            print("Monte Carlo Tree Search won")
+            logging.info("Monte Carlo Tree Search won")
             break
 
-# print()tree.Q.values())
+# print(tree.Q.values())
 # winner = board.get_current_player()
 
 # print("-----------------")
