@@ -117,49 +117,6 @@ def create_node(content):
     return Node(content)
 
 
-class MinMaxPlayer:
-    '''
-    Min Max Player
-    '''
-
-    def __init__(self, depth=2):
-        self.depth = depth
-
-    def minmax(self, node, depth, maximizingPlayer, alpha, beta):
-        if depth == 0 or node.is_terminal():
-            return node.reward()
-        if maximizingPlayer:
-            v = -math.inf
-            for n in node.find_children():
-                v = max(v, self.minmax(n, depth - 1, False, alpha, beta))
-                alpha = max(alpha, v)
-                if beta <= alpha:
-                    break
-            return v
-        else:
-            v = math.inf
-            for n in node.find_children():
-                v = min(v, self.minmax(n, depth - 1, True, alpha, beta))
-                beta = min(beta, v)
-                if beta <= alpha:
-                    break
-            return v
-
-    def play(self, board):
-        '''
-        Choose the best move
-        '''
-        possible_moves = []
-        for x in range(4):
-            for y in range(4):
-                for next_piece in range(16):
-                    if board.check_if_move_valid(board.get_selected_piece(), x, y, next_piece):
-                        possible_moves.append([board.get_selected_piece(), x, y, next_piece, self.minmax(create_node(board.make_move(
-                            board.get_selected_piece(), x, y, next_piece, newboard=True)), self.depth, False, -math.inf, math.inf)])
-        best_move = max(possible_moves, key=lambda x: x[4])[0:4]
-        return board.make_move(best_move[0], best_move[1], best_move[2], best_move[3], newboard=True)
-
-
 class MonteCarloTreeSearch:
     '''
     Solve using Monte Carlo Tree Search
@@ -273,9 +230,66 @@ class MonteCarloTreeSearch:
             return pickle.load(f)
 
 
+tree = MonteCarloTreeSearch()
+
+
+class QLearningPlayer:
+    def __init__(self, board, epsilon=0.1, alpha=0.5, gamma=0.9):
+        self.epsilon = epsilon
+        self.alpha = alpha
+        self.gamma = gamma
+        self.board = board
+        self.MAX_PIECES = 16
+        self.BOARD_SIDE = 4
+        self.Q = defaultdict(int)
+
+    def hash_state_action(self, state, action):
+        return hash(str(state) + '|' + str(action))
+
+    def get_Q(self, state, action):
+        if self.hash_state_action(state, action) not in self.Q:
+            return None
+        return self.Q[self.hash_state_action(state, action)]
+
+    def set_Q(self, state, action, value):
+        self.Q[self.hash_state_action(state, action)] = value
+
+    def get_possible_actions(self, state):
+        actions = []
+        for i in range(self.BOARD_SIDE):
+            for j in range(self.BOARD_SIDE):
+                for piece in state.get_available_pieces():
+                    if state.check_if_move_valid(state.get_selected_piece(), i, j, piece):
+                        actions.append((i, j, piece))
+        return actions
+
+    def get_max_Q(self, state):
+        max_Q = -math.inf
+        for action in self.get_possible_actions(state):
+            max_Q = max(max_Q, self.get_Q(state, action))
+        return max_Q
+
+    def get_action(self, state):
+        '''
+        If state, action pair not in Q, go to Monte Carlo Tree Search to find best action
+        '''
+        if random.random() < self.epsilon:
+            return random.choice(self.get_possible_actions(state))
+        else:
+            expected_score = 0
+            for action in self.get_possible_actions(state):
+                if self.get_Q(state, action) is not None and expected_score < self.get_Q(state, action):
+                    expected_score = self.get_Q(state, action)
+                    best_action = action
+            # go to Monte Carlo Tree Search if no suitable action found in Q table
+            if best_action is None:
+                # print("Monte Carlo Tree Search")
+                best_action = tree.choose(state)
+            return best_action
+
+
 logging.info("Training")
 # Training while playing
-tree = MonteCarloTreeSearch()
 for i in range(100):
     board = Quarto()
     random_player = RandomPlayer(board)
@@ -294,6 +308,8 @@ for i in range(100):
         board.place(chosen_location[0], chosen_location[1])
         board.set_selected_piece(chosen_piece)
         board.switch_player()
+        print(board.state_as_array())
+
         if board.check_is_game_over():
             if 1 - board.check_winner() == 0:
                 logging.info("Random player won")
@@ -301,13 +317,17 @@ for i in range(100):
                 logging.info("Draw")
             break
         # monte carlo tree search moves
+
+        # make move with monte carlo tree search or minmax
         for _ in range(50):
             tree.do_rollout(board)
         board = tree.choose(board)
+
+        print(board.state_as_array())
         if board.check_is_game_over():
             # TODO: check if it's a draw
             if 1 - board.check_winner() == 1:
-                logging.info("Monte Carlo Tree Search won")
+                logging.info("Agent won")
             else:
                 logging.info("Draw")
             break
@@ -341,12 +361,16 @@ for i in range(100):
         logging.debug(board.state_as_array())
         board.switch_player()
         # monte carlo tree search moves
+
+        logging.debug("Using monte carlo tree search")
         board = tree.choose(board)
-        logging.debug("After monte carlo tree search move: ")
-        logging.debug(board.state_as_array())
-        if board.check_is_game_over():
-            logging.info("Monte Carlo Tree Search won")
-            break
+
+        # board = tree.choose(board)
+        # logging.debug("After monte carlo tree search move: ")
+        # logging.debug(board.state_as_array())
+        # if board.check_is_game_over():
+        #     logging.info("Monte Carlo Tree Search won")
+        #     break
 
 # print(tree.Q.values())
 # winner = board.get_current_player()
