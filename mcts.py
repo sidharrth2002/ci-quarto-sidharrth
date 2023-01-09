@@ -24,12 +24,14 @@ class Node:
     Node on tree
     '''
 
-    def __init__(self, board: Quarto):
+    def __init__(self, board: Quarto, move=None):
         self.board = copy.deepcopy(board)
         self.hashed_board = self.hash_state()
         self.MAX_PIECES = 16
         self.BOARD_SIDE = 4
         self.selected_piece = None
+        # move taken to get to this node
+        self.move = move
 
     def hash_state(self):
         '''
@@ -69,7 +71,7 @@ class Node:
             return set()
 
         new_stuff = {
-            create_node(self.board.make_move(self.board.get_selected_piece(), x, y, next_piece, newboard=True)) for x in range(self.BOARD_SIDE) for y in range(self.BOARD_SIDE) for next_piece in range(self.MAX_PIECES) if self.board.check_if_move_valid(self.board.get_selected_piece(), x, y, next_piece)
+            create_node(self.board.make_move(self.board.get_selected_piece(), x, y, next_piece, newboard=True, return_move=True)) for x in range(self.BOARD_SIDE) for y in range(self.BOARD_SIDE) for next_piece in range(self.MAX_PIECES) if self.board.check_if_move_valid(self.board.get_selected_piece(), x, y, next_piece)
         }
 
         return new_stuff
@@ -101,10 +103,19 @@ class Node:
         pa = [[board.get_selected_piece(), x, y, next_piece] for x in range(self.BOARD_SIDE) for y in range(self.BOARD_SIDE)
               for next_piece in range(self.MAX_PIECES) if board.check_if_move_valid(board.get_selected_piece(), x, y, next_piece)]
         pa = random.choice(pa)
-        return create_node(board.make_move(pa[0], pa[1], pa[2], pa[3], newboard=True))
+        return create_node(board.make_move(pa[0], pa[1], pa[2], pa[3], newboard=True, return_move=True))
 
     def is_terminal(self):
         return self.board.check_is_game_over()
+
+    def find_symmetry_on_board(self):
+        '''
+        Check for symmetry on quarto board
+        '''
+        for i in range(4):
+            for j in range(4):
+                if self.board[i][j] != self.board[3 - i][3 - j]:
+                    return False
 
     def __hash__(self):
         return hash(self.hash_state())
@@ -114,7 +125,8 @@ class Node:
 
 
 def create_node(content):
-    return Node(content)
+    # board and move taken to reach this node
+    return Node(content[0], content[1])
 
 
 class MonteCarloTreeSearch:
@@ -221,6 +233,42 @@ class MonteCarloTreeSearch:
 
         return max(self.children[node], key=uct)
 
+    def generate_future_probabilities(self, board):
+        '''
+        play an action a from the root state st with probability proportional to the number of times that action was chosen during Phase One. To do this, AlphaGo Zero creates a probability distribution πt over the actions from the state st such that πt(a) ∝ N(st,a)^-1/τ for some hyperparameter τ; when τ = 1 the distribution exactly matches the ratios of the visit counts, while when τ → 0 the probability mass focuses on the action that was chosen most often. Using this distribution to selects actions improves the performance of AlphaGo Zero because πt is a refinement of the prediction pt for the start state st; as MCTS is allowed to run, it starts selecting actions with high value estimates more frequently rather than relying on the prior probability bonus exploration term.
+        '''
+        # calculate the expected value of each future action
+        node = Node(board)
+        if node not in self.children:
+            self.do_rollout(board)
+            # probability distribution πt over the actions from the state st such that πt(a) ∝ N(st,a)^-1/τ for some hyperparameter τ
+            # when τ = 1 the distribution exactly matches the ratios of the visit counts, while when τ → 0 the probability mass focuses on the action that was chosen most often.
+
+            # probability is dictionary of action: probability
+            probabilities = {child.move: self.N[child]
+                             for child in self.children[node]}
+            # normalize probabilities
+            probabilities = {action: probability / sum(probabilities.values())
+                             for action, probability in probabilities.items()}
+            return probabilities
+
+        else:
+            probabilities = {child.move: self.N[child]
+                             for child in self.children[node]}
+            probabilities = {action: probability / sum(probabilities.values())
+                             for action, probability in probabilities.items()}
+            return probabilities
+
+        #     probability_distribution = [
+        #         math.exp(Q_value / self.epsilon) for Q_value in Q_values]
+        #     return [probability / sum(probability_distribution) for probability in probability_distribution]
+        # else:
+        #     Q_values = [self.Q[child] for child in self.children[node]]
+        #     # probability distribution of each possible action from the current state
+        #     probability_distribution = [
+        #         math.exp(Q_value / self.epsilon) for Q_value in Q_values]
+        #     return [probability / sum(probability_distribution) for probability in probability_distribution]
+
     def save_progress(self, filename):
         with open(filename, 'wb') as f:
             pickle.dump(self, f)
@@ -250,6 +298,11 @@ class QLearningPlayer:
         if self.hash_state_action(state, action) not in self.Q:
             return None
         return self.Q[self.hash_state_action(state, action)]
+
+    def get_Q_for_state(self, state):
+        if self.hash_state_action(state, None) not in self.Q:
+            return None
+        return [i for i in self.Q if i.startswith(str(state))]
 
     def set_Q(self, state, action, value):
         self.Q[self.hash_state_action(state, action)] = value
@@ -286,6 +339,39 @@ class QLearningPlayer:
                 # print("Monte Carlo Tree Search")
                 best_action = tree.choose(state)
             return best_action
+
+    def update_Q(self, state, action, reward, next_state):
+        self.set_Q(state, action, self.get_Q(state, action) + self.alpha *
+                   (reward + self.gamma * self.get_max_Q(next_state) - self.get_Q(state, action)))
+
+    def train(self):
+        # 1. Select an action using Monte Carlo Tree Search
+        # 2. Make the move
+        # 3. Generate future probabilities using Monte Carlo Tree Search
+        # 4. Dot product of future probabilities and Q values to get expected values
+        # 5. Update Q table with formula: (1 - alpha) * Q[state, action] + alpha * (reward + gamma * np.max(expected_values))
+        # 6. Repeat until game over
+
+        while True:
+            new_board = tree.choose(board)
+            if Node(new_board).is_terminal():
+                done = True
+            future_probabilities = tree.generate_future_probabilities(
+                new_board)
+
+            # dot product between 2 dictionaries based on keys
+            expected_values = {}
+            for action, probability in future_probabilities.items():
+                expected_values[action] = probability * self.Q[self.hash_state_action(
+                    new_board, action)]
+
+            # expected_values = np.dot(future_probabilities,
+            #                          self.get_Q_for_state(new_board))
+            self.Q[self.hash_state_action(board, action)] = (1 - self.alpha) * self.Q[self.hash_state_action(board, action)] + self.alpha * (
+                reward + self.gamma * np.max(expected_values.values()))
+
+            if done:
+                break
 
 
 logging.info("Training")

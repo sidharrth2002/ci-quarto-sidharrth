@@ -11,6 +11,7 @@ from gym import spaces
 
 from quarto.objects import *
 
+
 class Player(object):
 
     def __init__(self, quarto) -> None:
@@ -43,7 +44,7 @@ class Quarto(object):
     BOARD_SIDE = 4
     MAX_PIECES = 16
 
-    def __init__(self, pieces = None) -> None:
+    def __init__(self, pieces=None) -> None:
         self.__board = np.ones(
             shape=(self.BOARD_SIDE, self.BOARD_SIDE), dtype=int) * -1
         self.__pieces = []
@@ -93,7 +94,8 @@ class Quarto(object):
             return True
         else:
             print("Not placeable")
-        logging.debug("Invalid move: ", x, y)
+        print("Invalid move: ", x, y)
+        print(self.__board)
         return False
 
     def __placeable(self, x: int, y: int) -> bool:
@@ -299,7 +301,6 @@ class Quarto(object):
         # print("Draw: ", self.check_if_draw())
         return self.check_winner() >= 0 or self.check_finished() or self.check_if_draw()
 
-
     def check_finished(self) -> bool:
         '''
         Check if the game is finished
@@ -411,7 +412,7 @@ class Quarto(object):
 
         return True
 
-    def make_move(self, piece: int, x: int, y: int, next_piece: int, newboard = False):
+    def make_move(self, piece: int, x: int, y: int, next_piece: int, newboard=False, return_move=False):
         '''
         Make a move
         '''
@@ -420,7 +421,8 @@ class Quarto(object):
             if new.check_if_move_valid(piece, x, y, next_piece):
                 new.__board[y, x] = piece
                 new.__selected_piece_index = next_piece
-                new.__current_player = (self.__current_player + 1) % self.MAX_PLAYERS
+                new.__current_player = (
+                    self.__current_player + 1) % self.MAX_PLAYERS
             else:
                 print("Invalid move")
             # print("Board after: ", new.__board)
@@ -430,9 +432,13 @@ class Quarto(object):
                 # print("Turn: ", self.__current_player)
                 self.__board[y, x] = piece
                 self.__selected_piece_index = next_piece
-                self.__current_player = (self.__current_player + 1) % self.MAX_PLAYERS
+                self.__current_player = (
+                    self.__current_player + 1) % self.MAX_PLAYERS
             else:
                 print("Invalid move")
+
+            if return_move:
+                return self.__board, (piece, x, y, next_piece)
             return self
 
     def get_pieces(self):
@@ -456,8 +462,6 @@ class Quarto(object):
                 row[j] = int(string[i])
                 i += 2
         return board
-
-
 
 
 class RandomPlayer(Player):
@@ -549,6 +553,7 @@ class QuartoScape:
         score_before_action = self.score(state)
         cloned_quarto = Quarto(pieces=state)
         cloned_quarto.select(piece)
+        print("Placing in reward")
         cloned_quarto.place(action[0], action[1])
         score_after_action = self.score(cloned_quarto.state_as_array())
         return score_after_action - score_before_action
@@ -606,14 +611,17 @@ class QuartoScape:
         self.next_piece = chosen_next_piece
         reward = 0
         if self.game.check_if_move_valid(chosen_piece, x, y, chosen_next_piece):
-            logging.info(f"Valid move, piece {chosen_piece} placed at {x}, {y}")
+            logging.info(
+                f"Valid move, piece {chosen_piece} placed at {x}, {y}")
             self.game.select(chosen_piece)
+            print(f"Trying to place piece {chosen_piece} at {x}, {y}")
             self.game.place(x, y)
             # self.game.print()
             if self.game.check_winner() != -1:
                 # this move resulted in a win
                 # reward = self.reward(self.game.state_as_array(), chosen_piece, action)
                 # bonus
+                print('Winner winner chicken dinner')
                 reward = 1
                 return self.game.state_as_array(), reward, self.game.check_is_game_over(), {}
             # elif self.game.check_if_draw():
@@ -623,7 +631,8 @@ class QuartoScape:
             else:
                 # this move did not result in a win or a draw
                 # print('Nothing happened, reward is 0')
-                reward = self.reward(self.game.state_as_array(), chosen_piece, action)
+                reward = self.reward(
+                    self.game.state_as_array(), chosen_piece, action)
                 return self.game.state_as_array(), reward, self.game.check_is_game_over(), {}
         # else:
         #     print("Invalid move, fuck off")

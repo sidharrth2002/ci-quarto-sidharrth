@@ -23,6 +23,7 @@ env2 = gym.make('CartPole-v1')
 # print('CARTPOLE')
 # print(env2.observation_space.shape)
 
+
 class RandomPlayer(Player):
     """Random player"""
 
@@ -34,6 +35,7 @@ class RandomPlayer(Player):
 
     def place_piece(self, state=None, piece_to_be_placed: int = None):
         return random.randint(0, 3), random.randint(0, 3)
+
 
 def test(agent):
     dq_wins = 0
@@ -47,8 +49,10 @@ def test(agent):
         # logging.warning(f"main: Winner: player {winner}")
     logging.warning(f"main: DQ wins: {dq_wins}")
 
+
 class DQNAgent:
     '''Play Quarto using a Deep Q-Network'''
+
     def __init__(self, env=env, game=None):
         self.env = env
         # self.env.set_main_player(self)
@@ -96,15 +100,18 @@ class DQNAgent:
         # print('OBSERVATION SPACE')
         # print(len(self.env.action_space.nvec))
         initializer = HeUniform()
-        model.add(Dense(12, input_dim=self.env.observation_space.shape[0], activation='relu', kernel_initializer=initializer))
+        model.add(Dense(
+            12, input_dim=self.env.observation_space.shape[0], activation='relu', kernel_initializer=initializer))
         model.add(Dense(24, activation='relu', kernel_initializer=initializer))
         model.add(Dense(48, activation='relu', kernel_initializer=initializer))
         model.add(Dense(96, activation='relu', kernel_initializer=initializer))
         # model.add(Dense(192, activation='relu', kernel_initializer=initializer))
         # model.add(Dense(384, activation='relu', kernel_initializer=initializer))
         # model.add(Dense(768, activation='relu', kernel_initializer=initializer))
-        model.add(Dense(4 * 4 * 16, activation='linear', kernel_initializer=initializer))
-        model.compile(loss=tf.keras.losses.Huber(), metrics=['mae', 'mse'], optimizer=Adam(lr=0.001))
+        model.add(Dense(4 * 4 * 16, activation='linear',
+                  kernel_initializer=initializer))
+        model.compile(loss=tf.keras.losses.Huber(), metrics=[
+                      'mae', 'mse'], optimizer=Adam(lr=0.001))
         # print(model.summary())
         return model
 
@@ -115,7 +122,8 @@ class DQNAgent:
         model.add(Flatten())
         model.add(Dense(16, activation='relu'))
         model.add(Dense(4 * 4 * 16, activation='linear'))
-        model.compile(loss='mse', metrics=['accuracy'], optimizer=Adam(lr=0.001))
+        model.compile(loss='mse', metrics=[
+                      'accuracy'], optimizer=Adam(lr=0.001))
         # print(model.summary())
         return model
 
@@ -128,7 +136,8 @@ class DQNAgent:
     def make_prediction(self, state, chosen_piece=None):
         '''Make a prediction using the network'''
         # prediction X is the position of the single 1 in the state
-        pred_X = [self.get_position(i, list(state.flatten())) for i in range(0, 16)]
+        pred_X = [self.get_position(i, list(state.flatten()))
+                  for i in range(0, 16)]
         pred_X.append(chosen_piece)
         # # print(np.array([pred_X]))
         return self.model.predict(np.array([pred_X]))[0]
@@ -157,16 +166,19 @@ class DQNAgent:
             print("Replay memory ", len(replay_memory))
             return
 
-        # print('TRAINING')
+        print('TRAINING')
         batch_size = 64 * 2
         minibatch = random.sample(replay_memory, batch_size)
         # current_states = [transition[0] for transition in minibatch]
         # state + chosen_piece for you -> action (contains chosen_piece for next player)
-        current_states = np.array([self.abbellire(state, chosen_piece) for state, chosen_piece, action, reward, new_current_state, done in minibatch])
+        current_states = np.array([self.abbellire(state, chosen_piece)
+                                  for state, chosen_piece, action, reward, new_current_state, done in minibatch])
         current_qs = self.model.predict(current_states.reshape(batch_size, 17))
         # new current state + chosen_piece for next player -> action (contains chosen_piece for next player)
-        new_current_states = np.array([self.abbellire(new_current_state, action[2]) for state, chosen_piece, action, reward, new_current_state, done in minibatch])
-        future_qs = self.target_model.predict(new_current_states.reshape(batch_size, 17))
+        new_current_states = np.array([self.abbellire(new_current_state, action[2])
+                                      for state, chosen_piece, action, reward, new_current_state, done in minibatch])
+        future_qs = self.target_model.predict(
+            new_current_states.reshape(batch_size, 17))
         # exclude invalid moves from calculation
         # future_qs = [self.nan_out_invalid_actions(batch[2][2], future_q) for batch, future_q in zip(minibatch, future_qs)]
 
@@ -184,7 +196,8 @@ class DQNAgent:
             # 0 2 5
             # 0 + 2 * 4 + 5 * 16 = 85
 
-            current_qs[index][action[0] + action[1] * 4 + action[2] * 16] = (1 - self.lr) * current_qs[index][action[0] + action[1] * 4 + action[2] * 16] + self.lr * max_future_q
+            current_qs[index][action[0] + action[1] * 4 + action[2] * 16] = (
+                1 - self.lr) * current_qs[index][action[0] + action[1] * 4 + action[2] * 16] + self.lr * max_future_q
 
             X.append(self.abbellire(current_state, chosen_piece))
             Y.append(current_qs[index])
@@ -192,13 +205,15 @@ class DQNAgent:
         # X = np.array(X).reshape(batch_size, 17)
         X = np.array(X).reshape(batch_size, 17)
         Y = np.array(Y).reshape(batch_size, 4 * 4 * 16)
+        print(X)
+        print(Y)
         self.model.fit(X, Y, batch_size=batch_size, verbose=2, shuffle=True)
 
     def choose_piece(self, state: Any, piece_chosen_for_you: int):
         '''Choose piece for the next guy to play'''
         self.env.game.__board = state
         pred = self.make_prediction(state, piece_chosen_for_you)
-        pred = self.nan_out_invalid_actions(piece_chosen_for_you, pred)
+        # pred = self.nan_out_invalid_actions(piece_chosen_for_you, pred)
         # print(f'Number of valid moves: {len([i for i in pred if i != np.nan])}')
         best_action = np.nanargmax(pred)
         best_action = self.get_all_actions()[best_action]
@@ -262,7 +277,8 @@ class DQNAgent:
                     # print(action)
                 else:
                     prediction = self.make_prediction(state, chosen_piece)
-                    prediction = self.nan_out_invalid_actions(chosen_piece, prediction)
+                    prediction = self.nan_out_invalid_actions(
+                        chosen_piece, prediction)
                     if np.all(np.isnan(prediction)):
                         # print('ALL NAN')
                         action = self.env.action_space.sample()
@@ -275,21 +291,25 @@ class DQNAgent:
                         # action = np.argmax(self.make_prediction(state, chosen_piece))
                         # get action at index of action
                         action = self.get_all_actions()[action]
-                    # print('PREDICTED ACTION')
-                    # print(action)
+                    print('PREDICTED ACTION')
+                    print(action)
 
-                new_state, reward, done, _ = self.env.step(action, chosen_piece)
-                replay_memory.append((state, chosen_piece, action, reward, new_state, done))
+                new_state, reward, done, _ = self.env.step(
+                    action, chosen_piece)
+                replay_memory.append(
+                    (state, chosen_piece, action, reward, new_state, done))
 
                 # if done:
                 #     print('GAME OVER')
 
                 if steps_to_update_target_model % 4 == 0 or done:
                     # print('Training')
-                    self.train(replay_memory, 64)
+                    self.train(replay_memory, 16)
 
                 state = new_state
                 total_training_reward += reward
+
+                print(total_training_reward)
 
                 if done:
                     # print(f'Total reward: {total_training_reward} at episode {episode} after {steps_to_update_target_model} steps')
@@ -308,6 +328,7 @@ class DQNAgent:
             self.lr = self.decay_lr(self.lr, 0.0001, episode)
         self.env.close()
         self.model.save('model.h5')
+
 
 if __name__ == '__main__':
     agent = DQNAgent(env)
