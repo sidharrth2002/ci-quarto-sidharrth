@@ -108,14 +108,96 @@ class Node:
     def is_terminal(self):
         return self.board.check_is_game_over()
 
-    def find_symmetry_on_board(self):
+    def check_if_board_is_symmetric(self, board):
         '''
-        Check for symmetry on quarto board
+        Check if board is symmetric
         '''
         for i in range(4):
             for j in range(4):
-                if self.board[i][j] != self.board[3 - i][3 - j]:
+                if board[i][j] != board[3 - i][3 - j]:
                     return False
+        return True
+
+    def get_canonical_representation(self, board):
+        '''
+        Get canonical representation of the board
+        '''
+        canonical =
+
+    def normal_form(self, board):
+        '''
+        Return normal form of board
+        Two boards are equivalent if they reduce to the same normal form.
+        The normal form is defined by the sequence of steps that generate it, and the sequence
+        is chosen to ensure that all equivalent instances are reduced to the same normal form.
+        '''
+        normal_form = []
+
+        # all of the positional symmetries are applied to the original instance, generating 32 equivalent, possibly distinct instances
+        # each of these instances have and associated tag
+        # this tag, or positional bit-mask, is a 17-bit string in which the ith bit is set if the ith square of the board is occuped
+
+        # those instances that share the largest bit-mask are candidates for normal form
+
+        # each candidate instance is mapped with and XOR piece transformation.
+        # the constant used is the value of the piece on the first occupied square
+
+        # all 24 bitwise-permutaton piece transformations are applied to each of the candidate instances
+        # the resulting instances are compared to each other with a string comparison
+        # instance that results in the lexicographically least string is selected as the normal form
+
+        positional_symmetries = [board, np.rot90(board, k=1, axes=(0, 1)), np.rot90(
+            board, k=2, axes=(0, 1)), np.rot90(board, k=3, axes=(0, 1)), np.flip(board, axis=0), np.flip(np.rot90(board, k=1, axes=(0, 1)), axis=0), np.flip(np.rot90(board, k=2, axes=(0, 1)), axis=0), np.flip(np.rot90(board, k=3, axes=(0, 1)), axis=0), np.flip(board, axis=1), np.flip(np.rot90(board, k=1, axes=(0, 1)), axis=1), np.flip(np.rot90(board, k=2, axes=(0, 1)), axis=1), np.flip(np.rot90(board, k=3, axes=(0, 1)), axis=1), np.flip(board, axis=(0, 1)), np.flip(np.rot90(board, k=1, axes=(0, 1)), axis=(0, 1)), np.flip(np.rot90(board, k=2, axes=(0, 1)), axis=(0, 1)), np.flip(np.rot90(board, k=3, axes=(0, 1)), axis=(0, 1)), np.rot90(board, k=1, axes=(0, 1)), np.rot90(board, k=2, axes=(0, 1)), np.rot90(board, k=3, axes=(0, 1)), np.rot90(board, k=1, axes=(0, 1)), np.rot90(board, k=2, axes=(0, 1)), np.rot90(board, k=3, axes=(0, 1)), np.rot90(board, k=1, axes=(0, 1)), np.rot90(board, k=2, axes=(0, 1)), np.rot90(board, k=3, axes=(0, 1))]
+
+        positional_bitmasks = [0] * len(positional_symmetries)
+
+        for i in range(len(positional_symmetries)):
+            for j in range(self.BOARD_SIDE):
+                for k in range(self.BOARD_SIDE):
+                    if positional_symmetries[i][j][k] != 0:
+                        positional_bitmasks[i] |= 1 << (j * 4 + k)
+
+        max_positional_bitmask = max(positional_bitmasks)
+        candidates = [positional_symmetries[i] for i in range(
+            len(positional_symmetries)) if positional_bitmasks[i] == max_positional_bitmask]
+
+        for candidate in candidates:
+            candidate_normal_form = ""
+            for i in range(self.BOARD_SIDE):
+                for j in range(self.BOARD_SIDE):
+                    candidate_normal_form += str(candidate[i][j])
+            normal_form.append(candidate_normal_form)
+
+        return min(normal_form)
+
+    def find_equivalent_boards(self, board):
+        '''
+        Find isomorphic boards
+        '''
+        # rotate 90 degrees
+        equivalent_boards = [np.rot90(board, k=1, axes=(0, 1)), np.rot90(
+            board, k=2, axes=(0, 1)), np.rot90(board, k=3, axes=(0, 1))]
+        # flip horizontally
+        equivalent_boards += [np.flip(board, axis=0), np.flip(
+            np.rot90(board, k=1, axes=(0, 1)), axis=0), np.flip(np.rot90(board, k=2, axes=(0, 1)), axis=0), np.flip(np.rot90(board, k=3, axes=(0, 1)), axis=0)]
+        # flip vertically
+        equivalent_boards += [np.flip(board, axis=1), np.flip(
+            np.rot90(board, k=1, axes=(0, 1)), axis=1), np.flip(np.rot90(board, k=2, axes=(0, 1)), axis=1), np.flip(np.rot90(board, k=3, axes=(0, 1)), axis=1)]
+
+        # middle flip (flip the 4 middle squares in board of 16 squares)
+        new_board = np.copy(board)
+        new_board[1][1], new_board[1][2] = new_board[1][2], new_board[1][1]
+        equivalent_boards.append(new_board)
+
+        # # inside out
+        # new_board = np.copy(board)
+        # new_board[0][0], new_board[2][2] = new_board[2][2], new_board[0][0]
+        # new_board[1][0], new_board[0][1] = new_board[0][1], new_board[1][0]
+        # new_board[2][0], new_board[3][2] = new_board[3][2], new_board[2][0]
+        # new_board[3][0], new_board[2][2] = new_board[2][2], new_board[3][0]
+        # new_vert board[0][2],
+
+        return equivalent_boards
 
     def __hash__(self):
         return hash(self.hash_state())
