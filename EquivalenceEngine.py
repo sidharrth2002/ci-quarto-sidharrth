@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class EquivalenceEngine:
     '''
     Get canonical representation of a board
@@ -101,3 +104,8 @@ board2 = [[1, 1, 2, 1], [4, 2, 3, 7], [8, 100, 10, 11], [12, 13, 14, 15]]
 engine = EquivalenceEngine()
 print(engine.getCanonicalRepresentation(board, 3))
 print(engine.getCanonicalRepresentation(board2, 3))
+
+
+positional_symmetries = [board, np.rot90(board, k=1, axes=(0, 1)), np.rot90(
+    board, k=2, axes=(0, 1)), np.rot90(board, k=3, axes=(0, 1)), np.flip(board, axis=0), np.flip(np.rot90(board, k=1, axes=(0, 1)), axis=0), np.flip(np.rot90(board, k=2, axes=(0, 1)), axis=0), np.flip(np.rot90(board, k=3, axes=(0, 1)), axis=0), np.flip(board, axis=1), np.flip(np.rot90(board, k=1, axes=(0, 1)), axis=1), np.flip(np.rot90(board, k=2, axes=(0, 1)), axis=1), np.flip(np.rot90(board, k=3, axes=(0, 1)), axis=1), np.flip(board, axis=(0, 1)), np.flip(np.rot90(board, k=1, axes=(0, 1)), axis=(0, 1)), np.flip(np.rot90(board, k=2, axes=(0, 1)), axis=(0, 1)), np.flip(np.rot90(board, k=3, axes=(0, 1)), axis=(0, 1)), np.rot90(board, k=1, axes=(0, 1)), np.rot90(board, k=2, axes=(0, 1)), np.rot90(board, k=3, axes=(0, 1)), np.rot90(board, k=1, axes=(0, 1)), np.rot90(board, k=2, axes=(0, 1)), np.rot90(board, k=3, axes=(0, 1)), np.rot90(board, k=1, axes=(0, 1)), np.rot90(board, k=2, axes=(0, 1)), np.rot90(board, k=3, axes=(0, 1))]
+print(len(positional_symmetries))
