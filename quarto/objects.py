@@ -425,7 +425,9 @@ class Quarto(object):
                     self.__current_player + 1) % self.MAX_PLAYERS
             else:
                 print("Invalid move")
-            # print("Board after: ", new.__board)
+
+            if return_move:
+                return new, (piece, x, y, next_piece)
             return new
         else:
             if self.check_if_move_valid(piece, x, y, next_piece):
@@ -438,7 +440,7 @@ class Quarto(object):
                 print("Invalid move")
 
             if return_move:
-                return self.__board, (piece, x, y, next_piece)
+                return self, (piece, x, y, next_piece)
             return self
 
     def get_pieces(self):

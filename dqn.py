@@ -24,19 +24,6 @@ env2 = gym.make('CartPole-v1')
 # print(env2.observation_space.shape)
 
 
-class RandomPlayer(Player):
-    """Random player"""
-
-    def __init__(self, quarto: Quarto):
-        super().__init__(quarto)
-
-    def choose_piece(self, state=None, piece_to_be_chosen: int = None):
-        return random.randint(0, 15)
-
-    def place_piece(self, state=None, piece_to_be_placed: int = None):
-        return random.randint(0, 3), random.randint(0, 3)
-
-
 def test(agent):
     dq_wins = 0
     for round in range(100):

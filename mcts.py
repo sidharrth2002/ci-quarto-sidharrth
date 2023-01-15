@@ -6,13 +6,16 @@ Monte Carlo Tree Search
 
 from collections import defaultdict
 import copy
+import json
 import logging
 import math
 import pickle
 import random
+from threading import Thread
 
 import numpy as np
-from dqn import RandomPlayer
+from lib.players import RandomPlayer
+from lib.utilities import MonteCarloTreeSearchEncoder, Node
 
 from quarto.objects import Quarto
 
@@ -82,11 +85,11 @@ class MonteCarloTreeSearch:
             node = self.uct_select(node)
 
     def expand(self, node):
-        # print('Expanding')
+        # logging.debug('Expanding')
         if node in self.children:
             return
         self.children[node] = node.find_children()
-        # print('Children: ', self.children[node])
+        # logging.debug('Children: ', self.children[node])
 
     def simulate(self, node):
         '''
@@ -106,9 +109,11 @@ class MonteCarloTreeSearch:
         '''
         logging.debug('Backpropagating')
         for node in reversed(path):
+            node.lock.acquire()
             self.N[node] += 1
             self.Q[node] += reward
             reward = 1 - reward
+            node.lock.release()
 
     def uct_select(self, node):
         '''
@@ -122,6 +127,89 @@ class MonteCarloTreeSearch:
             return self.Q[n] / self.N[n] + self.epsilon * math.sqrt(log_N_vertex / self.N[n])
 
         return max(self.children[node], key=uct)
+
+    def train_engine(self, board, num_sims=100, save_format='json'):
+        '''
+        Train the model
+        '''
+        for i in range(num_sims):
+            board = Quarto()
+            random_player = RandomPlayer(board)
+            board.set_selected_piece(random_player.choose_piece(board))
+            logging.info(f"Iteration: {i}")
+            while True:
+                print(board.state_as_array())
+                # random player moves
+                chosen_location = random_player.place_piece(
+                    board, board.get_selected_piece())
+                chosen_piece = random_player.choose_piece(board)
+                while not board.check_if_move_valid(board.get_selected_piece(), chosen_location[0], chosen_location[1], chosen_piece):
+                    chosen_location = random_player.place_piece(
+                        board, board.get_selected_piece())
+                    chosen_piece = random_player.choose_piece(board)
+                board.select(board.get_selected_piece())
+                board.place(chosen_location[0], chosen_location[1])
+                board.set_selected_piece(chosen_piece)
+                board.switch_player()
+                logging.debug(board.state_as_array())
+
+                if board.check_is_game_over():
+                    if 1 - board.check_winner() == 0:
+                        logging.info("Random player won")
+                    else:
+                        logging.info("Draw")
+                    break
+                # monte carlo tree search moves
+
+                # make move with monte carlo tree search or minmax
+                for _ in range(50):
+                    self.do_rollout(board)
+                board = self.choose(board)
+
+                logging.debug(board.state_as_array())
+                if board.check_is_game_over():
+                    # TODO: check if it's a draw
+                    if 1 - board.check_winner() == 1:
+                        logging.info("Agent won")
+                    else:
+                        logging.info("Draw")
+                    break
+                # don't need to switch player because it's done in choose
+                # random_player needs to do it because it is not done automatically
+
+                # save progress every 20 iterations
+                if i % 20 == 0:
+                    logging.debug("Saving progress")
+                    if save_format == 'json':
+                        self.save_progress_json('progress.json')
+                    else:
+                        self.save_progress_pickle('progress.pkl')
+
+    def train(self):
+        '''
+        Train without multithreading
+        '''
+        self.train_engine(Quarto(), 5, 'json')
+
+    # def train(self, num_threads=1, save_format='json'):
+    #     '''
+    #     Train the model
+    #     '''
+    #     thread_pool = []
+
+    #     for i in range(num_threads):
+    #         t = Thread(target=self.train_engine, args=(Quarto(), 100, 'json'))
+    #         t.start()
+    #         thread_pool.append(t)
+
+    #     for t in thread_pool:
+    #         t.join()
+
+    #     # final save after training
+    #     if save_format == 'json':
+    #         self.save_progress_json('progress.json')
+    #     else:
+    #         self.save_progress_pickle('progress.pkl')
 
     def generate_future_probabilities(self, board):
         '''
@@ -159,9 +247,31 @@ class MonteCarloTreeSearch:
         #         math.exp(Q_value / self.epsilon) for Q_value in Q_values]
         #     return [probability / sum(probability_distribution) for probability in probability_distribution]
 
-    def save_progress(self, filename):
+    def save_progress_pickle(self, filename):
         with open(filename, 'wb') as f:
             pickle.dump(self, f)
+
+    def save_progress_json(self, filename):
+        pass
+        # def recursive_save(tree: dict, root: Node):
+        #     if self.children[root] is None:
+        #         return
+
+        #     children = []
+        #     for child in root.children:
+        #         self.recursive_save(tree, child)
+        #         el = {
+        #             'hashed': child.hash_state(),
+        #             'move': child.move,
+        #             'N': self.N[child],
+        #             'Q': self.Q[child],
+        #             'selected_piece': child.selected_piece
+        #         }
+        #         children.append(el)
+        #     tree[root.hash_state()] = children
+
+        # tree = {}
+        # self.recursive_save(tree,
 
     def load_progress(self, filename):
         with open(filename, 'rb') as f:
@@ -198,6 +308,9 @@ class QLearningPlayer:
         self.Q[self.hash_state_action(state, action)] = value
 
     def get_possible_actions(self, state):
+        '''
+        Get actions that are valid
+        '''
         actions = []
         for i in range(self.BOARD_SIDE):
             for j in range(self.BOARD_SIDE):
@@ -226,7 +339,7 @@ class QLearningPlayer:
                     best_action = action
             # go to Monte Carlo Tree Search if no suitable action found in Q table
             if best_action is None:
-                # print("Monte Carlo Tree Search")
+                # logging.debug("Monte Carlo Tree Search")
                 best_action = tree.choose(state)
             return best_action
 
@@ -242,82 +355,88 @@ class QLearningPlayer:
         # 5. Update Q table with formula: (1 - alpha) * Q[state, action] + alpha * (reward + gamma * np.max(expected_values))
         # 6. Repeat until game over
 
-        while True:
-            new_board = tree.choose(board)
-            if Node(new_board).is_terminal():
-                done = True
-            future_probabilities = tree.generate_future_probabilities(
-                new_board)
+        # while True:
+        #     new_board = tree.choose(board)
+        #     if Node(new_board).is_terminal():
+        #         done = True
+        #     future_probabilities = tree.generate_future_probabilities(
+        #         new_board)
 
-            # dot product between 2 dictionaries based on keys
-            expected_values = {}
-            for action, probability in future_probabilities.items():
-                expected_values[action] = probability * self.Q[self.hash_state_action(
-                    new_board, action)]
+        #     # dot product between 2 dictionaries based on keys
+        #     expected_values = {}
+        #     for action, probability in future_probabilities.items():
+        #         expected_values[action] = probability * self.Q[self.hash_state_action(
+        #             new_board, action)]
 
-            # expected_values = np.dot(future_probabilities,
-            #                          self.get_Q_for_state(new_board))
-            self.Q[self.hash_state_action(board, action)] = (1 - self.alpha) * self.Q[self.hash_state_action(board, action)] + self.alpha * (
-                reward + self.gamma * np.max(expected_values.values()))
+        #     # expected_values = np.dot(future_probabilities,
+        #     #                          self.get_Q_for_state(new_board))
+        #     self.Q[self.hash_state_action(board, action)] = (1 - self.alpha) * self.Q[self.hash_state_action(board, action)] + self.alpha * (
+        #         reward + self.gamma * np.max(expected_values.values()))
 
-            if done:
-                break
+        #     if done:
+        #         break
+        pass
 
 
-logging.info("Training")
-# Training while playing
-for i in range(100):
-    board = Quarto()
-    random_player = RandomPlayer(board)
-    board.set_selected_piece(random_player.choose_piece(board))
-    logging.info(f"Iteration: {i}")
-    while True:
-        # random player moves
-        chosen_location = random_player.place_piece(
-            board, board.get_selected_piece())
-        chosen_piece = random_player.choose_piece(board)
-        while not board.check_if_move_valid(board.get_selected_piece(), chosen_location[0], chosen_location[1], chosen_piece):
-            chosen_location = random_player.place_piece(
-                board, board.get_selected_piece())
-            chosen_piece = random_player.choose_piece(board)
-        board.select(board.get_selected_piece())
-        board.place(chosen_location[0], chosen_location[1])
-        board.set_selected_piece(chosen_piece)
-        board.switch_player()
-        print(board.state_as_array())
+mcts = MonteCarloTreeSearch()
+mcts.train()
 
-        if board.check_is_game_over():
-            if 1 - board.check_winner() == 0:
-                logging.info("Random player won")
-            else:
-                logging.info("Draw")
-            break
-        # monte carlo tree search moves
 
-        # make move with monte carlo tree search or minmax
-        for _ in range(50):
-            tree.do_rollout(board)
-        board = tree.choose(board)
+# logging.info("Training")
+# # Training while playing
+# for i in range(100):
+#     board = Quarto()
+#     random_player = RandomPlayer(board)
+#     board.set_selected_piece(random_player.choose_piece(board))
+#     logging.info(f"Iteration: {i}")
+#     while True:
+#         # random player moves
+#         chosen_location = random_player.place_piece(
+#             board, board.get_selected_piece())
+#         chosen_piece = random_player.choose_piece(board)
+#         while not board.check_if_move_valid(board.get_selected_piece(), chosen_location[0], chosen_location[1], chosen_piece):
+#             chosen_location = random_player.place_piece(
+#                 board, board.get_selected_piece())
+#             chosen_piece = random_player.choose_piece(board)
+#         board.select(board.get_selected_piece())
+#         board.place(chosen_location[0], chosen_location[1])
+#         board.set_selected_piece(chosen_piece)
+#         board.switch_player()
+#         logging.debug(board.state_as_array())
 
-        print(board.state_as_array())
-        if board.check_is_game_over():
-            # TODO: check if it's a draw
-            if 1 - board.check_winner() == 1:
-                logging.info("Agent won")
-            else:
-                logging.info("Draw")
-            break
-        # don't need to switch player because it's done in choose
-        # random_player needs to do it because it is not done automatically
+#         if board.check_is_game_over():
+#             if 1 - board.check_winner() == 0:
+#                 logging.info("Random player won")
+#             else:
+#                 logging.info("Draw")
+#             break
+#         # monte carlo tree search moves
 
-        # save progress every 20 iterations
-        if i % 20 == 0:
-            logging.debug("Saving progress")
-            tree.save_progress("progress.pkl")
+#         # make move with monte carlo tree search or minmax
+#         for _ in range(50):
+#             tree.do_rollout(board)
+#         board = tree.choose(board)
+
+#         logging.debug(board.state_as_array())
+#         if board.check_is_game_over():
+#             # TODO: check if it's a draw
+#             if 1 - board.check_winner() == 1:
+#                 logging.info("Agent won")
+#             else:
+#                 logging.info("Draw")
+#             break
+#         # don't need to switch player because it's done in choose
+#         # random_player needs to do it because it is not done automatically
+
+#         # save progress every 20 iterations
+#         if i % 20 == 0:
+#             logging.debug("Saving progress")
+#             tree.save_progress("progress.pkl")
 
 logging.info("Testing")
 for i in range(100):
     board = Quarto()
+    random_player = RandomPlayer(board)
     while True:
         # random player moves
         chosen_location = random_player.place_piece(
@@ -348,15 +467,15 @@ for i in range(100):
         #     logging.info("Monte Carlo Tree Search won")
         #     break
 
-# print(tree.Q.values())
+# logging.debug(tree.Q.values())
 # winner = board.get_current_player()
 
-# print("-----------------")
-# print("PARENT")
+# logging.debug("-----------------")
+# logging.debug("PARENT")
 # parent = list(tree.children.keys())[-1]
-# print(parent.board.state_as_array())
+# logging.debug(parent.board.state_as_array())
 # for child in tree.children[list(tree.children.keys())[-1]]:
-#     print("CHILD")
-#     print(child.board.state_as_array())
+#     logging.debug("CHILD")
+#     logging.debug(child.board.state_as_array())
 
-# print("Testing")
+# logging.debug("Testing")
