@@ -7,6 +7,7 @@ import random
 from mcts import MonteCarloTreeSearch
 from quarto.objects import Quarto
 from lib.players import RandomPlayer
+from lib.isomorphic import BoardTransforms
 
 
 class QLearningPlayer:
@@ -37,12 +38,17 @@ class QLearningPlayer:
 
     def hash_state_action(self, state: Quarto, action):
         # reduce to normal form before saving to Q table
-        state = self.reduce_normal_form(state)
-        return hash(state.board_to_string() + str(state.get_selected_piece()) + str(action))
+        return state.board_to_string() + '||' + str(state.get_selected_piece()) + '||' + str(action)
 
     def get_Q(self, state, action):
+        # check possible transforms first (really really slow)
+        for key, val in self.Q.items():
+            if BoardTransforms.compare_boards(state.board, self.string_to_board(key.split('||')[0])):
+                return val
+
         if self.hash_state_action(state, action) not in self.Q:
             return None
+
         return self.Q[self.hash_state_action(state, action)]
 
     def get_Q_for_state(self, state):

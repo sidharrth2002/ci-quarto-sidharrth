@@ -24,6 +24,7 @@ class Node:
                 hashed_state)
             self.board = Quarto(board)
             self.selected_piece = selected_piece_index
+            self.board.set_selected_piece(selected_piece_index)
         else:
             self.board = copy.deepcopy(board)
             self.hashed_board = self.hash_state()
@@ -42,7 +43,7 @@ class Node:
         Hash the board state, current player and selected piece
         '''
         board = self.board
-        return board.board_to_string() + '||' + str(board.get_selected_piece())
+        return board.board_to_string() + '|| ' + str(board.get_selected_piece())
 
     def string_to_board(self, string):
         board = np.zeros((self.BOARD_SIDE, self.BOARD_SIDE))
@@ -172,9 +173,11 @@ def create_node(content):
 class NodeEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Node):
-            return {
-                'state': obj.hash_state(),
-            }
+            # l = {
+            #     'state': obj.hash_state(),
+            # }
+            # print(l)
+            return obj.hash_state()
         return json.JSONEncoder.default(self, obj)
 
 
@@ -184,23 +187,28 @@ class NodeDecoder(json.JSONDecoder):
             self, object_hook=self.object_hook, *args, **kwargs)
 
     def object_hook(self, obj):
-        if 'state' in obj:
-            return Node(hashed_state=obj['state'])
-        return obj
+        # if 'state' in obj:
+        #     return Node(hashed_state=obj['state'])
+        # return obj
+        return Node(hashed_state=obj)
 
 
 class MonteCarloTreeSearchEncoder(json.JSONEncoder):
     def default(self, obj):
-        return {
-            'Q': obj.Q,
-            'N': obj.N,
+        l = {
+            'Q': {k.hash_state(): v for k, v in obj.Q.items()},
+            'N': {k.hash_state(): v for k, v in obj.N.items()},
 
             # children is a dictionary of nodes
-            'children': {k.hash_state(): NodeEncoder().default(v) for k, v in obj.children.items()},
+            'children': {k.hash_state(): [NodeEncoder().default(i) for i in v] for k, v in obj.children.items()},
 
             # 'children': [NodeEncoder().default(child) for child in obj.children],
             'epsilon': obj.epsilon,
         }
+        return l
+
+    def encode(self, obj):
+        return super().encode(obj)
 
     def load_json(self, filename):
         with open(filename, 'r') as f:

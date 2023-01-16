@@ -14,8 +14,9 @@ import random
 from threading import Thread
 
 import numpy as np
+from lib.isomorphic import BoardTransforms
 from lib.players import Player, RandomPlayer
-from lib.utilities import MonteCarloTreeSearchDecoder, MonteCarloTreeSearchEncoder, Node, NodeDecoder
+from lib.utilities import MonteCarloTreeSearchEncoder, Node, NodeDecoder
 
 from quarto.objects import Quarto
 
@@ -34,8 +35,8 @@ class MonteCarloTreeSearchDecoder(json.JSONDecoder):
     def object_hook(self, obj):
         if 'Q' in obj:
             return MonteCarloTreeSearch(
-                Q=obj['Q'],
-                N=obj['N'],
+                Q={Node(hashed_state=k): v for k, v in obj['Q'].items()},
+                N={Node(hashed_state=k): v for k, v in obj['N'].items()},
                 children={Node(hashed_state=k): NodeDecoder().object_hook(v)
                           for k, v in obj['children'].items()},
                 epsilon=obj['epsilon'],
@@ -67,19 +68,23 @@ class MonteCarloTreeSearch(Player):
         Choose best successor of node (move)
         Returns the board itself
         '''
+        def score(n):
+            logging.debug(f"Before reading in choose {n}")
+            if self.N[n] == 0:
+                return float('-inf')
+            return self.Q[n] / self.N[n]
+
         node = Node(node)
         if node.is_terminal():
             logging.debug(node.state_as_array())
             raise RuntimeError("choose called on terminal node")
 
         if node not in self.children:
-            return node.find_random_child()
+            for key, value in self.children.items():
+                if BoardTransforms().compare_boards(key.board.board_as_array, node.board.board_as_array):
+                    return max(self.children[key], key=score).board
 
-        def score(n):
-            logging.debug(f"Before reading in choose {n}")
-            if self.N[n] == 0:
-                return float('-inf')
-            return self.Q[n] / self.N[n]
+            return node.find_random_child()
 
         return max(self.children[node], key=score).board
 
@@ -211,7 +216,6 @@ class MonteCarloTreeSearch(Player):
             board.set_selected_piece(random_player.choose_piece(board))
             logging.info(f"Iteration: {i}")
             while True:
-                print(board.state_as_array())
                 # random player moves
                 chosen_location = random_player.place_piece(
                     board, board.get_selected_piece())
@@ -250,13 +254,13 @@ class MonteCarloTreeSearch(Player):
                 # don't need to switch player because it's done in choose
                 # random_player needs to do it because it is not done automatically
 
-                # save progress every 20 iterations
-                if i % 20 == 0:
-                    logging.debug("Saving progress")
-                    if save_format == 'json':
-                        self.save_progress_json('progress.json')
-                    else:
-                        self.save_progress_pickle('progress.pkl')
+            # save progress every 20 iterations
+            if i % 20 == 0:
+                logging.debug("Saving progress")
+                if save_format == 'json':
+                    self.save_progress_json('progress.json')
+                else:
+                    self.save_progress_pickle('progress.pkl')
 
     def train(self):
         '''
