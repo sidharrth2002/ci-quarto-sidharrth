@@ -141,16 +141,15 @@ class QLearningPlayer:
                     self.current_state.place(action[0], action[1])
                     self.current_state.set_selected_piece(action[2])
                     self.current_state.switch_player()
-                    selected_piece = self.tree.choose_piece()
                     player = 1 - player
                 else:
                     # Random moves here
                     action = opponent.get_action(self.current_state)
-                    self.current_state.select(selected_piece)
+                    self.current_state.select(
+                        self.current_state.get_selected_piece())
                     self.current_state.place(action[0], action[1])
                     self.current_state.set_selected_piece(action[2])
                     self.current_state.switch_player()
-                    selected_piece = random_player.choose_piece()
                     player = 1 - player
 
                 if self.current_state.check_is_game_over():
