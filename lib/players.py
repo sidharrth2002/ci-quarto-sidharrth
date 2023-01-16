@@ -1,5 +1,26 @@
+from abc import abstractmethod
 import random
 import quarto
+
+
+class Player(object):
+    '''
+    Calabrese base class
+    '''
+
+    def __init__(self, quarto):
+        self.__quarto = quarto
+
+    @abstractmethod
+    def choose_piece(self):
+        pass
+
+    @abstractmethod
+    def place_piece(self):
+        pass
+
+    def get_game(self):
+        return self.__quarto
 
 
 class RandomPlayer(quarto.Player):

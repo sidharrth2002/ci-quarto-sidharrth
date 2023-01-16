@@ -14,22 +14,35 @@ class Node:
     Node on tree
     '''
 
-    def __init__(self, board: Quarto, move=None):
-        self.board = copy.deepcopy(board)
-        self.hashed_board = self.hash_state()
+    def __init__(self, board: Quarto = None, move=None, current_player=None, selected_piece_index=None, hashed_state=None):
+        # recreating node from a hashed state
         self.MAX_PIECES = 16
         self.BOARD_SIDE = 4
-        self.selected_piece = None
-        # move taken to get to this node
-        self.move = move
-        self.lock = Lock()
+
+        if hashed_state is not None:
+            board, selected_piece_index = self.unhash_state(
+                hashed_state)
+            self.board = Quarto(board)
+            self.selected_piece = selected_piece_index
+        else:
+            self.board = copy.deepcopy(board)
+            self.hashed_board = self.hash_state()
+            self.selected_piece = None
+            # move taken to get to this node
+            self.move = move
+            self.lock = Lock()
+            if current_player is not None:
+                self.board.set_current_player(current_player)
+            if selected_piece_index is not None:
+                self.board.set_selected_piece(selected_piece_index)
+                self.selected_piece = selected_piece_index
 
     def hash_state(self):
         '''
         Hash the board state, current player and selected piece
         '''
         board = self.board
-        return board.board_to_string() + '||' + str(board.get_current_player()) + '||' + str(board.get_selected_piece())
+        return board.board_to_string() + '||' + str(board.get_selected_piece())
 
     def string_to_board(self, string):
         board = np.zeros((self.BOARD_SIDE, self.BOARD_SIDE))
@@ -44,11 +57,10 @@ class Node:
         '''
         Unhash the board state, current player and selected piece
         '''
-        board, current_player, selected_piece_index = state.split('||')
+        board, selected_piece_index = state.split('||')
         board = self.string_to_board(board)
-        current_player = int(current_player)
         selected_piece_index = int(selected_piece_index)
-        return board, current_player, selected_piece_index
+        return board, selected_piece_index
 
     def get_board(self):
         return self.unhash_state(self.hashed_board)
@@ -153,16 +165,15 @@ class Node:
 
 def create_node(content):
     # board and move taken to reach this node
-    return Node(content[0], content[1])
+    piece, x, y, next_piece = content[1]
+    return Node(board=content[0], move=(piece, x, y, next_piece))
 
 
 class NodeEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Node):
             return {
-                'board': obj.board,
-                'move': obj.move,
-                'selected_piece': obj.selected_piece,
+                'state': obj.hash_state(),
             }
         return json.JSONEncoder.default(self, obj)
 
@@ -173,8 +184,8 @@ class NodeDecoder(json.JSONDecoder):
             self, object_hook=self.object_hook, *args, **kwargs)
 
     def object_hook(self, obj):
-        if 'board' in obj and 'move' in obj:
-            return Node(obj['board'], obj['move'])
+        if 'state' in obj:
+            return Node(hashed_state=obj['state'])
         return obj
 
 
@@ -183,21 +194,14 @@ class MonteCarloTreeSearchEncoder(json.JSONEncoder):
         return {
             'Q': obj.Q,
             'N': obj.N,
-            'children': [NodeEncoder().default(child) for child in obj.children],
+
+            # children is a dictionary of nodes
+            'children': {k.hash_state(): NodeEncoder().default(v) for k, v in obj.children.items()},
+
+            # 'children': [NodeEncoder().default(child) for child in obj.children],
             'epsilon': obj.epsilon,
         }
 
     def load_json(self, filename):
         with open(filename, 'r') as f:
             return json.load(f, cls=MonteCarloTreeSearchDecoder)
-
-
-class MonteCarloTreeSearchDecoder(json.JSONDecoder):
-    def __init__(self, *args, **kwargs):
-        json.JSONDecoder.__init__(
-            self, object_hook=self.object_hook, *args, **kwargs)
-
-    # def object_hook(self, obj):
-    #     if 'Q' in obj:
-    #         return MonteCarloTreeSearch(obj['Q'], obj['N'], [NodeDecoder().decode(child) for child in obj['children']], obj['epsilon'], obj['MAX_PIECES'], obj['BOARD_SIDE'])
-    #     return obj
