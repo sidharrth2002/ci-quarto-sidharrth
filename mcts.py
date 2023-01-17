@@ -16,11 +16,33 @@ from threading import Thread
 import numpy as np
 from lib.isomorphic import BoardTransforms
 from lib.players import Player, RandomPlayer
-from lib.utilities import MonteCarloTreeSearchEncoder, Node, NodeDecoder
+from lib.utilities import Node, NodeDecoder, NodeEncoder
 
 from quarto.objects import Quarto
 
 logging.basicConfig(level=logging.INFO)
+
+
+class MonteCarloTreeSearchEncoder(json.JSONEncoder):
+    def default(self, obj):
+        l = {
+            'Q': {k.hash_state(): v for k, v in obj.Q.items()},
+            'N': {k.hash_state(): v for k, v in obj.N.items()},
+
+            # children is a dictionary of nodes
+            'children': {k.hash_state(): [NodeEncoder().default(i) for i in v] for k, v in obj.children.items()},
+
+            # 'children': [NodeEncoder().default(child) for child in obj.children],
+            'epsilon': obj.epsilon,
+        }
+        return l
+
+    def encode(self, obj):
+        return super().encode(obj)
+
+    def load_json(self, filename):
+        with open(filename, 'r') as f:
+            return json.load(f, cls=MonteCarloTreeSearchDecoder)
 
 
 class MonteCarloTreeSearchDecoder(json.JSONDecoder):
@@ -49,12 +71,21 @@ class MonteCarloTreeSearch(Player):
     Solve using Monte Carlo Tree Search
     '''
 
-    def __init__(self, epsilon=0.1, max_depth=1000, board: Quarto = None):
+    def __init__(self, epsilon=0.1, max_depth=1000, board=None, Q=None, N=None, children=None):
         self.epsilon = epsilon
         self.max_depth = max_depth
-        self.Q = defaultdict(int)
-        self.N = defaultdict(int)
-        self.children = dict()
+        if Q is None:
+            self.Q = defaultdict(int)
+        else:
+            self.Q = Q
+        if N is None:
+            self.N = defaultdict(int)
+        else:
+            self.N = N
+        if children is None:
+            self.children = dict()
+        else:
+            self.children = children
         self.MAX_PIECES = 16
         self.BOARD_SIDE = 4
         self.board = board

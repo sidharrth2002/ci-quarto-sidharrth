@@ -161,7 +161,8 @@ class Node:
         return hash(self.hash_state())
 
     def __eq__(self, other):
-        return self.hash_state() == other.hash_state() and self.board.get_current_player() == other.board.get_current_player() and self.board.get_selected_piece() == other.board.get_selected_piece()
+        # return self.hash_state() == other.hash_state() and self.board.get_current_player() == other.board.get_current_player() and self.board.get_selected_piece() == other.board.get_selected_piece()
+        return self.hash_state() == other.hash_state() and self.board.get_selected_piece() == other.board.get_selected_piece()
 
 
 def create_node(content):
@@ -191,25 +192,3 @@ class NodeDecoder(json.JSONDecoder):
         #     return Node(hashed_state=obj['state'])
         # return obj
         return Node(hashed_state=obj)
-
-
-class MonteCarloTreeSearchEncoder(json.JSONEncoder):
-    def default(self, obj):
-        l = {
-            'Q': {k.hash_state(): v for k, v in obj.Q.items()},
-            'N': {k.hash_state(): v for k, v in obj.N.items()},
-
-            # children is a dictionary of nodes
-            'children': {k.hash_state(): [NodeEncoder().default(i) for i in v] for k, v in obj.children.items()},
-
-            # 'children': [NodeEncoder().default(child) for child in obj.children],
-            'epsilon': obj.epsilon,
-        }
-        return l
-
-    def encode(self, obj):
-        return super().encode(obj)
-
-    def load_json(self, filename):
-        with open(filename, 'r') as f:
-            return json.load(f, cls=MonteCarloTreeSearchDecoder)
