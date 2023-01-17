@@ -1,6 +1,7 @@
 import copy
 import json
 import logging
+import os
 import random
 from threading import Lock
 
@@ -20,14 +21,16 @@ class Node:
         self.BOARD_SIDE = 4
 
         if hashed_state is not None:
-            board, selected_piece_index = self.unhash_state(
+            board, selected_piece_index, move = self.unhash_state(
                 hashed_state)
             self.board = Quarto(board)
             self.selected_piece = selected_piece_index
             self.board.set_selected_piece(selected_piece_index)
+            # move taken to get to this node
+            # format: (piece, x, y, next_piece)
+            self.move = move
         else:
             self.board = copy.deepcopy(board)
-            self.hashed_board = self.hash_state()
             self.selected_piece = None
             # move taken to get to this node
             self.move = move
@@ -37,31 +40,35 @@ class Node:
             if selected_piece_index is not None:
                 self.board.set_selected_piece(selected_piece_index)
                 self.selected_piece = selected_piece_index
+            self.hashed_board = self.hash_state()
 
     def hash_state(self):
         '''
         Hash the board state, current player and selected piece
         '''
         board = self.board
-        return board.board_to_string() + '|| ' + str(board.get_selected_piece())
+        return board.board_to_string() + '|| ' + str(board.get_selected_piece()) + '|| ' + str(self.move)
 
     def string_to_board(self, string):
+        board_elements = string.strip().split(' ')
         board = np.zeros((self.BOARD_SIDE, self.BOARD_SIDE))
-        i = 0
-        for row in board:
-            for j in range(len(row)):
-                row[j] = int(string[i])
-                i += 2
+        for i in range(len(board_elements)):
+            board[i // self.BOARD_SIDE][i % self.BOARD_SIDE] = int(
+                board_elements[i])
         return board
 
     def unhash_state(self, state):
         '''
         Unhash the board state, current player and selected piece
         '''
-        board, selected_piece_index = state.split('||')
+        board, selected_piece_index, move = state.split('||')
         board = self.string_to_board(board)
         selected_piece_index = int(selected_piece_index)
-        return board, selected_piece_index
+        try:
+            move = eval(move)
+        except:
+            move = ()
+        return board, selected_piece_index, move
 
     def get_board(self):
         return self.unhash_state(self.hashed_board)

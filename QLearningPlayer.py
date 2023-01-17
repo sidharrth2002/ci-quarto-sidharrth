@@ -1,17 +1,18 @@
 from collections import defaultdict
 from copy import deepcopy
+import json
 import logging
 import math
 import random
 
-from mcts import MonteCarloTreeSearch
+from mcts import MonteCarloTreeSearch, MonteCarloTreeSearchDecoder, decode_tree
 from quarto.objects import Quarto
 from lib.players import RandomPlayer
 from lib.isomorphic import BoardTransforms
 
 
 class QLearningPlayer:
-    def __init__(self, board: Quarto, epsilon=0.1, alpha=0.5, gamma=0.9, tree: MonteCarloTreeSearch = None):
+    def __init__(self, board: Quarto = Quarto(), epsilon=0.1, alpha=0.5, gamma=0.9, tree: MonteCarloTreeSearch = None):
         self.epsilon = epsilon
         self.alpha = alpha
         self.gamma = gamma
@@ -38,6 +39,8 @@ class QLearningPlayer:
 
     def hash_state_action(self, state: Quarto, action):
         # reduce to normal form before saving to Q table
+        print("State")
+        print(state)
         return state.board_to_string() + '||' + str(state.get_selected_piece()) + '||' + str(action)
 
     def get_Q(self, state, action):
@@ -101,10 +104,12 @@ class QLearningPlayer:
             return action
 
     def update_Q(self, state, action, reward, next_state):
+        print("Updating Q")
+        print(state)
         self.set_Q(state, action, self.get_Q(state, action) + self.alpha *
                    (reward + self.gamma * self.get_max_Q(next_state) - self.get_Q(state, action)))
 
-    def train(self, opponent, iterations=100):
+    def train(self, iterations=100):
         '''
         The basic idea behind MCTS-QL is to use MCTS to identify promising actions, and then use Q-learning to update the Q-values of those actions. The process can be described as follows:
 
@@ -123,20 +128,20 @@ class QLearningPlayer:
         5. Repeat the process for multiple episodes.
         '''
         # 1. Use the Q-function to initialize the value of each state-action pair, Q(s, a) = 0.
-        for i in range(self.MAX_PIECES):
-            for j in range(self.MAX_PIECES):
-                self.set_Q(i, j, 0)
+        # automatically done through defaultdict
 
         # Choose an action using MCTS
         for i in range(iterations):
             board = Quarto()
             self.board = board
             random_player = RandomPlayer(board)
+            self.tree.set_board(board)
             self.current_state = board
             self.previous_state = None
             self.previous_action = None
             player = 0
             selected_piece = random_player.choose_piece()
+            self.current_state.set_selected_piece(selected_piece)
             while True:
                 reward = 0
                 if player == 0:
@@ -150,7 +155,7 @@ class QLearningPlayer:
                     player = 1 - player
                 else:
                     # Random moves here
-                    action = opponent.get_action(self.current_state)
+                    action = random_player.get_action(self.current_state)
                     self.current_state.select(
                         self.current_state.get_selected_piece())
                     self.current_state.place(action[0], action[1])
@@ -171,3 +176,11 @@ class QLearningPlayer:
                 else:
                     self.update_Q(
                         self.previous_state, self.previous_action, reward, self.current_state)
+
+
+if __name__ == '__main__':
+    # load tree with MonteCarloSearchDecoder
+    with open('progress.json', 'r') as f:
+        tree = decode_tree(json.load(f))
+    qplayer = QLearningPlayer(tree=tree)
+    qplayer.train(100)

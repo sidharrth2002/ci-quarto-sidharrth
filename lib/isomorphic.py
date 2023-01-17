@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 
 
@@ -11,6 +12,7 @@ class BoardTransforms:
         """
         Compare two boards and return the one that is in normal form.
         """
+        board1 = copy.deepcopy(board1)
         possible_transforms = [
             np.rot90(board1, 1),
             np.rot90(board1, 2),

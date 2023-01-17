@@ -457,12 +457,11 @@ class Quarto(object):
         return string
 
     def string_to_board(self, string):
+        board_elements = string.strip().split(' ')
         board = np.zeros((self.BOARD_SIDE, self.BOARD_SIDE))
-        i = 0
-        for row in board:
-            for j in range(len(row)):
-                row[j] = int(string[i])
-                i += 2
+        for i in range(len(board_elements)):
+            board[i // self.BOARD_SIDE][i % self.BOARD_SIDE] = int(
+                board_elements[i])
         return board
 
 

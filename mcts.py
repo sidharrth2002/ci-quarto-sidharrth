@@ -55,15 +55,24 @@ class MonteCarloTreeSearchDecoder(json.JSONDecoder):
             self, object_hook=self.object_hook, *args, **kwargs)
 
     def object_hook(self, obj):
+        children = {}
+
+        for k, v in obj['children'].items():
+            children[Node(hashed_state=k)] = [
+                NodeDecoder().object_hook(node) for node in v]
+
         if 'Q' in obj:
             return MonteCarloTreeSearch(
                 Q={Node(hashed_state=k): v for k, v in obj['Q'].items()},
                 N={Node(hashed_state=k): v for k, v in obj['N'].items()},
-                children={Node(hashed_state=k): NodeDecoder().object_hook(v)
-                          for k, v in obj['children'].items()},
+                children=children,
                 epsilon=obj['epsilon'],
             )
         return obj
+
+
+def decode_tree(tree):
+    return MonteCarloTreeSearchDecoder().object_hook(tree)
 
 
 class MonteCarloTreeSearch(Player):
@@ -71,7 +80,7 @@ class MonteCarloTreeSearch(Player):
     Solve using Monte Carlo Tree Search
     '''
 
-    def __init__(self, epsilon=0.1, max_depth=1000, board=None, Q=None, N=None, children=None):
+    def __init__(self, board=Quarto(), epsilon=0.1, max_depth=1000, Q=None, N=None, children=None):
         self.epsilon = epsilon
         self.max_depth = max_depth
         if Q is None:
@@ -107,15 +116,16 @@ class MonteCarloTreeSearch(Player):
 
         node = Node(node)
         if node.is_terminal():
-            logging.debug(node.state_as_array())
+            logging.debug(node.board.state_as_array())
             raise RuntimeError("choose called on terminal node")
 
         if node not in self.children:
             for key, value in self.children.items():
-                if BoardTransforms().compare_boards(key.board.board_as_array, node.board.board_as_array):
-                    return max(self.children[key], key=score).board
+                if BoardTransforms().compare_boards(node.board.state_as_array(), key.board.state_as_array()):
+                    if key in self.children:
+                        return max(self.children[key], key=score).board
 
-            return node.find_random_child()
+            return node.find_random_child().board
 
         return max(self.children[node], key=score).board
 
@@ -154,7 +164,7 @@ class MonteCarloTreeSearch(Player):
             raise RuntimeError("choose called on terminal node")
 
         if node not in self.children:
-            piece, x, y, next_piece = node.find_random_child()
+            piece, x, y, next_piece = node.find_random_child().move
             return x, y
 
         def score(n):
@@ -163,14 +173,16 @@ class MonteCarloTreeSearch(Player):
                 return float('-inf')
             return self.Q[n] / self.N[n]
 
-        return max(self.children[node], key=score)[1:3]
+        print(self.children[node])
+        return max(self.children[node], key=score).move[1:3]
 
     def do_rollout(self, board):
         '''
         Rollout from the node for one iteration
         '''
         logging.debug("Rollout")
-        node = Node(board)
+        # if root node, there is no move
+        node = Node(board, move=())
         path = self.select(node)
         leaf = path[-1]
         self.expand(leaf)
@@ -237,7 +249,7 @@ class MonteCarloTreeSearch(Player):
 
         return max(self.children[node], key=uct)
 
-    def train_engine(self, board, num_sims=100, save_format='json'):
+    def train_engine(self, board, num_sims=200, save_format='json'):
         '''
         Train the model
         '''
@@ -274,7 +286,6 @@ class MonteCarloTreeSearch(Player):
                     self.do_rollout(board)
                 board = self.choose(board)
 
-                logging.debug(board.state_as_array())
                 if board.check_is_game_over():
                     # TODO: check if it's a draw
                     if 1 - board.check_winner() == 1:
@@ -355,5 +366,6 @@ class MonteCarloTreeSearch(Player):
             return pickle.load(f)
 
 
-mcts = MonteCarloTreeSearch()
-mcts.train()
+if __name__ == "__main__":
+    mcts = MonteCarloTreeSearch()
+    mcts.train()
