@@ -165,7 +165,7 @@ class MonteCarloTreeSearch(Player):
 
         if node not in self.children:
             piece, x, y, next_piece = node.find_random_child().move
-            return x, y
+            return x, y, next_piece
 
         def score(n):
             logging.debug(f"Before reading in choose {n}")
@@ -173,8 +173,9 @@ class MonteCarloTreeSearch(Player):
                 return float('-inf')
             return self.Q[n] / self.N[n]
 
-        print(self.children[node])
-        return max(self.children[node], key=score).move[1:3]
+        print("In place piece")
+        print(max(self.children[node], key=score).move)
+        return max(self.children[node], key=score).move[1:]
 
     def do_rollout(self, board):
         '''
@@ -297,12 +298,12 @@ class MonteCarloTreeSearch(Player):
                 # random_player needs to do it because it is not done automatically
 
             # save progress every 20 iterations
-            if i % 20 == 0:
-                logging.debug("Saving progress")
-                if save_format == 'json':
-                    self.save_progress_json('progress.json')
-                else:
-                    self.save_progress_pickle('progress.pkl')
+                if i % 20 == 0:
+                    logging.debug("Saving progress")
+                    if save_format == 'json':
+                        self.save_progress_json('progress.json')
+                    else:
+                        self.save_progress_pickle('progress.pkl')
 
     def train(self):
         '''

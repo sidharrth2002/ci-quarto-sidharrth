@@ -10,6 +10,8 @@ from quarto.objects import Quarto
 from lib.players import RandomPlayer
 from lib.isomorphic import BoardTransforms
 
+logging.basicConfig(level=logging.INFO)
+
 
 class QLearningPlayer:
     def __init__(self, board: Quarto = Quarto(), epsilon=0.1, alpha=0.5, gamma=0.9, tree: MonteCarloTreeSearch = None):
@@ -39,18 +41,16 @@ class QLearningPlayer:
 
     def hash_state_action(self, state: Quarto, action):
         # reduce to normal form before saving to Q table
-        print("State")
-        print(state)
         return state.board_to_string() + '||' + str(state.get_selected_piece()) + '||' + str(action)
 
     def get_Q(self, state, action):
         # check possible transforms first (really really slow)
         for key, val in self.Q.items():
-            if BoardTransforms.compare_boards(state.board, self.string_to_board(key.split('||')[0])):
+            if BoardTransforms.compare_boards(state.state_as_array(), state.string_to_board(key.split('||')[0])):
                 return val
 
         if self.hash_state_action(state, action) not in self.Q:
-            return None
+            return random.uniform(1.0, 0.01)
 
         return self.Q[self.hash_state_action(state, action)]
 
@@ -62,31 +62,36 @@ class QLearningPlayer:
     def set_Q(self, state, action, value):
         self.Q[self.hash_state_action(state, action)] = value
 
-    def get_possible_actions(self, state):
+    def get_possible_actions(self, state: Quarto):
         actions = []
         for i in range(self.BOARD_SIDE):
             for j in range(self.BOARD_SIDE):
-                for piece in state.get_available_pieces():
-                    if state.check_if_move_valid(state.get_selected_piece(), i, j, piece):
+                for piece in range(self.MAX_PIECES):
+                    if state.check_if_move_valid(self.board.get_selected_piece(), i, j, piece):
                         actions.append((i, j, piece))
+
         return actions
 
     def get_max_Q(self, state):
         max_Q = -math.inf
         for action in self.get_possible_actions(state):
-            max_Q = max(max_Q, self.get_Q(state, action))
+            if self.get_Q(state, action) is not None:
+                max_Q = max(max_Q, self.get_Q(state, action))
         return max_Q
 
     def get_action(self, state, mode='training'):
         '''
         If state, action pair not in Q, go to Monte Carlo Tree Search to find best action
         '''
-        if mode == 'testing':
+        if mode == 'training':
             # TESTING mode (primarily use the Q table)
             if random.random() < self.epsilon:
-                return random.choice(self.get_possible_actions(state))
+                best_action = self.tree.place_piece()
+                return best_action
+                # return random.choice(self.get_possible_actions(state))
             else:
                 expected_score = 0
+                best_action = None
                 for action in self.get_possible_actions(state):
                     if self.get_Q(state, action) is not None and expected_score < self.get_Q(state, action):
                         expected_score = self.get_Q(state, action)
@@ -98,14 +103,11 @@ class QLearningPlayer:
                     best_action = self.tree.place_piece()
                 return best_action
         else:
-            # TRAINING mode (primarily use Monte Carlo Tree Search because we want to search the space)
+            # TESTING mode (primarily use Q table)
             action = self.tree.place_piece()
-
             return action
 
     def update_Q(self, state, action, reward, next_state):
-        print("Updating Q")
-        print(state)
         self.set_Q(state, action, self.get_Q(state, action) + self.alpha *
                    (reward + self.gamma * self.get_max_Q(next_state) - self.get_Q(state, action)))
 
@@ -147,6 +149,10 @@ class QLearningPlayer:
                 if player == 0:
                     # QL-MCTS moves here
                     self.previous_state = deepcopy(self.current_state)
+                    print("Piece to place: ",
+                          self.current_state.get_selected_piece())
+                    print("Board: ")
+                    print(self.current_state.state_as_array())
                     action = self.get_action(self.current_state)
                     self.current_state.select(selected_piece)
                     self.current_state.place(action[0], action[1])
@@ -155,20 +161,24 @@ class QLearningPlayer:
                     player = 1 - player
                 else:
                     # Random moves here
-                    action = random_player.get_action(self.current_state)
+                    action = random_player.place_piece()
+                    next_piece = random_player.choose_piece()
+                    while self.board.check_if_move_valid(self.board.get_selected_piece(), action[0], action[1], next_piece) is False:
+                        action = random_player.place_piece()
+                        next_piece = random_player.choose_piece()
                     self.current_state.select(
                         self.current_state.get_selected_piece())
                     self.current_state.place(action[0], action[1])
-                    self.current_state.set_selected_piece(action[2])
+                    self.current_state.set_selected_piece(next_piece)
                     self.current_state.switch_player()
                     player = 1 - player
 
                 if self.current_state.check_is_game_over():
-                    if 1 - self.current_state.get_winner() == 1:
+                    if 1 - self.current_state.check_winner() == 0:
                         logging.info('QL-MCTS won')
                         reward = 1
                     else:
-                        logging.info('Random lost')
+                        logging.info('Random won')
                         reward = -1
                     self.update_Q(self.previous_state, self.previous_action,
                                   reward, self.current_state)
