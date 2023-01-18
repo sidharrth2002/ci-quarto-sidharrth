@@ -73,6 +73,9 @@ class Quarto(object):
     def set_players(self, players):
         self.__players = players
 
+    def set_board(self, board):
+        self.__board = board
+
     def get_players(self):
         return self.__players
 

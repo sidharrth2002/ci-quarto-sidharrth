@@ -87,6 +87,8 @@ class QLearningPlayer:
             # TESTING mode (primarily use the Q table)
             if random.random() < self.epsilon:
                 best_action = self.tree.place_piece()
+                print('Best action: ', best_action)
+                print(best_action)
                 return best_action
                 # return random.choice(self.get_possible_actions(state))
             else:
@@ -149,10 +151,10 @@ class QLearningPlayer:
                 if player == 0:
                     # QL-MCTS moves here
                     self.previous_state = deepcopy(self.current_state)
-                    print("Piece to place: ",
-                          self.current_state.get_selected_piece())
-                    print("Board: ")
-                    print(self.current_state.state_as_array())
+                    logging.debug("Piece to place: ",
+                                  self.current_state.get_selected_piece())
+                    logging.debug("Board: ")
+                    logging.debug(self.current_state.state_as_array())
                     action = self.get_action(self.current_state)
                     self.current_state.select(selected_piece)
                     self.current_state.place(action[0], action[1])

@@ -9,21 +9,25 @@ import numpy as np
 
 from quarto.objects import Quarto
 
+import hashlib
+
 
 class Node:
     '''
     Node on tree
     '''
 
-    def __init__(self, board: Quarto = None, move=None, current_player=None, selected_piece_index=None, hashed_state=None):
+    def __init__(self, board=None, move=None, current_player=None, selected_piece_index=None, hashed_state=None):
         # recreating node from a hashed state
         self.MAX_PIECES = 16
         self.BOARD_SIDE = 4
 
         if hashed_state is not None:
+            # selected piece is the piece that is selected for the next player after this move
             board, selected_piece_index, move = self.unhash_state(
                 hashed_state)
-            self.board = Quarto(board)
+            self.board = Quarto()
+            self.board.set_board(board)
             self.selected_piece = selected_piece_index
             self.board.set_selected_piece(selected_piece_index)
             # move taken to get to this node
@@ -34,20 +38,38 @@ class Node:
             self.selected_piece = None
             # move taken to get to this node
             self.move = move
-            self.lock = Lock()
+
+            # set current player on the board
             if current_player is not None:
                 self.board.set_current_player(current_player)
+
+            # this is the piece that is selected for the next player
+            # children will place this piece in different positions
             if selected_piece_index is not None:
                 self.board.set_selected_piece(selected_piece_index)
                 self.selected_piece = selected_piece_index
-            self.hashed_board = self.hash_state()
 
-    def hash_state(self):
+            # also check if move contains next piece as this should be added as selected piece
+            if move is not None and len(move) != 0:
+                # last element is the next piece
+                self.board.set_selected_piece(move[-1])
+                self.selected_piece = move[-1]
+
+            # at the end of each turn the selected piece on the board is the piece the next player will place
+            # so this should already be in the board
+            self.selected_piece = board.get_selected_piece()
+
+    def hash_state(self, with_move=True):
         '''
         Hash the board state, current player and selected piece
         '''
-        board = self.board
-        return board.board_to_string() + '|| ' + str(board.get_selected_piece()) + '|| ' + str(self.move)
+        if with_move:
+            board = self.board
+            return board.board_to_string() + '|| ' + str(self.selected_piece) + '|| ' + str(self.move)
+        else:
+            board = self.board
+            val = board.board_to_string() + '|| ' + str(self.selected_piece) + '|| ' + str(())
+            return val
 
     def string_to_board(self, string):
         board_elements = string.strip().split(' ')
@@ -65,13 +87,11 @@ class Node:
         board = self.string_to_board(board)
         selected_piece_index = int(selected_piece_index)
         try:
+            # string to tuple
             move = eval(move)
         except:
             move = ()
         return board, selected_piece_index, move
-
-    def get_board(self):
-        return self.unhash_state(self.hashed_board)
 
     def find_children(self):
         '''
@@ -165,11 +185,26 @@ class Node:
         raise NotImplementedError("Not implemented")
 
     def __hash__(self):
-        return hash(self.hash_state())
+        # hashlib hash to int (make sure it is deterministic)
+        # val = int(hashlib.sha1(
+        #     self.hash_state().encode('utf-8')).hexdigest(), 16)
+        t = str(self.board.state_as_array()) + \
+            str(self.board.get_selected_piece())
+        val = int(hashlib.sha1(t.encode('utf-8')).hexdigest(), 16)
+        return val
+        # return hash(self.hash_state())
 
     def __eq__(self, other):
         # return self.hash_state() == other.hash_state() and self.board.get_current_player() == other.board.get_current_player() and self.board.get_selected_piece() == other.board.get_selected_piece()
-        return self.hash_state() == other.hash_state() and self.board.get_selected_piece() == other.board.get_selected_piece()
+        # return self.hash_state(with_move=False) == other.hash_state(with_move=False) and self.board.get_selected_piece() == other.board.get_selected_piece()
+        # print(self)
+        # print(other)
+        # print(np.array_equal(self.board.state_as_array(),
+        #       other.board.state_as_array()))
+        # print(self.board.get_selected_piece() ==
+        #       other.board.get_selected_piece())
+        return np.array_equal(self.board.state_as_array(), other.board.state_as_array()) and self.board.get_selected_piece() == other.board.get_selected_piece()
+        # return self.hash_state(with_move=False) == other.hash_state(with_move=False)
 
 
 def create_node(content):

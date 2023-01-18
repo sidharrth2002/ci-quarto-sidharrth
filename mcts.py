@@ -98,6 +98,8 @@ class MonteCarloTreeSearch(Player):
         self.MAX_PIECES = 16
         self.BOARD_SIDE = 4
         self.board = board
+        self.random_factor = 0
+        self.decisions = 0
         super().__init__(board)
 
     def set_board(self, board):
@@ -119,14 +121,28 @@ class MonteCarloTreeSearch(Player):
             logging.debug(node.board.state_as_array())
             raise RuntimeError("choose called on terminal node")
 
+        # number of moves made in game
+        self.decisions += 1
+
+        for key in self.children:
+            if key == node:
+                return max(self.children[key], key=score).board
+
+        self.random_factor += 1
         if node not in self.children:
             for key, value in self.children.items():
                 if BoardTransforms().compare_boards(node.board.state_as_array(), key.board.state_as_array()):
                     if key in self.children:
+                        print("found in symmetry")
                         return max(self.children[key], key=score).board
 
-            return node.find_random_child().board
+            # number of times have to resort to random
+            rand_child = node.find_random_child()
+            # add to children
+            self.children[node] = [rand_child]
+            return rand_child.board
 
+        print("found in board")
         return max(self.children[node], key=score).board
 
     def choose_piece(self):
@@ -198,6 +214,7 @@ class MonteCarloTreeSearch(Player):
         while True:
             path.append(node)
             if node not in self.children or not self.children[node]:
+                print(path)
                 return path
             unexplored = self.children[node] - self.children.keys()
             if unexplored:
@@ -231,11 +248,9 @@ class MonteCarloTreeSearch(Player):
         '''
         logging.debug('Backpropagating')
         for node in reversed(path):
-            node.lock.acquire()
             self.N[node] += 1
             self.Q[node] += reward
             reward = 1 - reward
-            node.lock.release()
 
     def uct_select(self, node):
         '''
@@ -258,7 +273,7 @@ class MonteCarloTreeSearch(Player):
             board = Quarto()
             random_player = RandomPlayer(board)
             board.set_selected_piece(random_player.choose_piece(board))
-            logging.info(f"Iteration: {i}")
+            logging.info(f"Iteration: {i} with tree size {len(self.children)}")
             while True:
                 # random player moves
                 chosen_location = random_player.place_piece(
@@ -270,9 +285,9 @@ class MonteCarloTreeSearch(Player):
                     chosen_piece = random_player.choose_piece(board)
                 board.select(board.get_selected_piece())
                 board.place(chosen_location[0], chosen_location[1])
+                # setting the piece for the next player
                 board.set_selected_piece(chosen_piece)
                 board.switch_player()
-                logging.debug(board.state_as_array())
 
                 if board.check_is_game_over():
                     if 1 - board.check_winner() == 0:
@@ -282,7 +297,7 @@ class MonteCarloTreeSearch(Player):
                     break
                 # monte carlo tree search moves
 
-                # make move with monte carlo tree search or minmax
+                # make move with monte carlo tree search
                 for _ in range(50):
                     self.do_rollout(board)
                 board = self.choose(board)
@@ -297,19 +312,21 @@ class MonteCarloTreeSearch(Player):
                 # don't need to switch player because it's done in choose
                 # random_player needs to do it because it is not done automatically
 
-            # save progress every 20 iterations
-                if i % 20 == 0:
-                    logging.debug("Saving progress")
-                    if save_format == 'json':
-                        self.save_progress_json('progress.json')
-                    else:
-                        self.save_progress_pickle('progress.pkl')
+            # print(f"Random factor ", self.random_factor / self.decisions)
+
+            # save progress every 10 iterations
+            if i % 10 == 0:
+                logging.debug("Saving progress")
+                if save_format == 'json':
+                    self.save_progress_json('/Volumes/USB/progress.json')
+                else:
+                    self.save_progress_pickle('progress.pkl')
 
     def train(self):
         '''
         Train without multithreading
         '''
-        self.train_engine(Quarto(), 5, 'json')
+        self.train_engine(Quarto(), 100, 'json')
 
     def threaded_training(self, num_threads=1, save_format='json'):
         '''
@@ -369,4 +386,8 @@ class MonteCarloTreeSearch(Player):
 
 if __name__ == "__main__":
     mcts = MonteCarloTreeSearch()
+    # with open('/Volumes/USB/progress.json', 'r') as f:
+    #     mcts = decode_tree(json.load(f))
+    #     logging.info("Loaded progress")
+    logging.info("Starting training")
     mcts.train()
