@@ -86,11 +86,11 @@ class MonteCarloTreeSearch(Player):
         if Q is None:
             self.Q = defaultdict(int)
         else:
-            self.Q = Q
+            self.Q = defaultdict(int, Q)
         if N is None:
             self.N = defaultdict(int)
         else:
-            self.N = N
+            self.N = defaultdict(int, N)
         if children is None:
             self.children = dict()
         else:
@@ -116,6 +116,7 @@ class MonteCarloTreeSearch(Player):
                 return float('-inf')
             return self.Q[n] / self.N[n]
 
+        # node is board Quarto
         node = Node(node)
         if node.is_terminal():
             logging.debug(node.board.state_as_array())
@@ -202,7 +203,11 @@ class MonteCarloTreeSearch(Player):
         node = Node(board, move=())
         path = self.select(node)
         leaf = path[-1]
-        self.expand(leaf)
+
+        # expand a leaf only when necessary, i.e., only if I arrive at it during selection and if it has already been visited (self.N) but not yet expanded (self.children)
+        if leaf in self.N and leaf not in self.children:
+            self.expand(leaf)
+
         reward = self.simulate(leaf)
         self.backpropagate(path, reward)
 
@@ -214,7 +219,6 @@ class MonteCarloTreeSearch(Player):
         while True:
             path.append(node)
             if node not in self.children or not self.children[node]:
-                print(path)
                 return path
             unexplored = self.children[node] - self.children.keys()
             if unexplored:
@@ -234,13 +238,14 @@ class MonteCarloTreeSearch(Player):
         '''
         Returns reward for random simulation
         '''
-        invert_reward = True
+        invert_reward = False
         while True:
             if node.is_terminal():
                 reward = node.reward()
+
                 return 1 - reward if invert_reward else reward
             node = node.find_random_child()
-            invert_reward = not invert_reward
+            # invert_reward = not invert_reward
 
     def backpropagate(self, path, reward):
         '''
@@ -298,7 +303,7 @@ class MonteCarloTreeSearch(Player):
                 # monte carlo tree search moves
 
                 # make move with monte carlo tree search
-                for _ in range(50):
+                for _ in range(1):
                     self.do_rollout(board)
                 board = self.choose(board)
 
@@ -312,13 +317,13 @@ class MonteCarloTreeSearch(Player):
                 # don't need to switch player because it's done in choose
                 # random_player needs to do it because it is not done automatically
 
-            # print(f"Random factor ", self.random_factor / self.decisions)
+            print(f"Random factor ", self.random_factor / self.decisions)
 
             # save progress every 10 iterations
-            if i % 10 == 0:
+            if i % 100 == 0:
                 logging.debug("Saving progress")
                 if save_format == 'json':
-                    self.save_progress_json('/Volumes/USB/progress.json')
+                    self.save_progress_json('/Volumes/USB/progress3.json')
                 else:
                     self.save_progress_pickle('progress.pkl')
 
@@ -386,7 +391,7 @@ class MonteCarloTreeSearch(Player):
 
 if __name__ == "__main__":
     mcts = MonteCarloTreeSearch()
-    # with open('/Volumes/USB/progress.json', 'r') as f:
+    # with open('/Volumes/USB/progress3.json', 'r') as f:
     #     mcts = decode_tree(json.load(f))
     #     logging.info("Loaded progress")
     logging.info("Starting training")

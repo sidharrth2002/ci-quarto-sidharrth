@@ -13,7 +13,8 @@ class A:
 d = {}
 
 a1 = A(1, 2)
-a2 = A(1, 2)
+a2 = A(1, 3)
 
 d[a1] = 2
-print(a2 not in d)
+
+print(d[a2])

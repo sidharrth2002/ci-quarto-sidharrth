@@ -84,7 +84,7 @@ class QLearningPlayer:
         If state, action pair not in Q, go to Monte Carlo Tree Search to find best action
         '''
         if mode == 'training':
-            # TESTING mode (primarily use the Q table)
+            # TESTING mode (primarily use MCTS)
             if random.random() < self.epsilon:
                 best_action = self.tree.place_piece()
                 print('Best action: ', best_action)
@@ -104,10 +104,9 @@ class QLearningPlayer:
                         'No suitable action found in Q table, going to Monte Carlo Tree Search')
                     best_action = self.tree.place_piece()
                 return best_action
-        else:
-            # TESTING mode (primarily use Q table)
-            action = self.tree.place_piece()
-            return action
+        # else:
+        #     action = self.tree.place_piece()
+        #     return action
 
     def update_Q(self, state, action, reward, next_state):
         self.set_Q(state, action, self.get_Q(state, action) + self.alpha *

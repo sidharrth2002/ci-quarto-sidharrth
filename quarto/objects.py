@@ -4,6 +4,7 @@
 import itertools
 import logging
 import random
+import gym
 import numpy as np
 from abc import abstractmethod
 import copy
@@ -465,6 +466,7 @@ class Quarto(object):
         for i in range(len(board_elements)):
             board[i // self.BOARD_SIDE][i % self.BOARD_SIDE] = int(
                 board_elements[i])
+        print(board)
         return board
 
 
@@ -481,13 +483,13 @@ class RandomPlayer(Player):
         return random.randint(0, 3), random.randint(0, 3)
 
 
-class QuartoScape:
+class QuartoScape(gym.Env):
     '''Custom gym environment for Quarto'''
 
     def __init__(self):
         self.game = Quarto()
         self.action_space = spaces.MultiDiscrete([4, 4, 16])
-        self.observation_space = spaces.MultiDiscrete([17] * 17)
+        self.observation_space = spaces.MultiDiscrete([18] * 17)
         self.reward_range = (-1, 1)
         self.main_player = None
 
@@ -647,8 +649,14 @@ class QuartoScape:
     def reset(self):
         self.game = Quarto()
         self.game.set_players((self.main_player, RandomPlayer(self.game)))
-        # print(self.game.state_as_array())
-        return self.game.state_as_array()
+        print(np.array(list(itertools.chain.from_iterable(
+            self.game.state_as_array())) + [-1]))
+        print(self.observation_space.shape)
+        arr = np.array(list(itertools.chain.from_iterable(
+            self.game.state_as_array())) + [100])
+        # replace -1 with 18
+        arr[arr == -1] = 17
+        return arr
 
     def close(self):
         print("Closing environment")

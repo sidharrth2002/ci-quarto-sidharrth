@@ -57,7 +57,7 @@ class Node:
 
             # at the end of each turn the selected piece on the board is the piece the next player will place
             # so this should already be in the board
-            self.selected_piece = board.get_selected_piece()
+            self.selected_piece = self.board.get_selected_piece()
 
     def hash_state(self, with_move=True):
         '''
@@ -75,8 +75,8 @@ class Node:
         board_elements = string.strip().split(' ')
         board = np.zeros((self.BOARD_SIDE, self.BOARD_SIDE))
         for i in range(len(board_elements)):
-            board[i // self.BOARD_SIDE][i % self.BOARD_SIDE] = int(
-                board_elements[i])
+            board[i // self.BOARD_SIDE][i %
+                                        self.BOARD_SIDE] = int(float(board_elements[i]))
         return board
 
     def unhash_state(self, state):
@@ -105,6 +105,11 @@ class Node:
             create_node(self.board.make_move(self.board.get_selected_piece(), x, y, next_piece, newboard=True, return_move=True)) for x in range(self.BOARD_SIDE) for y in range(self.BOARD_SIDE) for next_piece in range(self.MAX_PIECES) if self.board.check_if_move_valid(self.board.get_selected_piece(), x, y, next_piece)
         }
 
+        # only take max children
+        # new_stuff = list(new_stuff)
+        # new_stuff = new_stuff[:min(len(new_stuff), 90)]
+        # new_stuff = set(new_stuff)
+
         return new_stuff
 
     def reward(self):
@@ -115,15 +120,27 @@ class Node:
         if not board.check_is_game_over():
             raise RuntimeError("reward called on non-terminal node")
         # logging.debug("WINNER: ", board.check_winner())
-        if 1 - board.check_winner() == board.get_current_player():
-            logging.debug("game is over, and you already won")
-            raise RuntimeError("reward called on unreachable node")
-        if board.check_winner() == board.get_current_player():
-            logging.debug("other guy won")
+
+        player_who_last_moved = 1 - board.get_current_player()
+
+        if player_who_last_moved == 1 and 1 - board.check_winner() == 1:
+            # agent won
+            return 1
+        elif player_who_last_moved == 0 and 1 - board.check_winner() == 0:
+            # agent lost
             return 0
-        if board.check_if_draw():
-            logging.debug('tie')
+        elif board.check_if_draw():
             return 0.5
+
+        # if 1 - board.check_winner() == board.get_current_player():
+        #     logging.debug("game is over, and you already won")
+        #     raise RuntimeError("reward called on unreachable node")
+        # if 1 - board.get_current_player() == 0 and 1 - board.check_winner() == 0:
+        #     logging.debug("other guy won")
+        #     return 0
+        # if board.check_if_draw():
+        #     logging.debug('tie')
+        #     return 0.5
         raise RuntimeError("nothing works")
         # return 0
 
