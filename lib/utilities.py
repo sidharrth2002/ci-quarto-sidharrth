@@ -124,12 +124,12 @@ class Node:
         player_who_last_moved = 1 - board.get_current_player()
 
         # 1 if plays second, 0 if plays first
-        agent_plays = 0
+        agent_position = 0
 
-        if player_who_last_moved == agent_plays and 1 - board.check_winner() == agent_plays:
+        if player_who_last_moved == agent_position and 1 - board.check_winner() == agent_position:
             # agent won
             return 1
-        elif player_who_last_moved == 1 - agent_plays and 1 - board.check_winner() == 1 - agent_plays:
+        elif player_who_last_moved == 1 - agent_position and 1 - board.check_winner() == 1 - agent_position:
             # agent lost
             return 0
         elif board.check_if_draw():
