@@ -8,6 +8,7 @@ from typing import Any
 import gym
 import numpy as np
 import tensorflow as tf
+from lib.players import RandomPlayer
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
 from tensorflow.keras.optimizers import Adam
@@ -127,7 +128,7 @@ class DQNAgent:
                   for i in range(0, 16)]
         pred_X.append(chosen_piece)
         # # print(np.array([pred_X]))
-        return self.model.predict(np.array([pred_X]))[0]
+        return self.model.predict(np.array([pred_X]), verbose=0)[0]
 
     def decay_lr(self, lr, decay_rate, decay_step):
         return lr * (1 / (1 + decay_rate * decay_step))
@@ -161,11 +162,13 @@ class DQNAgent:
         current_states = np.array([self.abbellire(state, chosen_piece)
                                   for state, chosen_piece, action, reward, new_current_state, done in minibatch])
         current_qs = self.model.predict(current_states.reshape(batch_size, 17))
+        print('CURRENT QS')
         # new current state + chosen_piece for next player -> action (contains chosen_piece for next player)
         new_current_states = np.array([self.abbellire(new_current_state, action[2])
                                       for state, chosen_piece, action, reward, new_current_state, done in minibatch])
         future_qs = self.target_model.predict(
-            new_current_states.reshape(batch_size, 17))
+            new_current_states.reshape(batch_size, 17), verbose=0)
+        print('FUTURE QS')
         # exclude invalid moves from calculation
         # future_qs = [self.nan_out_invalid_actions(batch[2][2], future_q) for batch, future_q in zip(minibatch, future_qs)]
 
@@ -194,7 +197,9 @@ class DQNAgent:
         Y = np.array(Y).reshape(batch_size, 4 * 4 * 16)
         print(X)
         print(Y)
-        self.model.fit(X, Y, batch_size=batch_size, verbose=2, shuffle=True)
+        self.model.fit(X, Y, batch_size=batch_size,
+                       verbose=1, shuffle=True, epochs=1)
+        print('TRAINING DONE')
 
     def choose_piece(self, state: Any, piece_chosen_for_you: int):
         '''Choose piece for the next guy to play'''
@@ -272,6 +277,7 @@ class DQNAgent:
                         while not self.env.game.check_if_move_valid(chosen_piece, action[0], action[1], action[2]):
                             # print(f'INVALID ACTION: {action}')
                             # print(f'CHOSEN PIECE: {chosen_piece}')
+                            print('RANDOM ACTION')
                             action = self.env.action_space.sample()
                     else:
                         action = np.nanargmax(prediction)
@@ -283,6 +289,9 @@ class DQNAgent:
 
                 new_state, reward, done, _ = self.env.step(
                     action, chosen_piece)
+
+                print(new_state)
+
                 replay_memory.append(
                     (state, chosen_piece, action, reward, new_state, done))
 
@@ -291,15 +300,17 @@ class DQNAgent:
 
                 if steps_to_update_target_model % 4 == 0 or done:
                     # print('Training')
-                    self.train(replay_memory, 16)
+                    self.train(replay_memory, 32)
 
                 state = new_state
                 total_training_reward += reward
 
                 print(total_training_reward)
+                print('game over', done)
 
                 if done:
-                    # print(f'Total reward: {total_training_reward} at episode {episode} after {steps_to_update_target_model} steps')
+                    print(
+                        f'Total reward: {total_training_reward} at episode {episode} after {steps_to_update_target_model} steps')
                     total_training_reward += 1
 
                     if steps_to_update_target_model >= 100:
@@ -309,8 +320,9 @@ class DQNAgent:
 
                 chosen_piece = action[2]
 
-            if episode % 10 == 0:
-                test(self)
+            # if episode % 10 == 0:
+            #     print('Testing')
+            #     test(self)
 
             self.lr = self.decay_lr(self.lr, 0.0001, episode)
         self.env.close()

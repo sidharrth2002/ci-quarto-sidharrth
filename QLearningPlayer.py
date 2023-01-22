@@ -10,7 +10,7 @@ from quarto.objects import Quarto
 from lib.players import RandomPlayer
 from lib.isomorphic import BoardTransforms
 
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 
 
 class QLearningPlayer:
@@ -84,14 +84,15 @@ class QLearningPlayer:
         If state, action pair not in Q, go to Monte Carlo Tree Search to find best action
         '''
         if mode == 'training':
-            # TESTING mode (primarily use MCTS)
+            # exploration through epsilon greedy
+            # look for good moves through Monte Carlo Tree Search
             if random.random() < self.epsilon:
+                for i in range(20):
+                    self.tree.do_rollout(state)
                 best_action = self.tree.place_piece()
-                print('Best action: ', best_action)
-                print(best_action)
                 return best_action
-                # return random.choice(self.get_possible_actions(state))
             else:
+                # look in the q table for the best action
                 expected_score = 0
                 best_action = None
                 for action in self.get_possible_actions(state):
@@ -104,9 +105,23 @@ class QLearningPlayer:
                         'No suitable action found in Q table, going to Monte Carlo Tree Search')
                     best_action = self.tree.place_piece()
                 return best_action
-        # else:
-        #     action = self.tree.place_piece()
-        #     return action
+        else:
+            # in test mode, use the Q table to find the best action
+            # only go to Monte Carlo Tree Search if no suitable action found in Q table
+            expected_score = 0
+            best_action = None
+            for action in self.get_possible_actions(state):
+                if self.get_Q(state, action) is not None and expected_score < self.get_Q(state, action):
+                    expected_score = self.get_Q(state, action)
+                    best_action = action
+            # go to Monte Carlo Tree Search if no suitable action found in Q table
+            if best_action is None or expected_score == 0:
+                logging.info(
+                    'No suitable action found in Q table, going to Monte Carlo Tree Search')
+                for i in range(20):
+                    self.tree.do_rollout(state)
+                best_action = self.tree.place_piece()
+            return best_action
 
     def update_Q(self, state, action, reward, next_state):
         self.set_Q(state, action, self.get_Q(state, action) + self.alpha *
@@ -191,7 +206,7 @@ class QLearningPlayer:
 
 if __name__ == '__main__':
     # load tree with MonteCarloSearchDecoder
-    with open('progress.json', 'r') as f:
-        tree = decode_tree(json.load(f))
-    qplayer = QLearningPlayer(tree=tree)
+    # with open('progress.json', 'r') as f:
+    #     tree = decode_tree(json.load(f))
+    qplayer = QLearningPlayer()
     qplayer.train(100)

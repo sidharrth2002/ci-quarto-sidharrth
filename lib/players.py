@@ -29,7 +29,7 @@ class RandomPlayer(quarto.Player):
     def __init__(self, quarto: quarto.Quarto):
         super().__init__(quarto)
 
-    def choose_piece(self, state=None):
+    def choose_piece(self, state=None, idk: int = None):
         return random.randint(0, 15)
 
     def place_piece(self, state=None, piece_to_be_placed: int = None):

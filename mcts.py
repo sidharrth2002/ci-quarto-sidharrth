@@ -182,6 +182,8 @@ class MonteCarloTreeSearch(Player):
 
         if node not in self.children:
             piece, x, y, next_piece = node.find_random_child().move
+            print("Random child")
+            print(piece, x, y, next_piece)
             return x, y, next_piece
 
         def score(n):
@@ -255,6 +257,7 @@ class MonteCarloTreeSearch(Player):
         for node in reversed(path):
             self.N[node] += 1
             self.Q[node] += reward
+            # TODO: check if this is correct
             reward = 1 - reward
 
     def uct_select(self, node):
@@ -270,6 +273,59 @@ class MonteCarloTreeSearch(Player):
 
         return max(self.children[node], key=uct)
 
+    def test_win_rate(self, num_trials=10, rollouts=20):
+        print("Testing win rate")
+        agent_wins = 0
+        opponent_wins = 0
+        draws = 0
+        for i in range(num_trials):
+            board = Quarto()
+            random_player = RandomPlayer(board)
+            self.board = board
+            board.set_selected_piece(random_player.choose_piece(board))
+            while True:
+                # random player moves
+                chosen_location = random_player.place_piece(
+                    board, board.get_selected_piece())
+                chosen_piece = random_player.choose_piece(board)
+                while not board.check_if_move_valid(board.get_selected_piece(), chosen_location[0], chosen_location[1], chosen_piece):
+                    chosen_location = random_player.place_piece(
+                        board, board.get_selected_piece())
+                    chosen_piece = random_player.choose_piece(board)
+                board.select(board.get_selected_piece())
+                board.place(chosen_location[0], chosen_location[1])
+                # setting the piece for the next player
+                board.set_selected_piece(chosen_piece)
+                board.switch_player()
+
+                if board.check_is_game_over():
+                    if 1 - board.check_winner() == 0:
+                        opponent_wins += 1
+                    else:
+                        draws += 1
+                    break
+                # monte carlo tree search moves
+
+                # make move with monte carlo tree search
+                for _ in range(rollouts):
+                    self.do_rollout(board)
+                board = self.choose(board)
+
+                if board.check_is_game_over():
+                    # TODO: check if it's a draw
+                    if 1 - board.check_winner() == 1:
+                        agent_wins += 1
+                    else:
+                        draws += 1
+                    break
+                # don't need to switch player because it's done in choose
+                # random_player needs to do it because it is not done automatically
+
+        print(f"Agent wins: {agent_wins}/{i+1}")
+        print(f"Random factor ", self.random_factor / self.decisions)
+        self.random_factor = 0
+        self.decisions = 0
+
     def train_engine(self, board, num_sims=200, save_format='json'):
         '''
         Train the model
@@ -277,6 +333,7 @@ class MonteCarloTreeSearch(Player):
         for i in range(num_sims):
             board = Quarto()
             random_player = RandomPlayer(board)
+            self.board = board
             board.set_selected_piece(random_player.choose_piece(board))
             logging.info(f"Iteration: {i} with tree size {len(self.children)}")
             while True:
@@ -303,7 +360,7 @@ class MonteCarloTreeSearch(Player):
                 # monte carlo tree search moves
 
                 # make move with monte carlo tree search
-                for _ in range(1):
+                for _ in range(20):
                     self.do_rollout(board)
                 board = self.choose(board)
 
@@ -317,7 +374,9 @@ class MonteCarloTreeSearch(Player):
                 # don't need to switch player because it's done in choose
                 # random_player needs to do it because it is not done automatically
 
-            print(f"Random factor ", self.random_factor / self.decisions)
+            if i % 2 == 0:
+                # run a test to see if the agent is improving
+                self.test_win_rate()
 
             # save progress every 10 iterations
             if i % 100 == 0:

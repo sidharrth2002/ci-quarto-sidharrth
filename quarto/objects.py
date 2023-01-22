@@ -99,7 +99,7 @@ class Quarto(object):
         else:
             print("Not placeable")
         print("Invalid move: ", x, y)
-        print(self.__board)
+        # print(self.__board)
         return False
 
     def __placeable(self, x: int, y: int) -> bool:
@@ -466,7 +466,7 @@ class Quarto(object):
         for i in range(len(board_elements)):
             board[i // self.BOARD_SIDE][i % self.BOARD_SIDE] = int(
                 board_elements[i])
-        print(board)
+        # print(board)
         return board
 
 
@@ -483,7 +483,54 @@ class RandomPlayer(Player):
         return random.randint(0, 3), random.randint(0, 3)
 
 
-class QuartoScape(gym.Env):
+class QuartoScape:
+    '''Custom gym environment for Quarto'''
+
+    def __init__(self):
+        self.game = Quarto()
+        self.action_space = spaces.MultiDiscrete([16, 16, 16])
+        self.observation_space = spaces.MultiDiscrete([17] * 17)
+        self.reward_range = (-1, 1)
+        self.main_player = None
+
+    def set_main_player(self, player):
+        self.main_player = player
+        self.game.set_players((player, RandomPlayer(self.game)))
+        return True
+
+    def step(self, action, chosen_piece):
+        # position is the position the previous piece should be moved to
+        # chosen next piece is the piece the agent chooses for the next player to move
+        x, y, chosen_next_piece = action
+        self.next_piece = chosen_next_piece
+        if self.game.check_if_move_valid(chosen_piece, x, y, chosen_next_piece):
+            print(f"Valid move, piece {chosen_piece} placed at {x}, {y}")
+            self.game.select(chosen_piece)
+            self.game.place(x, y)
+            self.game.print()
+            if self.game.check_winner() == 0:
+                reward = 1
+                return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
+            elif self.game.check_if_draw():
+                reward = 0.5
+                return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
+            else:
+                reward = 0
+            return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
+        else:
+            print("Invalid move, fuck off")
+            reward = -1
+
+        return self.game.state_as_array(), reward, self.game.check_finished(), {}
+
+    def reset(self):
+        self.game = Quarto()
+        self.game.set_players((self.main_player, RandomPlayer(self.game)))
+        # print(self.game.state_as_array())
+        return self.game.state_as_array()
+
+
+class QuartoScapeNew(gym.Env):
     '''Custom gym environment for Quarto'''
 
     def __init__(self):
