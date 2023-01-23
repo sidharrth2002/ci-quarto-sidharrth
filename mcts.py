@@ -181,11 +181,24 @@ class MonteCarloTreeSearch(Player):
             logging.debug(node.board.state_as_array())
             raise RuntimeError("choose called on terminal node")
 
+        # if node not in self.children:
+        #     piece, x, y, next_piece = node.find_random_child().move
+        #     # print("Random child")
+        #     # print(piece, x, y, next_piece)
+        #     return x, y, next_piece
+
         if node not in self.children:
-            piece, x, y, next_piece = node.find_random_child().move
-            # print("Random child")
-            # print(piece, x, y, next_piece)
-            return x, y, next_piece
+            for key, value in self.children.items():
+                if BoardTransforms().compare_boards(node.board.state_as_array(), key.board.state_as_array()):
+                    if key in self.children:
+                        print("found in symmetry")
+                        return max(self.children[key], key=score).board
+
+            # number of times have to resort to random
+            rand_child = node.find_random_child()
+            print("Random child")
+            # add to children
+            return rand_child.board.move
 
         def score(n):
             logging.debug(f"Before reading in choose {n}")
