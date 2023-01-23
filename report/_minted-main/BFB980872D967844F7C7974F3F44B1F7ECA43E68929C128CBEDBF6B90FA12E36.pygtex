@@ -1,0 +1,47 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{from} \PYG{n+nn}{copy} \PYG{k+kn}{import} \PYG{n}{deepcopy}
+\PYG{k+kn}{from} \PYG{n+nn}{itertools} \PYG{k+kn}{import} \PYG{n}{accumulate}
+\PYG{k+kn}{from} \PYG{n+nn}{operator} \PYG{k+kn}{import} \PYG{n}{xor}
+\PYG{k+kn}{import} \PYG{n+nn}{random}
+\PYG{k+kn}{import} \PYG{n+nn}{logging}
+\PYG{k+kn}{from} \PYG{n+nn}{lib} \PYG{k+kn}{import} \PYG{n}{Nim}
+
+\PYG{c+c1}{\PYGZsh{} 3.1: Agent Using Fixed Rules}
+\PYG{k}{class} \PYG{n+nc}{ExpertNimSumAgent}\PYG{p}{:}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Play the game of Nim using a fixed rule}
+\PYG{l+s+sd}{    (always leave nim\PYGZhy{}sum at the end of turn)}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{num\PYGZus{}moves} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+    \PYG{k}{def} \PYG{n+nf}{nim\PYGZus{}sum}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{nim}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Returns the nim sum of the current game board}
+\PYG{l+s+sd}{        by taking an XOR of all the rows.}
+\PYG{l+s+sd}{        Ideally, agent should try to leave nim sum of 0 at the end of turn}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{o}{*}\PYG{n}{\PYGZus{}}\PYG{p}{,} \PYG{n}{result} \PYG{o}{=} \PYG{n}{accumulate}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{,} \PYG{n}{xor}\PYG{p}{)}
+        \PYG{k}{return} \PYG{n}{result}
+        \PYG{c+c1}{\PYGZsh{} return sum([i\PYGZca{}r for i, r in enumerate(nim.\PYGZus{}rows)])}
+
+    \PYG{k}{def} \PYG{n+nf}{play}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{nim}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{):}
+        \PYG{c+c1}{\PYGZsh{} remove objects from row to make nim\PYGZhy{}sum 0}
+        \PYG{n}{nim\PYGZus{}sum} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{nim\PYGZus{}sum}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{)}
+        \PYG{n}{all\PYGZus{}possible\PYGZus{}moves} \PYG{o}{=} \PYG{p}{[(}\PYG{n}{r}\PYG{p}{,} \PYG{n}{o}\PYG{p}{)} \PYG{k}{for} \PYG{n}{r}\PYG{p}{,} \PYG{n}{c} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)} \PYG{k}{for} \PYG{n}{o} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{c}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{)]}
+        \PYG{n}{move\PYGZus{}found} \PYG{o}{=} \PYG{k+kc}{False}
+        \PYG{k}{for} \PYG{n}{move} \PYG{o+ow}{in} \PYG{n}{all\PYGZus{}possible\PYGZus{}moves}\PYG{p}{:}
+            \PYG{n}{replicated\PYGZus{}nim} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{)}
+            \PYG{n}{replicated\PYGZus{}nim}\PYG{o}{.}\PYG{n}{nimming\PYGZus{}remove}\PYG{p}{(}\PYG{o}{*}\PYG{n}{move}\PYG{p}{)}
+            \PYG{k}{if} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{nim\PYGZus{}sum}\PYG{p}{(}\PYG{n}{replicated\PYGZus{}nim}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                \PYG{n}{nim}\PYG{o}{.}\PYG{n}{nimming\PYGZus{}remove}\PYG{p}{(}\PYG{o}{*}\PYG{n}{move}\PYG{p}{)}
+                \PYG{n}{move\PYGZus{}found} \PYG{o}{=} \PYG{k+kc}{True}
+                \PYG{k}{break}
+        \PYG{c+c1}{\PYGZsh{} if a valid move not found, return random move}
+        \PYG{k}{if} \PYG{o+ow}{not} \PYG{n}{move\PYGZus{}found}\PYG{p}{:}
+            \PYG{n}{move} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{all\PYGZus{}possible\PYGZus{}moves}\PYG{p}{)}
+            \PYG{n}{nim}\PYG{o}{.}\PYG{n}{nimming\PYGZus{}remove}\PYG{p}{(}\PYG{o}{*}\PYG{n}{move}\PYG{p}{)}
+
+        \PYG{c+c1}{\PYGZsh{} logging.info(f\PYGZdq{}Move \PYGZob{}self.num\PYGZus{}moves\PYGZcb{}: Removed \PYGZob{}move[1]\PYGZcb{} objects from row \PYGZob{}move[0]\PYGZcb{}\PYGZdq{})}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{num\PYGZus{}moves} \PYG{o}{+=} \PYG{l+m+mi}{1}
+\end{Verbatim}

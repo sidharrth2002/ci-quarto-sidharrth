@@ -1,0 +1,112 @@
+logging.basicConfig(level=logging.INFO)
+
+def hash_list(l):
+    '''
+    Hashes a list of integers into a string
+    '''
+    return "-".join([str(i) for i in l])
+
+
+def unhash_list(l):
+    '''
+    Unhashes a string of integers into a list
+    '''
+    return [int(i) for i in l.split("-")]
+
+
+def decay(value, decay_rate):
+    return value * decay_rate
+
+
+class NimRLMonteCarloAgent:
+    def __init__(self, num_rows: int, epsilon: float = 0.3, alpha: float = 0.5, gamma: float = 0.9):
+        """Initialize agent."""
+        self.num_rows = num_rows
+        self.epsilon = epsilon
+        self.alpha = alpha
+        self.gamma = gamma
+        self.current_state = None
+        self.previous_state = None
+        self.previous_action = None
+        self.G = dict()
+        self.state_history = []
+
+    def get_action(self, state: Nim):
+        """Return action based on epsilon-greedy policy."""
+        if random.random() < self.epsilon:
+            action = random.choice(self.get_possible_actions(state))
+            if (hash_list(state.rows), action) not in self.G:
+                self.G[(hash_list(state.rows), action)] = random.uniform(1.0, 0.01)
+            return action
+        else:
+            max_G = -math.inf
+            best_action = None
+            for r, c in enumerate(state.rows):
+                for o in range(1, c+1):
+                    if (hash_list(state.rows), (r, o)) not in self.G:
+                        self.G[(hash_list(state.rows), (r, o))] = random.uniform(1.0, 0.01)
+                        G = self.G[(hash_list(state.rows), (r, o))]
+                    else:
+                        G = self.G[(hash_list(state.rows), (r, o))]
+                    if G > max_G:
+                        max_G = G
+                        best_action = (r, o)
+            return best_action
+
+    def update_state(self, state, reward):
+        self.state_history.append((state, reward))
+
+    def learn(self):
+        target = 0
+
+        for state, reward in reversed(self.state_history):
+            self.G[state] = self.G.get(state, 0) + self.alpha * (target - self.G.get(state, 0))
+            target += reward
+
+        self.state_history = []
+        self.epsilon -= 10e-5
+
+    def compute_reward(self, state: Nim):
+        return 0 if state.goal() else -1
+
+    def get_possible_actions(self, state: Nim):
+        actions = []
+        for r, c in enumerate(state.rows):
+            for o in range(1, c+1):
+                actions.append((r, o))
+        return actions
+
+    def get_G(self, state: Nim, action: tuple):
+        return self.G.get((hash_list(state.rows), action), 0)
+
+    def battle(self, opponent, training=True):
+        player = 0
+        agent_wins = 0
+        for episode in range(rounds):
+            self.current_state = Nim(num_rows=self.num_rows)
+            while True:
+                if player == 0:
+                    action = self.get_action(self.current_state)
+                    self.current_state.nimming_remove(*action)
+                    reward = self.compute_reward(self.current_state)
+                    self.update_state(hash_list(self.current_state.rows), reward)
+                    player = 1
+                else:
+                    action = opponent(self.current_state)
+                    self.current_state.nimming_remove(*action)
+                    player = 0
+
+                if self.current_state.goal():
+                    logging.info("Player {} wins!".format(1 - player))
+                    break
+
+            winner = 1 - player
+            if winner == 0:
+                agent_wins += 1
+            # episodic learning
+            self.learn()
+
+            if episode % 1000 == 0:
+                logging.info("Win rate: {}".format(agent_wins / (episode + 1)))
+        if not training:
+            logging.info("Win rate: {}".format(agent_wins / rounds))

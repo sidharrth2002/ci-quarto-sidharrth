@@ -1,0 +1,117 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+  \PYG{k+kn}{from} \PYG{n+nn}{typing} \PYG{k+kn}{import} \PYG{n}{Callable}
+  \PYG{k+kn}{from} \PYG{n+nn}{helpers} \PYG{k+kn}{import} \PYG{n}{State}\PYG{p}{,} \PYG{n}{PriorityQueue}
+  \PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k}{as} \PYG{n+nn}{np}
+
+  \PYG{k}{class} \PYG{n+nc}{AStarSearch}\PYG{p}{:}
+      \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{N}\PYG{p}{,} \PYG{n}{seed}\PYG{o}{=}\PYG{l+m+mi}{42}\PYG{p}{):}
+          \PYG{c+c1}{\PYGZsh{} N is the number of elements to expect}
+          \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N} \PYG{o}{=} \PYG{n}{N}
+          \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{seed} \PYG{o}{=} \PYG{n}{seed}
+
+      \PYG{k}{def} \PYG{n+nf}{add\PYGZus{}to\PYGZus{}state}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{st}\PYG{p}{,} \PYG{n}{subset}\PYG{p}{):}
+          \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{          Unnecessary function to add a subset to a state because we are using the State class instead of a normal np.array}
+\PYG{l+s+sd}{          \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+          \PYG{n}{state\PYGZus{}list} \PYG{o}{=} \PYG{n}{st}\PYG{o}{.}\PYG{n}{copy\PYGZus{}data}\PYG{p}{()}\PYG{o}{.}\PYG{n}{tolist}\PYG{p}{()}
+          \PYG{n}{state\PYGZus{}list}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{subset}\PYG{p}{)}
+          \PYG{k}{return} \PYG{n}{State}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{asarray}\PYG{p}{(}\PYG{n}{state\PYGZus{}list}\PYG{p}{,} \PYG{n}{dtype}\PYG{o}{=}\PYG{n+nb}{object}\PYG{p}{))}
+
+      \PYG{k}{def} \PYG{n+nf}{are\PYGZus{}we\PYGZus{}done}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{state}\PYG{p}{):}
+          \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{          Check if we have reached the goal state (such that all elements are covered in range(N))}
+\PYG{l+s+sd}{          \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+          \PYG{n}{flattened\PYGZus{}list} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{flatten\PYGZus{}list}\PYG{p}{(}\PYG{n}{state}\PYG{o}{.}\PYG{n}{copy\PYGZus{}data}\PYG{p}{()}\PYG{o}{.}\PYG{n}{tolist}\PYG{p}{())}
+          \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{p}{):}
+              \PYG{k}{if} \PYG{n}{i} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n}{flattened\PYGZus{}list}\PYG{p}{:}
+                  \PYG{k}{return} \PYG{k+kc}{False}
+          \PYG{c+c1}{\PYGZsh{} print(\PYGZdq{}We are done\PYGZdq{})}
+          \PYG{k}{return} \PYG{k+kc}{True}
+
+      \PYG{k}{def} \PYG{n+nf}{flatten\PYGZus{}list}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{l}\PYG{p}{):}
+          \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{          Utility function to flatten a list of lists using itertools}
+\PYG{l+s+sd}{          \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+          \PYG{k}{return} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{itertools}\PYG{o}{.}\PYG{n}{chain}\PYG{o}{.}\PYG{n}{from\PYGZus{}iterable}\PYG{p}{(}\PYG{n}{l}\PYG{p}{))}
+
+      \PYG{k}{def} \PYG{n+nf}{h}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{state}\PYG{p}{):}
+          \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{          Heuristic Function h(n) = number of undiscovered elements}
+\PYG{l+s+sd}{          \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+          \PYG{n}{num\PYGZus{}undiscovered\PYGZus{}elements} \PYG{o}{=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb}{set}\PYG{p}{(}\PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{p}{))} \PYG{o}{\PYGZhy{}} \PYG{n+nb}{set}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{flatten\PYGZus{}list}\PYG{p}{(}\PYG{n}{state}\PYG{o}{.}\PYG{n}{copy\PYGZus{}data}\PYG{p}{()}\PYG{o}{.}\PYG{n}{tolist}\PYG{p}{())))}
+          \PYG{k}{return} \PYG{n}{num\PYGZus{}undiscovered\PYGZus{}elements}
+
+      \PYG{k}{def} \PYG{n+nf}{astar\PYGZus{}search}\PYG{p}{(}
+          \PYG{n+nb+bp}{self}\PYG{p}{,}
+          \PYG{n}{initial\PYGZus{}state}\PYG{p}{:} \PYG{n}{State}\PYG{p}{,}
+          \PYG{n}{subsets}\PYG{p}{:} \PYG{n+nb}{list}\PYG{p}{,}
+          \PYG{n}{parents}\PYG{p}{:} \PYG{n+nb}{dict}\PYG{p}{,}
+          \PYG{n}{cost\PYGZus{}of\PYGZus{}each\PYGZus{}state}\PYG{p}{:} \PYG{n+nb}{dict}\PYG{p}{,}
+          \PYG{n}{priority\PYGZus{}function}\PYG{p}{:} \PYG{n}{Callable}\PYG{p}{,}
+          \PYG{n}{unit\PYGZus{}cost}\PYG{p}{:} \PYG{n}{Callable}\PYG{p}{,}
+      \PYG{p}{):}
+          \PYG{n}{frontier} \PYG{o}{=} \PYG{n}{PriorityQueue}\PYG{p}{()}
+          \PYG{n}{parents}\PYG{o}{.}\PYG{n}{clear}\PYG{p}{()}
+          \PYG{n}{cost\PYGZus{}of\PYGZus{}each\PYGZus{}state}\PYG{o}{.}\PYG{n}{clear}\PYG{p}{()}
+
+          \PYG{n}{visited\PYGZus{}nodes} \PYG{o}{=} \PYG{l+m+mi}{1}
+          \PYG{n}{state} \PYG{o}{=} \PYG{n}{initial\PYGZus{}state}
+          \PYG{n}{parents}\PYG{p}{[}\PYG{n}{state}\PYG{p}{]} \PYG{o}{=} \PYG{k+kc}{None}
+          \PYG{n}{cost\PYGZus{}of\PYGZus{}each\PYGZus{}state}\PYG{p}{[}\PYG{n}{state}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}
+          \PYG{c+c1}{\PYGZsh{} to find length at the end without needed to flatten the state}
+          \PYG{n}{discovered\PYGZus{}elements} \PYG{o}{=} \PYG{p}{[]}
+
+          \PYG{k}{while} \PYG{n}{state} \PYG{o+ow}{is} \PYG{o+ow}{not} \PYG{k+kc}{None} \PYG{o+ow}{and} \PYG{o+ow}{not} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{are\PYGZus{}we\PYGZus{}done}\PYG{p}{(}\PYG{n}{state}\PYG{p}{):}
+              \PYG{k}{for} \PYG{n}{subset} \PYG{o+ow}{in} \PYG{n}{subsets}\PYG{p}{:}
+                  \PYG{c+c1}{\PYGZsh{} if this list has already been collected, skip}
+                  \PYG{k}{if} \PYG{n}{subset} \PYG{o+ow}{in} \PYG{n}{state}\PYG{o}{.}\PYG{n}{copy\PYGZus{}data}\PYG{p}{():}
+                      \PYG{c+c1}{\PYGZsh{} print(\PYGZdq{}Already in\PYGZdq{})}
+                      \PYG{k}{continue}
+                  \PYG{n}{new\PYGZus{}state} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{add\PYGZus{}to\PYGZus{}state}\PYG{p}{(}\PYG{n}{state}\PYG{p}{,} \PYG{n}{subset}\PYG{p}{)}
+                  \PYG{n}{state\PYGZus{}cost} \PYG{o}{=} \PYG{n}{unit\PYGZus{}cost}\PYG{p}{(}\PYG{n}{subset}\PYG{p}{)}
+                  \PYG{c+c1}{\PYGZsh{} if new\PYGZus{}state not in cost\PYGZus{}of\PYGZus{}each\PYGZus{}state or cost\PYGZus{}of\PYGZus{}each\PYGZus{}state[new\PYGZus{}state] \PYGZgt{} cost\PYGZus{}of\PYGZus{}each\PYGZus{}state[state] + state\PYGZus{}cost:}
+                  \PYG{k}{if} \PYG{n}{new\PYGZus{}state} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n}{cost\PYGZus{}of\PYGZus{}each\PYGZus{}state} \PYG{o+ow}{and} \PYG{n}{new\PYGZus{}state} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n}{frontier}\PYG{p}{:}
+                      \PYG{n}{parents}\PYG{p}{[}\PYG{n}{new\PYGZus{}state}\PYG{p}{]} \PYG{o}{=} \PYG{n}{state}
+                      \PYG{n}{cost\PYGZus{}of\PYGZus{}each\PYGZus{}state}\PYG{p}{[}\PYG{n}{new\PYGZus{}state}\PYG{p}{]} \PYG{o}{=} \PYG{n}{cost\PYGZus{}of\PYGZus{}each\PYGZus{}state}\PYG{p}{[}\PYG{n}{state}\PYG{p}{]} \PYG{o}{+} \PYG{n}{state\PYGZus{}cost}
+                      \PYG{n}{frontier}\PYG{o}{.}\PYG{n}{push}\PYG{p}{(}\PYG{n}{new\PYGZus{}state}\PYG{p}{,} \PYG{n}{p}\PYG{o}{=}\PYG{n}{priority\PYGZus{}function}\PYG{p}{(}\PYG{n}{new\PYGZus{}state}\PYG{p}{))}
+                  \PYG{k}{elif} \PYG{n}{new\PYGZus{}state} \PYG{o+ow}{in} \PYG{n}{frontier} \PYG{o+ow}{and} \PYG{n}{cost\PYGZus{}of\PYGZus{}each\PYGZus{}state}\PYG{p}{[}\PYG{n}{new\PYGZus{}state}\PYG{p}{]} \PYG{o}{\PYGZgt{}} \PYG{n}{cost\PYGZus{}of\PYGZus{}each\PYGZus{}state}\PYG{p}{[}\PYG{n}{state}\PYG{p}{]} \PYG{o}{+} \PYG{n}{state\PYGZus{}cost}\PYG{p}{:}
+                      \PYG{n}{parents}\PYG{p}{[}\PYG{n}{new\PYGZus{}state}\PYG{p}{]} \PYG{o}{=} \PYG{n}{state}
+                      \PYG{n}{cost\PYGZus{}of\PYGZus{}each\PYGZus{}state}\PYG{p}{[}\PYG{n}{new\PYGZus{}state}\PYG{p}{]} \PYG{o}{=} \PYG{n}{cost\PYGZus{}of\PYGZus{}each\PYGZus{}state}\PYG{p}{[}\PYG{n}{state}\PYG{p}{]} \PYG{o}{+} \PYG{n}{state\PYGZus{}cost}
+              \PYG{k}{if} \PYG{n}{frontier}\PYG{p}{:}
+                  \PYG{n}{state} \PYG{o}{=} \PYG{n}{frontier}\PYG{o}{.}\PYG{n}{pop}\PYG{p}{()}
+                  \PYG{n}{visited\PYGZus{}nodes} \PYG{o}{+=} \PYG{l+m+mi}{1}
+              \PYG{k}{else}\PYG{p}{:}
+                  \PYG{n}{state} \PYG{o}{=} \PYG{k+kc}{None}
+
+          \PYG{n}{path} \PYG{o}{=} \PYG{n+nb}{list}\PYG{p}{()}
+          \PYG{n}{s} \PYG{o}{=} \PYG{n}{state}
+
+          \PYG{k}{while} \PYG{n}{s}\PYG{p}{:}
+              \PYG{n}{path}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{s}\PYG{o}{.}\PYG{n}{copy\PYGZus{}data}\PYG{p}{())}
+              \PYG{n}{s} \PYG{o}{=} \PYG{n}{parents}\PYG{p}{[}\PYG{n}{s}\PYG{p}{]}
+
+          \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Length of final list: }\PYG{l+s+si}{\PYGZob{}}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{flatten\PYGZus{}list}\PYG{p}{(}\PYG{n}{path}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]))}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+          \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Found a solution in }\PYG{l+s+si}{\PYGZob{}}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{path}\PYG{p}{)}\PYG{l+s+si}{:}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ steps; visited }\PYG{l+s+si}{\PYGZob{}}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{cost\PYGZus{}of\PYGZus{}each\PYGZus{}state}\PYG{p}{)}\PYG{l+s+si}{:}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ states\PYGZdq{}}\PYG{p}{)}
+          \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Visited }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{visited\PYGZus{}nodes}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ nodes\PYGZdq{}}\PYG{p}{)}
+          \PYG{n+nb}{print}\PYG{p}{(}
+              \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}My solution for N=}\PYG{l+s+si}{\PYGZob{}}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{: w=}\PYG{l+s+si}{\PYGZob{}}\PYG{n+nb}{sum}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{\PYGZus{}}\PYG{p}{)} \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n}{path}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{])}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ (bloat=}\PYG{l+s+si}{\PYGZob{}}\PYG{p}{(}\PYG{n+nb}{sum}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{\PYGZus{}}\PYG{p}{)} \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n}{path}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{])}\PYG{o}{\PYGZhy{}}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{p}{)}\PYG{o}{/}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{o}{*}\PYG{l+m+mi}{100}\PYG{l+s+si}{:}\PYG{l+s+s2}{.0f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZpc{})\PYGZdq{}}
+          \PYG{p}{)}
+          \PYG{k}{return} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n+nb}{reversed}\PYG{p}{(}\PYG{n}{path}\PYG{p}{))}
+
+      \PYG{k}{def} \PYG{n+nf}{search}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{constant\PYGZus{}cost}\PYG{o}{=}\PYG{k+kc}{False}\PYG{p}{):}
+          \PYG{n}{GOAL} \PYG{o}{=} \PYG{n}{State}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{p}{)))}
+          \PYG{n}{subsets} \PYG{o}{=} \PYG{n}{problem}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{p}{,} \PYG{n}{seed}\PYG{o}{=}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{seed}\PYG{p}{)}
+          \PYG{n}{initial\PYGZus{}state} \PYG{o}{=} \PYG{n}{State}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{([}\PYG{n}{subsets}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]]))}
+
+          \PYG{n}{parents} \PYG{o}{=} \PYG{n+nb}{dict}\PYG{p}{()}
+          \PYG{n}{cost\PYGZus{}of\PYGZus{}each\PYGZus{}state} \PYG{o}{=} \PYG{n+nb}{dict}\PYG{p}{()}
+
+          \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{astar\PYGZus{}search}\PYG{p}{(}
+              \PYG{n}{initial\PYGZus{}state} \PYG{o}{=} \PYG{n}{initial\PYGZus{}state}\PYG{p}{,}
+              \PYG{n}{subsets} \PYG{o}{=} \PYG{n}{subsets}\PYG{p}{,}
+              \PYG{n}{parents} \PYG{o}{=} \PYG{n}{parents}\PYG{p}{,}
+              \PYG{n}{cost\PYGZus{}of\PYGZus{}each\PYGZus{}state} \PYG{o}{=} \PYG{n}{cost\PYGZus{}of\PYGZus{}each\PYGZus{}state}\PYG{p}{,}
+              \PYG{n}{priority\PYGZus{}function} \PYG{o}{=} \PYG{k}{lambda} \PYG{n}{state}\PYG{p}{:} \PYG{n}{cost\PYGZus{}of\PYGZus{}each\PYGZus{}state}\PYG{p}{[}\PYG{n}{state}\PYG{p}{]} \PYG{o}{+} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{h}\PYG{p}{(}\PYG{n}{state}\PYG{p}{),}
+              \PYG{n}{unit\PYGZus{}cost} \PYG{o}{=} \PYG{k}{lambda} \PYG{n}{subset}\PYG{p}{:} \PYG{l+m+mi}{1} \PYG{k}{if} \PYG{n}{constant\PYGZus{}cost} \PYG{k}{else} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{subset}\PYG{p}{)}
+          \PYG{p}{)}
+\end{Verbatim}

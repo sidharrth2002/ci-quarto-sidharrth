@@ -1,0 +1,6 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{k}{def} \PYG{o}{*}\PYG{n}{\PYGZus{}mutation}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{):}
+	\PYG{n}{modified\PYGZus{}genome} \PYG{o}{=} \PYG{n}{genome}\PYG{o}{.}\PYG{n}{copy}\PYG{p}{()}
+	\PYG{o}{...}
+	\PYG{k}{return} \PYG{n}{modified\PYGZus{}genome}
+\end{Verbatim}

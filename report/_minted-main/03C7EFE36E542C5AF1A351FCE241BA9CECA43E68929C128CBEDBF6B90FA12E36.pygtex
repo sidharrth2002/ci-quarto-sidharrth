@@ -1,0 +1,159 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+  \PYG{k}{class} \PYG{n+nc}{AStarSearchFullyConnectedGraph}\PYG{p}{:}
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{adjacency\PYGZus{}list}\PYG{p}{,} \PYG{n}{list\PYGZus{}values}\PYG{p}{,} \PYG{n}{N}\PYG{p}{):}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{adjacency\PYGZus{}list} \PYG{o}{=} \PYG{n}{adjacency\PYGZus{}list}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{list\PYGZus{}values} \PYG{o}{=} \PYG{n}{list\PYGZus{}values}
+        \PYG{n}{H} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{}}
+        \PYG{k}{for} \PYG{n}{key} \PYG{o+ow}{in} \PYG{n}{list\PYGZus{}values}\PYG{p}{:}
+            \PYG{c+c1}{\PYGZsh{} heuristic value is length of list}
+            \PYG{n}{H}\PYG{p}{[}\PYG{n}{key}\PYG{p}{]} \PYG{o}{=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{list\PYGZus{}values}\PYG{p}{[}\PYG{n}{key}\PYG{p}{])}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{H} \PYG{o}{=} \PYG{n}{H}
+        \PYG{c+c1}{\PYGZsh{} holds the lists of each visited node}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{final\PYGZus{}list} \PYG{o}{=} \PYG{p}{[]}
+        \PYG{c+c1}{\PYGZsh{} N is the count of elements that should be in the final list}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N} \PYG{o}{=} \PYG{n}{N}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{discovered\PYGZus{}elements} \PYG{o}{=} \PYG{n+nb}{set}\PYG{p}{()}
+
+    \PYG{k}{def} \PYG{n+nf}{flatten\PYGZus{}list}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{\PYGZus{}list}\PYG{p}{):}
+        \PYG{k}{return} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{itertools}\PYG{o}{.}\PYG{n}{chain}\PYG{o}{.}\PYG{n}{from\PYGZus{}iterable}\PYG{p}{(}\PYG{n}{\PYGZus{}list}\PYG{p}{))}
+
+    \PYG{k}{def} \PYG{n+nf}{get\PYGZus{}neighbors}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{v}\PYG{p}{):}
+        \PYG{k}{return} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{adjacency\PYGZus{}list}\PYG{p}{[}\PYG{n}{v}\PYG{p}{]}
+
+    \PYG{k}{def} \PYG{n+nf}{get\PYGZus{}number\PYGZus{}of\PYGZus{}elements\PYGZus{}not\PYGZus{}in\PYGZus{}second\PYGZus{}list}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{list1}\PYG{p}{,} \PYG{n}{list2}\PYG{p}{):}
+        \PYG{n}{count} \PYG{o}{=} \PYG{l+m+mi}{0}
+        \PYG{c+c1}{\PYGZsh{} flattened\PYGZus{}list = self.flatten\PYGZus{}list(list2)}
+        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{set}\PYG{p}{(}\PYG{n}{list1}\PYG{p}{):}
+            \PYG{c+c1}{\PYGZsh{} print(\PYGZdq{}i: \PYGZdq{}, i)}
+            \PYG{k}{if} \PYG{n}{i} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n}{list2}\PYG{p}{:}
+                \PYG{n}{count} \PYG{o}{+=} \PYG{l+m+mi}{1}
+        \PYG{c+c1}{\PYGZsh{} if count \PYGZgt{} 1:}
+        \PYG{c+c1}{\PYGZsh{}     print(\PYGZdq{}count: \PYGZdq{}, count)}
+        \PYG{k}{return} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb}{set}\PYG{p}{(}\PYG{n}{list1}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n+nb}{set}\PYG{p}{(}\PYG{n}{list2}\PYG{p}{))}
+
+    \PYG{c+c1}{\PYGZsh{} f(n) = h(n) + g(n)}
+
+    \PYG{k}{def} \PYG{n+nf}{h}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{n}\PYG{p}{):}
+        \PYG{n}{num\PYGZus{}new\PYGZus{}elements} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}number\PYGZus{}of\PYGZus{}elements\PYGZus{}not\PYGZus{}in\PYGZus{}second\PYGZus{}list}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{list\PYGZus{}values}\PYG{p}{[}\PYG{n}{n}\PYG{p}{],} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{discovered\PYGZus{}elements}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{} if self.list\PYGZus{}values[n] in self.final\PYGZus{}list:}
+        \PYG{c+c1}{\PYGZsh{}     return 1000}
+        \PYG{k}{return} \PYG{n}{num\PYGZus{}new\PYGZus{}elements}
+        \PYG{c+c1}{\PYGZsh{} return self.H[n] / (num\PYGZus{}new\PYGZus{}elements + 1)}
+
+    \PYG{k}{def} \PYG{n+nf}{get\PYGZus{}node\PYGZus{}with\PYGZus{}least\PYGZus{}h}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{n}{min\PYGZus{}h} \PYG{o}{=} \PYG{n+nb}{float}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}inf\PYGZdq{}}\PYG{p}{)}
+        \PYG{n}{min\PYGZus{}node} \PYG{o}{=} \PYG{k+kc}{None}
+        \PYG{k}{for} \PYG{n}{node} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{adjacency\PYGZus{}list}\PYG{p}{:}
+            \PYG{k}{if} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{h}\PYG{p}{(}\PYG{n}{node}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{n}{min\PYGZus{}h}\PYG{p}{:}
+                \PYG{n}{min\PYGZus{}h} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{h}\PYG{p}{(}\PYG{n}{node}\PYG{p}{)}
+                \PYG{n}{min\PYGZus{}node} \PYG{o}{=} \PYG{n}{node}
+        \PYG{k}{return} \PYG{n}{min\PYGZus{}node}
+
+    \PYG{k}{def} \PYG{n+nf}{get\PYGZus{}node\PYGZus{}with\PYGZus{}least\PYGZus{}h\PYGZus{}and\PYGZus{}not\PYGZus{}in\PYGZus{}final\PYGZus{}list}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{n}{min\PYGZus{}h} \PYG{o}{=} \PYG{n+nb}{float}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}inf\PYGZdq{}}\PYG{p}{)}
+        \PYG{n}{min\PYGZus{}node} \PYG{o}{=} \PYG{k+kc}{None}
+        \PYG{k}{for} \PYG{n}{node} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{adjacency\PYGZus{}list}\PYG{p}{:}
+            \PYG{k}{if} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{h}\PYG{p}{(}\PYG{n}{node}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{n}{min\PYGZus{}h} \PYG{o+ow}{and} \PYG{n}{node} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{final\PYGZus{}list}\PYG{p}{:}
+                \PYG{n}{min\PYGZus{}h} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{h}\PYG{p}{(}\PYG{n}{node}\PYG{p}{)}
+                \PYG{n}{min\PYGZus{}node} \PYG{o}{=} \PYG{n}{node}
+        \PYG{k}{return} \PYG{n}{min\PYGZus{}node}
+
+    \PYG{c+c1}{\PYGZsh{} visited\PYGZus{}node = [1, 2, 3]}
+    \PYG{c+c1}{\PYGZsh{} final\PYGZus{}list = [[4, 5], [1]]}
+    \PYG{k}{def} \PYG{n+nf}{are\PYGZus{}we\PYGZus{}done}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{c+c1}{\PYGZsh{} flattened\PYGZus{}list = list(itertools.chain.from\PYGZus{}iterable(self.final\PYGZus{}list))}
+        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{p}{):}
+            \PYG{k}{if} \PYG{n}{i} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{discovered\PYGZus{}elements}\PYG{p}{:}
+                \PYG{k}{return} \PYG{k+kc}{False}
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}We are done\PYGZdq{}}\PYG{p}{)}
+        \PYG{k}{return} \PYG{k+kc}{True}
+
+    \PYG{k}{def} \PYG{n+nf}{insert\PYGZus{}unique\PYGZus{}element\PYGZus{}into\PYGZus{}list}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{\PYGZus{}list}\PYG{p}{,} \PYG{n}{element}\PYG{p}{):}
+        \PYG{k}{if} \PYG{n}{element} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n}{\PYGZus{}list}\PYG{p}{:}
+            \PYG{n}{\PYGZus{}list}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{element}\PYG{p}{)}
+        \PYG{k}{return} \PYG{n}{\PYGZus{}list}
+
+    \PYG{k}{def} \PYG{n+nf}{a\PYGZus{}star\PYGZus{}algorithm}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{c+c1}{\PYGZsh{} start\PYGZus{}node is node with lowest cost}
+        \PYG{n}{start\PYGZus{}node} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}node\PYGZus{}with\PYGZus{}least\PYGZus{}h}\PYG{p}{()}
+
+        \PYG{n}{open\PYGZus{}list} \PYG{o}{=} \PYG{p}{[}\PYG{n}{start\PYGZus{}node}\PYG{p}{]}
+        \PYG{n}{closed\PYGZus{}list} \PYG{o}{=} \PYG{p}{[]}
+
+        \PYG{n}{g} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{}}
+
+        \PYG{n}{g}\PYG{p}{[}\PYG{n}{start\PYGZus{}node}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+        \PYG{n}{parents} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{}}
+        \PYG{n}{parents}\PYG{p}{[}\PYG{n}{start\PYGZus{}node}\PYG{p}{]} \PYG{o}{=} \PYG{n}{start\PYGZus{}node}
+
+        \PYG{k}{while} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{open\PYGZus{}list}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{:}
+            \PYG{n}{n} \PYG{o}{=} \PYG{k+kc}{None}
+
+            \PYG{c+c1}{\PYGZsh{} find a node with the highest value of f() \PYGZhy{} evaluation function}
+            \PYG{k}{for} \PYG{n}{v} \PYG{o+ow}{in} \PYG{n}{open\PYGZus{}list}\PYG{p}{:}
+                \PYG{k}{if} \PYG{n}{n} \PYG{o}{==} \PYG{k+kc}{None} \PYG{o+ow}{or} \PYG{n}{g}\PYG{p}{[}\PYG{n}{v}\PYG{p}{]} \PYG{o}{+} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{h}\PYG{p}{(}\PYG{n}{v}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{n}{g}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]} \PYG{o}{+} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{h}\PYG{p}{(}\PYG{n}{n}\PYG{p}{):}
+                    \PYG{n}{n} \PYG{o}{=} \PYG{n}{v}\PYG{p}{;}
+
+            \PYG{k}{if} \PYG{n}{n} \PYG{o}{==} \PYG{k+kc}{None}\PYG{p}{:}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Path does not exist!\PYGZsq{}}\PYG{p}{)}
+                \PYG{k}{return} \PYG{k+kc}{None}
+
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Visiting node: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{n}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{final\PYGZus{}list}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{list\PYGZus{}values}\PYG{p}{[}\PYG{n}{n}\PYG{p}{])}
+            \PYG{c+c1}{\PYGZsh{} self.discovered\PYGZus{}elements.union(self.list\PYGZus{}values[n])}
+            \PYG{c+c1}{\PYGZsh{} add list\PYGZus{}values[n] to discovered\PYGZus{}elements}
+            \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{list\PYGZus{}values}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]:}
+                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{discovered\PYGZus{}elements}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{discovered\PYGZus{}elements}\PYG{p}{))}
+
+            \PYG{c+c1}{\PYGZsh{} if the current node is the stop\PYGZus{}node}
+            \PYG{c+c1}{\PYGZsh{} then we begin reconstructin the path from it to the start\PYGZus{}node}
+            \PYG{k}{if} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{are\PYGZus{}we\PYGZus{}done}\PYG{p}{():}
+                \PYG{n}{reconst\PYGZus{}path} \PYG{o}{=} \PYG{p}{[]}
+
+                \PYG{k}{while} \PYG{n}{parents}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]} \PYG{o}{!=} \PYG{n}{n}\PYG{p}{:}
+                    \PYG{n}{reconst\PYGZus{}path}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{n}\PYG{p}{)}
+                    \PYG{n}{n} \PYG{o}{=} \PYG{n}{parents}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]}
+
+                \PYG{n}{reconst\PYGZus{}path}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{start\PYGZus{}node}\PYG{p}{)}
+
+                \PYG{n}{reconst\PYGZus{}path}\PYG{o}{.}\PYG{n}{reverse}\PYG{p}{()}
+
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Number of elements in final list: }\PYG{l+s+si}{\PYGZob{}}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{flatten\PYGZus{}list}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{final\PYGZus{}list}\PYG{p}{))}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Path found: }\PYG{l+s+si}{\PYGZob{}\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{o}{.}\PYG{n}{format}\PYG{p}{(}\PYG{n}{reconst\PYGZus{}path}\PYG{p}{))}
+                \PYG{n+nb}{print}\PYG{p}{(}
+                    \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}My solution for N=}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{N}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{: w=}\PYG{l+s+si}{\PYGZob{}}\PYG{n+nb}{sum}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{\PYGZus{}}\PYG{p}{)} \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{final\PYGZus{}list}\PYG{p}{)}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ (bloat=}\PYG{l+s+si}{\PYGZob{}}\PYG{p}{(}\PYG{n+nb}{sum}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{\PYGZus{}}\PYG{p}{)} \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{final\PYGZus{}list}\PYG{p}{)}\PYG{o}{\PYGZhy{}}\PYG{n}{N}\PYG{p}{)}\PYG{o}{/}\PYG{n}{N}\PYG{o}{*}\PYG{l+m+mi}{100}\PYG{l+s+si}{:}\PYG{l+s+s2}{.0f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZpc{})\PYGZdq{}}
+                \PYG{p}{)}
+                \PYG{k}{return} \PYG{n}{reconst\PYGZus{}path}
+
+            \PYG{c+c1}{\PYGZsh{} for all neighbors of the current node do}
+            \PYG{k}{for} \PYG{p}{(}\PYG{n}{m}\PYG{p}{,} \PYG{n}{weight}\PYG{p}{)} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}neighbors}\PYG{p}{(}\PYG{n}{n}\PYG{p}{):}
+                \PYG{n}{values} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{list\PYGZus{}values}\PYG{p}{[}\PYG{n}{m}\PYG{p}{]}
+                \PYG{k}{if} \PYG{n}{m} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n}{open\PYGZus{}list} \PYG{o+ow}{and} \PYG{n}{m} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n}{closed\PYGZus{}list}\PYG{p}{:}
+                    \PYG{c+c1}{\PYGZsh{} open\PYGZus{}list.add(m)}
+                    \PYG{n}{open\PYGZus{}list} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{insert\PYGZus{}unique\PYGZus{}element\PYGZus{}into\PYGZus{}list}\PYG{p}{(}\PYG{n}{open\PYGZus{}list}\PYG{p}{,} \PYG{n}{m}\PYG{p}{)}
+                    \PYG{c+c1}{\PYGZsh{} sort open\PYGZus{}list by self.h}
+                    \PYG{n}{open\PYGZus{}list} \PYG{o}{=} \PYG{n+nb}{sorted}\PYG{p}{(}\PYG{n}{open\PYGZus{}list}\PYG{p}{,} \PYG{n}{key}\PYG{o}{=}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{h}\PYG{p}{)}
+                    \PYG{n}{parents}\PYG{p}{[}\PYG{n}{m}\PYG{p}{]} \PYG{o}{=} \PYG{n}{n}
+                    \PYG{n}{g}\PYG{p}{[}\PYG{n}{m}\PYG{p}{]} \PYG{o}{=} \PYG{n}{g}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]} \PYG{o}{+} \PYG{n}{weight}
+
+                \PYG{k}{else}\PYG{p}{:}
+                    \PYG{k}{if} \PYG{n}{g}\PYG{p}{[}\PYG{n}{m}\PYG{p}{]} \PYG{o}{+} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{h}\PYG{p}{(}\PYG{n}{m}\PYG{p}{)} \PYG{o}{\PYGZgt{}} \PYG{n}{g}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]} \PYG{o}{+} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{h}\PYG{p}{(}\PYG{n}{n}\PYG{p}{)} \PYG{o}{+} \PYG{n}{weight}\PYG{p}{:}
+                        \PYG{n}{g}\PYG{p}{[}\PYG{n}{m}\PYG{p}{]} \PYG{o}{=} \PYG{n}{g}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]} \PYG{o}{+} \PYG{n}{weight}
+                        \PYG{n}{parents}\PYG{p}{[}\PYG{n}{m}\PYG{p}{]} \PYG{o}{=} \PYG{n}{n}
+
+                        \PYG{c+c1}{\PYGZsh{} if m in closed\PYGZus{}list:}
+                        \PYG{c+c1}{\PYGZsh{}     closed\PYGZus{}list.remove(m)}
+                        \PYG{c+c1}{\PYGZsh{}     \PYGZsh{} open\PYGZus{}list.add(m)}
+                        \PYG{c+c1}{\PYGZsh{}     open\PYGZus{}list = self.insert\PYGZus{}unique\PYGZus{}element\PYGZus{}into\PYGZus{}list(open\PYGZus{}list, m)}
+                        \PYG{c+c1}{\PYGZsh{}     open\PYGZus{}list = sorted(open\PYGZus{}list, key=self.h)}
+
+
+            \PYG{n}{open\PYGZus{}list}\PYG{o}{.}\PYG{n}{remove}\PYG{p}{(}\PYG{n}{n}\PYG{p}{)}
+            \PYG{n}{open\PYGZus{}list} \PYG{o}{=} \PYG{n+nb}{sorted}\PYG{p}{(}\PYG{n}{open\PYGZus{}list}\PYG{p}{,} \PYG{n}{key}\PYG{o}{=}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{h}\PYG{p}{)}
+            \PYG{n}{closed\PYGZus{}list} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{insert\PYGZus{}unique\PYGZus{}element\PYGZus{}into\PYGZus{}list}\PYG{p}{(}\PYG{n}{closed\PYGZus{}list}\PYG{p}{,} \PYG{n}{n}\PYG{p}{)}
+
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Path does not exist!\PYGZsq{}}\PYG{p}{)}
+        \PYG{k}{return} \PYG{k+kc}{None}
+\end{Verbatim}

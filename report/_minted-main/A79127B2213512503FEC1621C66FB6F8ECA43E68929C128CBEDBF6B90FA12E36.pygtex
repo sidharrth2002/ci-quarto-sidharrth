@@ -1,0 +1,106 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{c+c1}{\PYGZsh{} 3.2: Agent Using Evolved Rules (Randomly Chooses Between Strategies Based on Probabilities)}
+    \PYG{k+kn}{from} \PYG{n+nn}{itertools} \PYG{k+kn}{import} \PYG{n}{accumulate}
+    \PYG{k+kn}{from} \PYG{n+nn}{operator} \PYG{k+kn}{import} \PYG{n}{xor}
+    \PYG{k+kn}{import} \PYG{n+nn}{random}
+    \PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k}{as} \PYG{n+nn}{np}
+
+    \PYG{k+kn}{from} \PYG{n+nn}{lib} \PYG{k+kn}{import} \PYG{n}{Nim}
+
+    \PYG{k}{class} \PYG{n+nc}{EvolvedAgent1}\PYG{p}{:}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Plays Nim using a set of rules that are evolved}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{num\PYGZus{}moves} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+        \PYG{k}{def} \PYG{n+nf}{nim\PYGZus{}sum}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{nim}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{):}
+            \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{            Returns the nim sum of the current game board}
+\PYG{l+s+sd}{            by taking an XOR of all the rows.}
+\PYG{l+s+sd}{            Ideally, agent should try to leave nim sum of 0 at the end of turn}
+\PYG{l+s+sd}{            \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+            \PYG{o}{*}\PYG{n}{\PYGZus{}}\PYG{p}{,} \PYG{n}{result} \PYG{o}{=} \PYG{n}{accumulate}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{,} \PYG{n}{xor}\PYG{p}{)}
+            \PYG{k}{return} \PYG{n}{result}
+
+        \PYG{k}{def} \PYG{n+nf}{play\PYGZus{}nim}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{nim}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{,} \PYG{n}{prob\PYGZus{}list}\PYG{p}{:} \PYG{n+nb}{list}\PYG{p}{):}
+            \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{            GA can choose between the following strategies:}
+\PYG{l+s+sd}{            1. Randomly pick any row and any number of elements from that row}
+\PYG{l+s+sd}{            2. Pick the shortest row}
+\PYG{l+s+sd}{            3. Pick the longest row}
+\PYG{l+s+sd}{            4. Pick based on the nim\PYGZhy{}sum of the current game board}
+\PYG{l+s+sd}{            \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+            \PYG{n}{all\PYGZus{}possible\PYGZus{}moves} \PYG{o}{=} \PYG{p}{[(}\PYG{n}{r}\PYG{p}{,} \PYG{n}{o}\PYG{p}{)} \PYG{k}{for} \PYG{n}{r}\PYG{p}{,} \PYG{n}{c} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)} \PYG{k}{for} \PYG{n}{o} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{c}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{)]}
+            \PYG{n}{strategies} \PYG{o}{=} \PYG{p}{\PYGZob{}}
+                \PYG{l+s+s1}{\PYGZsq{}nim\PYGZus{}sum\PYGZsq{}}\PYG{p}{:} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{([}\PYG{n}{move} \PYG{k}{for} \PYG{n}{move} \PYG{o+ow}{in} \PYG{n}{all\PYGZus{}possible\PYGZus{}moves} \PYG{k}{if} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{nim\PYGZus{}sum}\PYG{p}{(}\PYG{n}{deepcopy}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{)}\PYG{o}{.}\PYG{n}{nimming\PYGZus{}remove}\PYG{p}{(}\PYG{o}{*}\PYG{n}{move}\PYG{p}{))} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{]),}
+                \PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{:} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{all\PYGZus{}possible\PYGZus{}moves}\PYG{p}{),}
+                \PYG{l+s+s1}{\PYGZsq{}all\PYGZus{}elements\PYGZus{}shortest\PYGZus{}row\PYGZsq{}}\PYG{p}{:} \PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{o}{.}\PYG{n}{index}\PYG{p}{(}\PYG{n+nb}{min}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)),} \PYG{n+nb}{min}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)),}
+                \PYG{l+s+s1}{\PYGZsq{}1\PYGZus{}element\PYGZus{}shortest\PYGZus{}row\PYGZsq{}}\PYG{p}{:} \PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{o}{.}\PYG{n}{index}\PYG{p}{(}\PYG{n+nb}{min}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)),} \PYG{l+m+mi}{1}\PYG{p}{),}
+                \PYG{l+s+s1}{\PYGZsq{}random\PYGZus{}element\PYGZus{}shortest\PYGZus{}row\PYGZsq{}}\PYG{p}{:} \PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{o}{.}\PYG{n}{index}\PYG{p}{(}\PYG{n+nb}{min}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)),} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n+nb}{min}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{))),}
+                \PYG{l+s+s1}{\PYGZsq{}all\PYGZus{}elements\PYGZus{}longest\PYGZus{}row\PYGZsq{}}\PYG{p}{:} \PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{o}{.}\PYG{n}{index}\PYG{p}{(}\PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)),} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)),}
+                \PYG{l+s+s1}{\PYGZsq{}1\PYGZus{}element\PYGZus{}longest\PYGZus{}row\PYGZsq{}}\PYG{p}{:} \PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{o}{.}\PYG{n}{index}\PYG{p}{(}\PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)),} \PYG{l+m+mi}{1}\PYG{p}{),}
+                \PYG{l+s+s1}{\PYGZsq{}random\PYGZus{}element\PYGZus{}longest\PYGZus{}row\PYGZsq{}}\PYG{p}{:} \PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{o}{.}\PYG{n}{index}\PYG{p}{(}\PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)),} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{))),}
+            \PYG{p}{\PYGZcb{}}
+
+            \PYG{n}{p} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()}
+            \PYG{n}{strategy} \PYG{o}{=} \PYG{k+kc}{None}
+            \PYG{k}{if} \PYG{n}{p} \PYG{o}{\PYGZlt{}} \PYG{n}{prob\PYGZus{}list}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]:}
+                \PYG{n}{strategy} \PYG{o}{=} \PYG{n}{strategies}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{]}
+            \PYG{k}{elif} \PYG{n}{p} \PYG{o}{\PYGZgt{}=} \PYG{n}{prob\PYGZus{}list}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o+ow}{and} \PYG{n}{p} \PYG{o}{\PYGZlt{}} \PYG{n}{prob\PYGZus{}list}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]:}
+                \PYG{n}{strategy} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{([}\PYG{n}{strategies}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}all\PYGZus{}elements\PYGZus{}shortest\PYGZus{}row\PYGZsq{}}\PYG{p}{],} \PYG{n}{strategies}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}1\PYGZus{}element\PYGZus{}shortest\PYGZus{}row\PYGZsq{}}\PYG{p}{],} \PYG{n}{strategies}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}random\PYGZus{}element\PYGZus{}shortest\PYGZus{}row\PYGZsq{}}\PYG{p}{]])}
+            \PYG{k}{elif} \PYG{n}{p} \PYG{o}{\PYGZgt{}=} \PYG{n}{prob\PYGZus{}list}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o+ow}{and} \PYG{n}{p} \PYG{o}{\PYGZlt{}} \PYG{n}{prob\PYGZus{}list}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]:}
+                \PYG{n}{strategy} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{([}\PYG{n}{strategies}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}all\PYGZus{}elements\PYGZus{}longest\PYGZus{}row\PYGZsq{}}\PYG{p}{],} \PYG{n}{strategies}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}1\PYGZus{}element\PYGZus{}longest\PYGZus{}row\PYGZsq{}}\PYG{p}{],} \PYG{n}{strategies}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}random\PYGZus{}element\PYGZus{}longest\PYGZus{}row\PYGZsq{}}\PYG{p}{]])}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{n}{strategy} \PYG{o}{=} \PYG{n}{strategies}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}nim\PYGZus{}sum\PYGZsq{}}\PYG{p}{]}
+
+            \PYG{n}{nim}\PYG{o}{.}\PYG{n}{nimming\PYGZus{}remove}\PYG{p}{(}\PYG{o}{*}\PYG{n}{strategy}\PYG{p}{)}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{num\PYGZus{}moves} \PYG{o}{+=} \PYG{l+m+mi}{1}
+            \PYG{k}{return} \PYG{n+nb}{sum}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)}
+
+        \PYG{k}{def} \PYG{n+nf}{play}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{nim}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{):}
+            \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{            Play the game of Nim using the evolved rules}
+\PYG{l+s+sd}{            \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+            \PYG{n}{prob\PYGZus{}list} \PYG{o}{=} \PYG{p}{[}\PYG{l+m+mf}{0.25}\PYG{p}{,} \PYG{l+m+mf}{0.5}\PYG{p}{,} \PYG{l+m+mf}{0.75}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{]}
+            \PYG{n}{prob\PYGZus{}list} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{evolve\PYGZus{}probabilities}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{,} \PYG{n}{prob\PYGZus{}list}\PYG{p}{,} \PYG{l+m+mi}{20}\PYG{p}{,} \PYG{l+m+mi}{5}\PYG{p}{)}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{play\PYGZus{}nim}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{,} \PYG{n}{prob\PYGZus{}list}\PYG{p}{)}
+
+        \PYG{k}{def} \PYG{n+nf}{crossover}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{p1}\PYG{p}{,} \PYG{n}{p2}\PYG{p}{):}
+            \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{            Crossover between two parents}
+\PYG{l+s+sd}{            \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+            \PYG{k}{return} \PYG{n}{np}\PYG{o}{.}\PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{p1} \PYG{o}{+} \PYG{n}{p2}\PYG{p}{,} \PYG{n}{size}\PYG{o}{=}\PYG{l+m+mi}{4}\PYG{p}{,} \PYG{n}{replace}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{)}
+
+        \PYG{k}{def} \PYG{n+nf}{evolve\PYGZus{}probabilities}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{nim}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{,} \PYG{n}{prob\PYGZus{}list}\PYG{p}{:} \PYG{n+nb}{list}\PYG{p}{,} \PYG{n}{num\PYGZus{}generations}\PYG{p}{:} \PYG{n+nb}{int}\PYG{p}{,} \PYG{n}{num\PYGZus{}children}\PYG{p}{:} \PYG{n+nb}{int}\PYG{p}{):}
+            \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{            Evolve the probabilities of the strategies}
+\PYG{l+s+sd}{            \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+            \PYG{c+c1}{\PYGZsh{} create initial population}
+            \PYG{n}{population} \PYG{o}{=} \PYG{p}{[}\PYG{n}{prob\PYGZus{}list} \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{num\PYGZus{}children}\PYG{p}{)]}
+            \PYG{c+c1}{\PYGZsh{} create initial fitness scores}
+            \PYG{n}{fitness\PYGZus{}scores} \PYG{o}{=} \PYG{p}{[}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{play}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{,} \PYG{n}{p}\PYG{p}{)} \PYG{k}{for} \PYG{n}{p} \PYG{o+ow}{in} \PYG{n}{population}\PYG{p}{]}
+            \PYG{c+c1}{\PYGZsh{} create initial parents}
+            \PYG{n}{parents} \PYG{o}{=} \PYG{p}{[}\PYG{n}{population}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n}{np}\PYG{o}{.}\PYG{n}{argsort}\PYG{p}{(}\PYG{n}{fitness\PYGZus{}scores}\PYG{p}{)[:}\PYG{l+m+mi}{2}\PYG{p}{]]}
+            \PYG{c+c1}{\PYGZsh{} create new population}
+            \PYG{n}{new\PYGZus{}population} \PYG{o}{=} \PYG{p}{[]}
+            \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{num\PYGZus{}generations}\PYG{p}{):}
+                \PYG{c+c1}{\PYGZsh{} create children}
+                \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{num\PYGZus{}children}\PYG{p}{):}
+                    \PYG{n}{p1} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{parents}\PYG{p}{)}
+                    \PYG{n}{p2} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{parents}\PYG{p}{)}
+                    \PYG{n}{child} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{crossover}\PYG{p}{(}\PYG{n}{p1}\PYG{p}{,} \PYG{n}{p2}\PYG{p}{)}
+                    \PYG{c+c1}{\PYGZsh{} child = []}
+                    \PYG{c+c1}{\PYGZsh{} for i in range(len(parents[0])):}
+                    \PYG{c+c1}{\PYGZsh{}     \PYGZsh{} crossover between parents}
+
+                    \PYG{c+c1}{\PYGZsh{}     child.append(random.choice(parents)[i])}
+                    \PYG{n}{new\PYGZus{}population}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{child}\PYG{p}{)}
+                \PYG{c+c1}{\PYGZsh{} create fitness scores}
+                \PYG{n}{fitness\PYGZus{}scores} \PYG{o}{=} \PYG{p}{[}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{play\PYGZus{}nim}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{,} \PYG{n}{p}\PYG{p}{)} \PYG{k}{for} \PYG{n}{p} \PYG{o+ow}{in} \PYG{n}{new\PYGZus{}population}\PYG{p}{]}
+                \PYG{c+c1}{\PYGZsh{} create new parents}
+                \PYG{n}{parents} \PYG{o}{=} \PYG{p}{[}\PYG{n}{new\PYGZus{}population}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n}{np}\PYG{o}{.}\PYG{n}{argsort}\PYG{p}{(}\PYG{n}{fitness\PYGZus{}scores}\PYG{p}{)[:}\PYG{l+m+mi}{2}\PYG{p}{]]}
+                \PYG{c+c1}{\PYGZsh{} create new population}
+                \PYG{n}{new\PYGZus{}population} \PYG{o}{=} \PYG{p}{[]}
+            \PYG{k}{return} \PYG{n}{parents}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}
+\end{Verbatim}

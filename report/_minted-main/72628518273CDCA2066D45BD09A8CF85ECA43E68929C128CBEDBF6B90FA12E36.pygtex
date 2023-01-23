@@ -1,0 +1,5 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{n}{genome} \PYG{o}{=} \PYG{n}{mutation}\PYG{p}{(}\PYG{n}{parent}\PYG{o}{.}\PYG{n}{genome}\PYG{p}{)}
+    \PYG{n}{child} \PYG{o}{=} \PYG{n}{Individual}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{,} \PYG{n}{calculate\PYGZus{}fitness}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{))}
+    
+\end{Verbatim}

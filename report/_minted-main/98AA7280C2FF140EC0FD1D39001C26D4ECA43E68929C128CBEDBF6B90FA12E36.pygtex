@@ -1,0 +1,5 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{NUM\PYGZus{}GENERATIONS}\PYG{p}{):}
+    \PYG{c+c1}{\PYGZsh{} create offspring}
+    \PYG{n}{offspring} \PYG{o}{=} \PYG{p}{[}\PYG{n}{generate}\PYG{p}{(}\PYG{n}{initial\PYGZus{}population}\PYG{p}{,} \PYG{n}{i}\PYG{p}{)} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{OFFSPRING\PYGZus{}SIZE}\PYG{p}{)]}
+\end{Verbatim}

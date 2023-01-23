@@ -1,0 +1,28 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{def} \PYG{n+nf}{set\PYGZus{}covering\PYGZus{}problem\PYGZus{}greedy}\PYG{p}{(}\PYG{n}{N}\PYG{p}{,} \PYG{n}{subsets}\PYG{p}{,} \PYG{n}{costs}\PYG{p}{):}
+  \PYG{n}{cost} \PYG{o}{=} \PYG{l+m+mi}{0}
+  \PYG{n}{visited\PYGZus{}nodes} \PYG{o}{=} \PYG{l+m+mi}{0}
+  \PYG{n}{already\PYGZus{}discovered} \PYG{o}{=} \PYG{n+nb}{set}\PYG{p}{()}
+  \PYG{n}{final\PYGZus{}solution} \PYG{o}{=} \PYG{p}{[]}
+  \PYG{n}{expected\PYGZus{}solution} \PYG{o}{=} \PYG{n+nb}{set}\PYG{p}{(}\PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{itertools}\PYG{o}{.}\PYG{n}{chain}\PYG{p}{(}\PYG{o}{*}\PYG{n}{subsets}\PYG{p}{)))}
+  \PYG{n}{covered} \PYG{o}{=} \PYG{n+nb}{set}\PYG{p}{()}
+  \PYG{k}{while} \PYG{n}{covered} \PYG{o}{!=} \PYG{n}{expected\PYGZus{}solution}\PYG{p}{:}
+      \PYG{n}{subset} \PYG{o}{=} \PYG{n+nb}{min}\PYG{p}{(}\PYG{n}{subsets}\PYG{p}{,} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{s}\PYG{p}{:} \PYG{n}{costs}\PYG{p}{[}\PYG{n}{subsets}\PYG{o}{.}\PYG{n}{index}\PYG{p}{(}\PYG{n}{s}\PYG{p}{)]} \PYG{o}{/} \PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb}{set}\PYG{p}{(}\PYG{n}{s}\PYG{p}{)}\PYG{o}{\PYGZhy{}}\PYG{n}{covered}\PYG{p}{)} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{))}
+      \PYG{n}{final\PYGZus{}solution}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{subset}\PYG{p}{)}
+      \PYG{n}{cost} \PYG{o}{+=} \PYG{n}{costs}\PYG{p}{[}\PYG{n}{subsets}\PYG{o}{.}\PYG{n}{index}\PYG{p}{(}\PYG{n}{subset}\PYG{p}{)]}
+      \PYG{n}{visited\PYGZus{}nodes} \PYG{o}{=} \PYG{n}{visited\PYGZus{}nodes}\PYG{o}{+}\PYG{l+m+mi}{1}
+      \PYG{n}{covered} \PYG{o}{|=} \PYG{n+nb}{set}\PYG{p}{(}\PYG{n}{subset}\PYG{p}{)}
+  \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}NUMBER OF VISITED NODES: \PYGZdq{}}\PYG{p}{,} \PYG{n}{visited\PYGZus{}nodes}\PYG{p}{)}
+  \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}w: \PYGZdq{}}\PYG{p}{,} \PYG{n+nb}{sum}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{\PYGZus{}}\PYG{p}{)} \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n}{final\PYGZus{}solution}\PYG{p}{))}
+  \PYG{n+nb}{print}\PYG{p}{(}
+      \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Naive greedy solution for N=}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{N}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{: w=}\PYG{l+s+si}{\PYGZob{}}\PYG{n+nb}{sum}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{\PYGZus{}}\PYG{p}{)} \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n}{final\PYGZus{}solution}\PYG{p}{)}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ (bloat=}\PYG{l+s+si}{\PYGZob{}}\PYG{p}{(}\PYG{n+nb}{sum}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{\PYGZus{}}\PYG{p}{)} \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n}{final\PYGZus{}solution}\PYG{p}{)}\PYG{o}{\PYGZhy{}}\PYG{n}{N}\PYG{p}{)}\PYG{o}{/}\PYG{n}{N}\PYG{o}{*}\PYG{l+m+mi}{100}\PYG{l+s+si}{:}\PYG{l+s+s2}{.0f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZpc{})\PYGZdq{}}
+  \PYG{p}{)}
+  \PYG{n+nb}{print}\PYG{p}{(}
+      \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}My solution for N=}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{N}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{: w=}\PYG{l+s+si}{\PYGZob{}}\PYG{n+nb}{sum}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{\PYGZus{}}\PYG{p}{)} \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n}{final\PYGZus{}solution}\PYG{p}{)}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ (bloat=}\PYG{l+s+si}{\PYGZob{}}\PYG{p}{(}\PYG{n+nb}{sum}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{\PYGZus{}}\PYG{p}{)} \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n}{final\PYGZus{}solution}\PYG{p}{)}\PYG{o}{\PYGZhy{}}\PYG{n}{N}\PYG{p}{)}\PYG{o}{/}\PYG{n}{N}\PYG{o}{*}\PYG{l+m+mi}{100}\PYG{l+s+si}{:}\PYG{l+s+s2}{.0f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZpc{})\PYGZdq{}}
+  \PYG{p}{)}
+  \PYG{k}{return} \PYG{n}{final\PYGZus{}solution}\PYG{p}{,} \PYG{n}{cost}
+
+  \PYG{k}{for} \PYG{n}{n} \PYG{o+ow}{in} \PYG{p}{[}\PYG{l+m+mi}{5}\PYG{p}{,} \PYG{l+m+mi}{10}\PYG{p}{,} \PYG{l+m+mi}{50}\PYG{p}{,} \PYG{l+m+mi}{100}\PYG{p}{,} \PYG{l+m+mi}{500}\PYG{p}{,} \PYG{l+m+mi}{1000}\PYG{p}{]:}
+    \PYG{n}{subsets} \PYG{o}{=} \PYG{n}{problem}\PYG{p}{(}\PYG{n}{n}\PYG{p}{,} \PYG{n}{seed}\PYG{o}{=}\PYG{n}{SEED}\PYG{p}{)}
+    \PYG{n}{set\PYGZus{}covering\PYGZus{}problem\PYGZus{}greedy}\PYG{p}{(}\PYG{n}{n}\PYG{p}{,} \PYG{n}{subsets}\PYG{p}{,} \PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]}\PYG{o}{*}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{subsets}\PYG{p}{))}
+\end{Verbatim}

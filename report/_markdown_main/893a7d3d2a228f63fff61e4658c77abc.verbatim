@@ -1,0 +1,14 @@
+rule_strategy = {
+    "one_pile": 2,
+    "two_piles": 3,
+    "three_piles": 3,
+    "n_piles": 4
+}
+
+# after mutation / crossover
+rule_strategy = {
+    "one_pile": 3,
+    "two_piles": 2,
+    "three_piles": 3,
+    "n_piles": 4
+}

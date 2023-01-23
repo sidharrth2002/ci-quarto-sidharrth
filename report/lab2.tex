@@ -1,0 +1,87 @@
+%!TEX ROOT = main.tex
+
+\section{Lab 2}
+
+\subsection{Solution}
+
+\subsection{Results}
+
+\subsection{Received Reviews}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,code={\singlespacing}]
+    s295103
+    \tcblower
+    Your commitment to this lab can be seen from all the approaches you implemented and tested.
+    My only issue is with the plateau detection function that is bound to always return False in that implementation.
+    Also a suggestion: try to enforce the constraint that all individuals' genome must be a solution with full set cover; in this way you'll vastly reduce the search space.
+\end{tcolorbox}
+
+  \begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,code={\singlespacing}]
+    s295103
+    \tcblower
+
+  Design considerations
+  - Overall good solution, nice work trying multiple parent selection functions, different fitness functions, and using multiple mutation functions
+
+  Implementation considerations
+  - After calling the problem() function it is necessary to reset the seed to a random value using `random.seed()` otherways all runs will always use 42 as seed value, so they won't be truly random
+
+  \begin{mintedbox}{python}
+    def flip_mutation(genome, mutate_only_one_element=False): is never called with mutate_only_one_element=True
+    genome = mutation(parent.genome)
+    child = Individual(parent, calculate_fitness(parent))
+  \end{mintedbox}
+
+  should substituted by
+
+  \begin{mintedbox}{python}
+    genome = mutation(parent.genome)
+    child = Individual(genome, calculate_fitness(genome))
+    \end{mintedbox}
+
+    for the mutation to have effect, since in every mutation you do
+
+    \begin{mintedbox}{python}
+
+    def *_mutation(genome):
+	modified_genome = genome.copy()
+	...
+	return modified_genome
+\end{mintedbox}
+
+\begin{mintedbox}{python}
+    initial_population = sorted(initial_population, key=lambda x: x.fitness, reverse=True)[:POPULATION_SIZE]
+fittest_offspring = max(initial_population, key=lambda x: x.fitness)
+\end{mintedbox}
+
+can become
+
+\begin{mintedbox}{python}
+initial_population = sorted(initial_population, key=lambda x: x.fitness, reverse=True)[:POPULATION_SIZE]
+fittest_offspring = initial_population[0]
+\end{mintedbox}
+
+  so that you don't need to search for the max in the list you just sorted
+  - The README and the important parts of the code are very clean and structured, but there are some comments, unused functions, an unfinished function, and other parts of the file that can be cleaned up a little
+\end{tcolorbox}
+
+\begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,code={\singlespacing}]
+   Ricardo Nicida Kazama
+\tcblower
+In the README, I was wondering if the function $return\_best\_genome$($modified\_genome$, genome) might disturb the exploration of your algorithm since a worse solution that could go towards the global optimum might be chosen instead of the current better solution that is going to a local optimum. Analyzing your code, I notice that the part where you would compare the genomes to pick the best is commented. Therefore, maybe you experienced what I previously mentioned.
+In the following part of the code, the use of the iterator "i" is a bit confusing since the one being taken into account for the function generate($initial\_population$, i) is the one in range($OFFSPRING\_SIZE$). However, from what I understood, the second input should be the generation number.
+
+\begin{mintedbox}{python}
+
+for i in range(NUM_GENERATIONS):
+    # create offspring
+    offspring = [generate(initial_population, i) for i in range(OFFSPRING_SIZE)]
+\end{mintedbox}
+
+Highlights/overall:
+The solution includes many different mutations which show an extra effort to improve the results with a broad approach.
+The change in the mutation rate based on the $fitness\_log$ is an interesting idea and seems to be effective.
+The code and results are very good!
+\end{tcolorbox}
+
+\subsection{Given Reviews}

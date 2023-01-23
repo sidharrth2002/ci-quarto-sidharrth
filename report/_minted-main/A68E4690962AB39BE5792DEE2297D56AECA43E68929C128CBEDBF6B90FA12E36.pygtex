@@ -1,0 +1,183 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{k+kn}{from} \PYG{n+nn}{collections} \PYG{k+kn}{import} \PYG{n}{Counter}
+    \PYG{k+kn}{from} \PYG{n+nn}{copy} \PYG{k+kn}{import} \PYG{n}{deepcopy}
+    \PYG{k+kn}{from} \PYG{n+nn}{itertools} \PYG{k+kn}{import} \PYG{n}{accumulate}
+    \PYG{k+kn}{import} \PYG{n+nn}{logging}
+    \PYG{k+kn}{from} \PYG{n+nn}{operator} \PYG{k+kn}{import} \PYG{n}{xor}
+    \PYG{k+kn}{import} \PYG{n+nn}{random}
+    \PYG{k+kn}{from} \PYG{n+nn}{typing} \PYG{k+kn}{import} \PYG{n}{Callable}
+
+    \PYG{k+kn}{from} \PYG{n+nn}{lib} \PYG{k+kn}{import} \PYG{n}{Genome}\PYG{p}{,} \PYG{n}{Nim}\PYG{p}{,} \PYG{n}{Nimply}
+
+
+    \PYG{k}{class} \PYG{n+nc}{FixedRuleNim}\PYG{p}{:}
+        \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{num\PYGZus{}moves} \PYG{o}{=} \PYG{l+m+mi}{0}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{OFFSPRING\PYGZus{}SIZE} \PYG{o}{=} \PYG{l+m+mi}{30}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{POPULATION\PYGZus{}SIZE} \PYG{o}{=} \PYG{l+m+mi}{100}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{GENERATIONS} \PYG{o}{=} \PYG{l+m+mi}{100}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{nim\PYGZus{}size} \PYG{o}{=} \PYG{l+m+mi}{5}
+
+        \PYG{k}{def} \PYG{n+nf}{nim\PYGZus{}sum}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{nim}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{):}
+            \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{            Returns the nim sum of the current game board}
+\PYG{l+s+sd}{            by taking an XOR of all the rows.}
+\PYG{l+s+sd}{            Ideally, agent should try to leave nim sum of 0 at the end of turn}
+\PYG{l+s+sd}{            \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+            \PYG{o}{*}\PYG{n}{\PYGZus{}}\PYG{p}{,} \PYG{n}{result} \PYG{o}{=} \PYG{n}{accumulate}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{,} \PYG{n}{xor}\PYG{p}{)}
+            \PYG{k}{return} \PYG{n}{result}
+
+        \PYG{k}{def} \PYG{n+nf}{init\PYGZus{}population}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{population\PYGZus{}size}\PYG{p}{,} \PYG{n}{nim}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{):}
+            \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{            Initialize population of genomes,}
+\PYG{l+s+sd}{            key is rule, value is number of sticks to take}
+\PYG{l+s+sd}{            The rules currently are:}
+\PYG{l+s+sd}{            1. If one pile, take \PYGZdl{}x\PYGZdl{} number of sticks from the pile.}
+\PYG{l+s+sd}{            2. If two piles:}
+\PYG{l+s+sd}{                a. If 1 pile has 1 stick, wipe out the pile}
+\PYG{l+s+sd}{                b. If 2 piles have multiple sticks, take x sticks from any pile}
+\PYG{l+s+sd}{            3. If three piles and two piles have the same size, remove all sticks from the smallest pile}
+\PYG{l+s+sd}{            4. If n piles and n\PYGZhy{}1 piles have the same size, remove x sticks from the smallest pile until it is the same size as the other piles}
+\PYG{l+s+sd}{            \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+            \PYG{n}{population} \PYG{o}{=} \PYG{p}{[]}
+            \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{population\PYGZus{}size}\PYG{p}{):}
+                \PYG{c+c1}{\PYGZsh{} rules 3 and 4 are fixed (apply for 3 or more piles)}
+                \PYG{c+c1}{\PYGZsh{} different strategies for different rules (situations on the board)}
+                \PYG{n}{individual} \PYG{o}{=} \PYG{p}{\PYGZob{}}
+                    \PYG{l+s+s1}{\PYGZsq{}rule\PYGZus{}1\PYGZsq{}}\PYG{p}{:} \PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{num\PYGZus{}rows} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{l+m+mi}{2}\PYG{p}{)],}
+                    \PYG{l+s+s1}{\PYGZsq{}rule\PYGZus{}2a\PYGZsq{}}\PYG{p}{:} \PYG{p}{[}\PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{),} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{num\PYGZus{}rows} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{l+m+mi}{2}\PYG{p}{)],}
+                    \PYG{l+s+s1}{\PYGZsq{}rule\PYGZus{}2b\PYGZsq{}}\PYG{p}{:} \PYG{p}{[}\PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{),} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{num\PYGZus{}rows} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{l+m+mi}{2}\PYG{p}{)],}
+                    \PYG{l+s+s1}{\PYGZsq{}rule\PYGZus{}3\PYGZsq{}}\PYG{p}{:} \PYG{p}{[}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{o}{.}\PYG{n}{index}\PYG{p}{(}\PYG{n+nb}{min}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)),} \PYG{n+nb}{min}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)],}
+                    \PYG{l+s+s1}{\PYGZsq{}rule\PYGZus{}4\PYGZsq{}}\PYG{p}{:} \PYG{p}{[}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{o}{.}\PYG{n}{index}\PYG{p}{(}\PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)),} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n+nb}{min}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)]}
+                \PYG{p}{\PYGZcb{}}
+                \PYG{n}{genome} \PYG{o}{=} \PYG{n}{Genome}\PYG{p}{(}\PYG{n}{individual}\PYG{p}{)}
+                \PYG{n}{population}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{)}
+            \PYG{k}{return} \PYG{n}{population}
+
+        \PYG{k}{def} \PYG{n+nf}{statistics}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{nim}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{):}
+            \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{            Similar to Squillero\PYGZsq{}s cooked function to get possible moves}
+\PYG{l+s+sd}{            and statistics on Nim board}
+\PYG{l+s+sd}{            \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+            \PYG{c+c1}{\PYGZsh{} logging.info(\PYGZsq{}In statistics\PYGZsq{})}
+            \PYG{c+c1}{\PYGZsh{} logging.info(nim.rows)}
+            \PYG{n}{stats} \PYG{o}{=} \PYG{p}{\PYGZob{}}
+                \PYG{l+s+s1}{\PYGZsq{}possible\PYGZus{}moves\PYGZsq{}}\PYG{p}{:} \PYG{p}{[(}\PYG{n}{r}\PYG{p}{,} \PYG{n}{o}\PYG{p}{)} \PYG{k}{for} \PYG{n}{r}\PYG{p}{,} \PYG{n}{c} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)} \PYG{k}{for} \PYG{n}{o} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{c} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{k}{if} \PYG{n}{nim}\PYG{o}{.}\PYG{n}{k} \PYG{o+ow}{is} \PYG{k+kc}{None} \PYG{o+ow}{or} \PYG{n}{o} \PYG{o}{\PYGZlt{}=} \PYG{n}{nim}\PYG{o}{.}\PYG{n}{k}\PYG{p}{],}
+                \PYG{c+c1}{\PYGZsh{} \PYGZsq{}possible\PYGZus{}moves\PYGZsq{}: [(row, num\PYGZus{}objects) for row in range(nim.num\PYGZus{}rows) for num\PYGZus{}objects in range(1, nim.rows[row]+1)],}
+                \PYG{l+s+s1}{\PYGZsq{}num\PYGZus{}active\PYGZus{}rows\PYGZsq{}}\PYG{p}{:} \PYG{n+nb}{sum}\PYG{p}{(}\PYG{n}{o} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0} \PYG{k}{for} \PYG{n}{o} \PYG{o+ow}{in} \PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{),}
+                \PYG{l+s+s1}{\PYGZsq{}shortest\PYGZus{}row\PYGZsq{}}\PYG{p}{:} \PYG{n+nb}{min}\PYG{p}{((}\PYG{n}{x} \PYG{k}{for} \PYG{n}{x} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)} \PYG{k}{if} \PYG{n}{x}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{),} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{y}\PYG{p}{:} \PYG{n}{y}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])[}\PYG{l+m+mi}{0}\PYG{p}{],}
+                \PYG{l+s+s1}{\PYGZsq{}longest\PYGZus{}row\PYGZsq{}}\PYG{p}{:} \PYG{n+nb}{max}\PYG{p}{((}\PYG{n}{x} \PYG{k}{for} \PYG{n}{x} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)),} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{y}\PYG{p}{:} \PYG{n}{y}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])[}\PYG{l+m+mi}{0}\PYG{p}{],}
+                \PYG{c+c1}{\PYGZsh{} only 1\PYGZhy{}stick row and not all rows having only 1 stick}
+                \PYG{l+s+s1}{\PYGZsq{}1\PYGZus{}stick\PYGZus{}row\PYGZsq{}}\PYG{p}{:} \PYG{n+nb}{any}\PYG{p}{([}\PYG{l+m+mi}{1} \PYG{k}{for} \PYG{n}{x} \PYG{o+ow}{in} \PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows} \PYG{k}{if} \PYG{n}{x} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{])} \PYG{o+ow}{and} \PYG{o+ow}{not} \PYG{n+nb}{all}\PYG{p}{([}\PYG{l+m+mi}{1} \PYG{k}{for} \PYG{n}{x} \PYG{o+ow}{in} \PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows} \PYG{k}{if} \PYG{n}{x} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{]),}
+                \PYG{l+s+s1}{\PYGZsq{}nim\PYGZus{}sum\PYGZsq{}}\PYG{p}{:} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{nim\PYGZus{}sum}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{)}
+            \PYG{p}{\PYGZcb{}}
+
+            \PYG{n}{brute\PYGZus{}force} \PYG{o}{=} \PYG{p}{[]}
+            \PYG{k}{for} \PYG{n}{move} \PYG{o+ow}{in} \PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}possible\PYGZus{}moves\PYGZsq{}}\PYG{p}{]:}
+                \PYG{n}{tmp} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{)}
+                \PYG{n}{tmp}\PYG{o}{.}\PYG{n}{nimming\PYGZus{}remove}\PYG{p}{(}\PYG{o}{*}\PYG{n}{move}\PYG{p}{)}
+                \PYG{n}{brute\PYGZus{}force}\PYG{o}{.}\PYG{n}{append}\PYG{p}{((}\PYG{n}{move}\PYG{p}{,} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{nim\PYGZus{}sum}\PYG{p}{(}\PYG{n}{tmp}\PYG{p}{)))}
+            \PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}brute\PYGZus{}force\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{n}{brute\PYGZus{}force}
+
+            \PYG{k}{return} \PYG{n}{stats}
+
+        \PYG{k}{def} \PYG{n+nf}{strategy}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+            \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{            Returns the best move to make based on the statistics}
+\PYG{l+s+sd}{            \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+            \PYG{k}{def} \PYG{n+nf}{engine}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{):}
+                \PYG{n}{stats} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{statistics}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{)}
+                \PYG{k}{if} \PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}num\PYGZus{}active\PYGZus{}rows\PYGZsq{}}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{:}
+                    \PYG{c+c1}{\PYGZsh{} logging.info(\PYGZsq{}m1\PYGZsq{})}
+                    \PYG{k}{return} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}shortest\PYGZus{}row\PYGZsq{}}\PYG{p}{],} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}possible\PYGZus{}moves\PYGZsq{}}\PYG{p}{][}\PYG{l+m+mi}{0}\PYG{p}{][}\PYG{l+m+mi}{1}\PYG{p}{]))}
+                \PYG{k}{elif} \PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}num\PYGZus{}active\PYGZus{}rows\PYGZdq{}}\PYG{p}{]} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{2} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                    \PYG{c+c1}{\PYGZsh{} logging.info(\PYGZsq{}m2\PYGZsq{})}
+                    \PYG{k}{if} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{:}
+                        \PYG{k}{return} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}longest\PYGZus{}row\PYGZsq{}}\PYG{p}{],} \PYG{l+m+mi}{1}\PYG{p}{)}
+                    \PYG{k}{else}\PYG{p}{:}
+                        \PYG{n}{pile} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{([}\PYG{n}{i} \PYG{k}{for} \PYG{n}{i}\PYG{p}{,} \PYG{n}{x} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)} \PYG{k}{if} \PYG{n}{x} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{1}\PYG{p}{])}
+                        \PYG{k}{return} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{pile}\PYG{p}{,} \PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{[}\PYG{n}{pile}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)}
+                \PYG{k}{elif} \PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}num\PYGZus{}active\PYGZus{}rows\PYGZsq{}}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mi}{3}\PYG{p}{:}
+                    \PYG{c+c1}{\PYGZsh{} logging.info(\PYGZsq{}m3\PYGZsq{})}
+                    \PYG{n}{unique\PYGZus{}elements} \PYG{o}{=} \PYG{n+nb}{set}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)}
+                    \PYG{c+c1}{\PYGZsh{} check if 2 rows have the same number of sticks}
+                    \PYG{n}{two\PYGZus{}rows\PYGZus{}with\PYGZus{}same\PYGZus{}elements} \PYG{o}{=} \PYG{k+kc}{False}
+                    \PYG{k}{for} \PYG{n}{element} \PYG{o+ow}{in} \PYG{n}{unique\PYGZus{}elements}\PYG{p}{:}
+                        \PYG{k}{if} \PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{o}{.}\PYG{n}{count}\PYG{p}{(}\PYG{n}{element}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{2}\PYG{p}{:}
+                            \PYG{n}{two\PYGZus{}rows\PYGZus{}with\PYGZus{}same\PYGZus{}elements} \PYG{o}{=} \PYG{k+kc}{True}
+                            \PYG{k}{break}
+
+                    \PYG{k}{if} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{3} \PYG{o+ow}{and} \PYG{n}{two\PYGZus{}rows\PYGZus{}with\PYGZus{}same\PYGZus{}elements}\PYG{p}{:}
+                        \PYG{c+c1}{\PYGZsh{} remove 1 stick from the longest row}
+                        \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)}
+                        \PYG{k}{return} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}longest\PYGZus{}row\PYGZsq{}}\PYG{p}{],} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{[}\PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}shortest\PYGZus{}row\PYGZsq{}}\PYG{p}{]],} \PYG{l+m+mi}{1}\PYG{p}{))}
+                    \PYG{k}{else}\PYG{p}{:}
+                        \PYG{c+c1}{\PYGZsh{} do something random}
+                        \PYG{k}{return} \PYG{n}{Nimply}\PYG{p}{(}\PYG{o}{*}\PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}possible\PYGZus{}moves\PYGZsq{}}\PYG{p}{]))}
+                \PYG{k}{elif} \PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}num\PYGZus{}active\PYGZus{}rows\PYGZsq{}}\PYG{p}{]} \PYG{o}{\PYGZgt{}=} \PYG{l+m+mi}{4}\PYG{p}{:}
+                    \PYG{c+c1}{\PYGZsh{} logging.info(\PYGZsq{}m4\PYGZsq{})}
+                    \PYG{n}{counter} \PYG{o}{=} \PYG{n}{Counter}\PYG{p}{()}
+                    \PYG{k}{for} \PYG{n}{element} \PYG{o+ow}{in} \PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{:}
+                        \PYG{n}{counter}\PYG{p}{[}\PYG{n}{element}\PYG{p}{]} \PYG{o}{+=} \PYG{l+m+mi}{1}
+                    \PYG{k}{if} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{counter}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{2}\PYG{p}{:}
+                        \PYG{k}{if} \PYG{n}{counter}\PYG{o}{.}\PYG{n}{most\PYGZus{}common}\PYG{p}{()[}\PYG{l+m+mi}{0}\PYG{p}{][}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{:}
+                            \PYG{c+c1}{\PYGZsh{} remove x sticks from the smallest pile until it is the same size as the other piles}
+                            \PYG{k}{return} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}shortest\PYGZus{}row\PYGZsq{}}\PYG{p}{],} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{[}\PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}shortest\PYGZus{}row\PYGZsq{}}\PYG{p}{]]} \PYG{o}{\PYGZhy{}} \PYG{n}{counter}\PYG{o}{.}\PYG{n}{most\PYGZus{}common}\PYG{p}{()[}\PYG{l+m+mi}{1}\PYG{p}{][}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{l+m+mi}{1}\PYG{p}{))}
+                    \PYG{k}{return} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}possible\PYGZus{}moves\PYGZsq{}}\PYG{p}{])}
+                \PYG{k}{else}\PYG{p}{:}
+                    \PYG{c+c1}{\PYGZsh{} logging.info(\PYGZsq{}m5\PYGZsq{})}
+                    \PYG{k}{return} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}possible\PYGZus{}moves\PYGZsq{}}\PYG{p}{])}
+            \PYG{k}{return} \PYG{n}{engine}
+
+        \PYG{k}{def} \PYG{n+nf}{random\PYGZus{}agent}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{nim}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{):}
+            \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{            Random agent that takes a random move}
+\PYG{l+s+sd}{            \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+            \PYG{n}{stats} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{statistics}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{)}
+            \PYG{k}{return} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{stats}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}possible\PYGZus{}moves\PYGZsq{}}\PYG{p}{])}
+
+        \PYG{k}{def} \PYG{n+nf}{battle}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{opponent}\PYG{p}{,} \PYG{n}{num\PYGZus{}games}\PYG{o}{=}\PYG{l+m+mi}{1000}\PYG{p}{):}
+            \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{            Battle this agent against another agent}
+\PYG{l+s+sd}{            \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+            \PYG{n}{wins} \PYG{o}{=} \PYG{l+m+mi}{0}
+            \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{num\PYGZus{}games}\PYG{p}{):}
+                \PYG{n}{nim} \PYG{o}{=} \PYG{n}{Nim}\PYG{p}{()}
+                \PYG{k}{while} \PYG{o+ow}{not} \PYG{n}{nim}\PYG{o}{.}\PYG{n}{goal}\PYG{p}{():}
+                    \PYG{n}{nim}\PYG{o}{.}\PYG{n}{nimming\PYGZus{}remove}\PYG{p}{(}\PYG{o}{*}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{play}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{))}
+                    \PYG{k}{if} \PYG{n+nb}{sum}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                        \PYG{k}{break}
+                    \PYG{n}{nim}\PYG{o}{.}\PYG{n}{nimming\PYGZus{}remove}\PYG{p}{(}\PYG{o}{*}\PYG{n}{opponent}\PYG{o}{.}\PYG{n}{play}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{))}
+                \PYG{k}{if} \PYG{n+nb}{sum}\PYG{p}{(}\PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                    \PYG{n}{wins} \PYG{o}{+=} \PYG{l+m+mi}{1}
+            \PYG{k}{return} \PYG{n}{wins}
+
+    \PYG{k}{if} \PYG{n+nv+vm}{\PYGZus{}\PYGZus{}name\PYGZus{}\PYGZus{}} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}\PYGZus{}\PYGZus{}main\PYGZus{}\PYGZus{}\PYGZsq{}}\PYG{p}{:}
+        \PYG{n}{rounds} \PYG{o}{=} \PYG{l+m+mi}{20}
+        \PYG{n}{evolved\PYGZus{}agent\PYGZus{}wins} \PYG{o}{=} \PYG{l+m+mi}{0}
+        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{rounds}\PYG{p}{):}
+            \PYG{n}{nim} \PYG{o}{=} \PYG{n}{Nim}\PYG{p}{(}\PYG{l+m+mi}{5}\PYG{p}{)}
+            \PYG{n}{orig} \PYG{o}{=} \PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}
+            \PYG{n}{fixedrule} \PYG{o}{=} \PYG{n}{FixedRuleNim}\PYG{p}{()}
+            \PYG{n}{engine} \PYG{o}{=} \PYG{n}{fixedrule}\PYG{o}{.}\PYG{n}{strategy}\PYG{p}{()}
+
+            \PYG{c+c1}{\PYGZsh{} play against random}
+            \PYG{n}{player} \PYG{o}{=} \PYG{l+m+mi}{0}
+            \PYG{k}{while} \PYG{o+ow}{not} \PYG{n}{nim}\PYG{o}{.}\PYG{n}{goal}\PYG{p}{():}
+                \PYG{k}{if} \PYG{n}{player} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                    \PYG{n}{move} \PYG{o}{=} \PYG{n}{engine}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{)}
+                    \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}move of player 1: \PYGZsq{}}\PYG{p}{,} \PYG{n}{move}\PYG{p}{)}
+                    \PYG{n}{nim}\PYG{o}{.}\PYG{n}{nimming\PYGZus{}remove}\PYG{p}{(}\PYG{o}{*}\PYG{n}{move}\PYG{p}{)}
+                    \PYG{n}{player} \PYG{o}{=} \PYG{l+m+mi}{1}
+                    \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}After Player 1 made move: \PYGZdq{}}\PYG{p}{,} \PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)}
+                \PYG{k}{else}\PYG{p}{:}
+                    \PYG{n}{move} \PYG{o}{=} \PYG{n}{fixedrule}\PYG{o}{.}\PYG{n}{random\PYGZus{}agent}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{)}
+                    \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}move of player 2: \PYGZsq{}}\PYG{p}{,} \PYG{n}{move}\PYG{p}{)}
+                    \PYG{n}{nim}\PYG{o}{.}\PYG{n}{nimming\PYGZus{}remove}\PYG{p}{(}\PYG{o}{*}\PYG{n}{move}\PYG{p}{)}
+                    \PYG{n}{player} \PYG{o}{=} \PYG{l+m+mi}{0}
+                    \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}After Player 2 made move: \PYGZdq{}}\PYG{p}{,} \PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)}
+            \PYG{n}{winner} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{player}
+            \PYG{k}{if} \PYG{n}{winner} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                \PYG{n}{evolved\PYGZus{}agent\PYGZus{}wins} \PYG{o}{+=} \PYG{l+m+mi}{1}
+        \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}Fixed rule agent won }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{evolved\PYGZus{}agent\PYGZus{}wins}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{ out of }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{rounds}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{ games\PYGZsq{}}\PYG{p}{)}
+\end{Verbatim}

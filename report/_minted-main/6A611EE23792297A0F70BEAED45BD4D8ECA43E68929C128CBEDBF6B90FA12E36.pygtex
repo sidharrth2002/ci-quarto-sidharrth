@@ -1,0 +1,6 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{k}{def} \PYG{n+nf}{flip\PYGZus{}mutation}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{,} \PYG{n}{mutate\PYGZus{}only\PYGZus{}one\PYGZus{}element}\PYG{o}{=}\PYG{k+kc}{False}\PYG{p}{):} \PYG{o+ow}{is} \PYG{n}{never} \PYG{n}{called} \PYG{k}{with} \PYG{n}{mutate\PYGZus{}only\PYGZus{}one\PYGZus{}element}\PYG{o}{=}\PYG{k+kc}{True}
+    \PYG{n}{genome} \PYG{o}{=} \PYG{n}{mutation}\PYG{p}{(}\PYG{n}{parent}\PYG{o}{.}\PYG{n}{genome}\PYG{p}{)}
+    \PYG{n}{child} \PYG{o}{=} \PYG{n}{Individual}\PYG{p}{(}\PYG{n}{parent}\PYG{p}{,} \PYG{n}{calculate\PYGZus{}fitness}\PYG{p}{(}\PYG{n}{parent}\PYG{p}{))}
+  
+\end{Verbatim}

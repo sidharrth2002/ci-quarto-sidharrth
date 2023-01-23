@@ -1,0 +1,14 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{n}{thresholds} \PYG{o}{=} \PYG{p}{[}\PYG{n}{p1}\PYG{p}{,} \PYG{n}{p2}\PYG{p}{,} \PYG{n}{p3}\PYG{p}{]}
+    \PYG{k}{if} \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()} \PYG{o}{\PYGZlt{}} \PYG{n}{p1}\PYG{p}{:}
+        \PYG{c+c1}{\PYGZsh{} strategy 1...}
+    \PYG{k}{elif} \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()} \PYG{o}{\PYGZlt{}} \PYG{n}{p2}\PYG{p}{:}
+        \PYG{c+c1}{\PYGZsh{} strategy 2...}
+    \PYG{k}{else}\PYG{p}{:}
+        \PYG{c+c1}{\PYGZsh{} strategy 3...}
+
+    \PYG{k}{class} \PYG{n+nc}{GA}\PYG{p}{:}
+        \PYG{o}{...}
+
+    \PYG{n}{GA}\PYG{o}{.}\PYG{n}{evolve}\PYG{p}{(}\PYG{n}{thresholds}\PYG{p}{)}
+\end{Verbatim}
