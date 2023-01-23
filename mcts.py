@@ -159,6 +159,7 @@ class MonteCarloTreeSearch(Player):
 
         if node not in self.children:
             # index -1 of tuple is next piece from a board
+            print("Random child")
             return node.find_random_child()[-1]
 
         def score(n):
@@ -182,8 +183,8 @@ class MonteCarloTreeSearch(Player):
 
         if node not in self.children:
             piece, x, y, next_piece = node.find_random_child().move
-            print("Random child")
-            print(piece, x, y, next_piece)
+            # print("Random child")
+            # print(piece, x, y, next_piece)
             return x, y, next_piece
 
         def score(n):
@@ -192,8 +193,8 @@ class MonteCarloTreeSearch(Player):
                 return float('-inf')
             return self.Q[n] / self.N[n]
 
-        print("In place piece")
-        print(max(self.children[node], key=score).move)
+        # print("In place piece")
+        # print(max(self.children[node], key=score).move)
         return max(self.children[node], key=score).move[1:]
 
     def do_rollout(self, board):

@@ -4,6 +4,7 @@ import json
 import logging
 import math
 import random
+import time
 
 from mcts import MonteCarloTreeSearch, MonteCarloTreeSearchDecoder, decode_tree
 from quarto.objects import Quarto
@@ -50,7 +51,8 @@ class QLearningPlayer:
                 return val
 
         if self.hash_state_action(state, action) not in self.Q:
-            return random.uniform(1.0, 0.01)
+            # return random.uniform(1.0, 0.01)
+            return None
 
         return self.Q[self.hash_state_action(state, action)]
 
@@ -76,6 +78,7 @@ class QLearningPlayer:
         max_Q = -math.inf
         for action in self.get_possible_actions(state):
             if self.get_Q(state, action) is not None:
+                Q_val = self.get_Q(state, action)
                 max_Q = max(max_Q, self.get_Q(state, action))
         return max_Q
 
@@ -101,8 +104,10 @@ class QLearningPlayer:
                         best_action = action
                 # go to Monte Carlo Tree Search if no suitable action found in Q table
                 if best_action is None or expected_score == 0:
-                    logging.info(
+                    logging.debug(
                         'No suitable action found in Q table, going to Monte Carlo Tree Search')
+                    for i in range(20):
+                        self.tree.do_rollout(state)
                     best_action = self.tree.place_piece()
                 return best_action
         else:
@@ -116,16 +121,19 @@ class QLearningPlayer:
                     best_action = action
             # go to Monte Carlo Tree Search if no suitable action found in Q table
             if best_action is None or expected_score == 0:
-                logging.info(
+                logging.debug(
                     'No suitable action found in Q table, going to Monte Carlo Tree Search')
-                for i in range(20):
+                for i in range(50):
                     self.tree.do_rollout(state)
                 best_action = self.tree.place_piece()
             return best_action
 
     def update_Q(self, state, action, reward, next_state):
-        self.set_Q(state, action, self.get_Q(state, action) + self.alpha *
-                   (reward + self.gamma * self.get_max_Q(next_state) - self.get_Q(state, action)))
+        Q_val = self.get_Q(state, action)
+        if Q_val is None:
+            Q_val = random.uniform(1.0, 0.01)
+        self.set_Q(state, action, Q_val + self.alpha *
+                   (reward + self.gamma * self.get_max_Q(next_state) - Q_val))
 
     def train(self, iterations=100):
         '''
@@ -149,6 +157,8 @@ class QLearningPlayer:
         # automatically done through defaultdict
 
         # Choose an action using MCTS
+        wins = 0
+        tries = 0
         for i in range(iterations):
             board = Quarto()
             self.board = board
@@ -169,7 +179,10 @@ class QLearningPlayer:
                                   self.current_state.get_selected_piece())
                     logging.debug("Board: ")
                     logging.debug(self.current_state.state_as_array())
+                    time_start = time.time()
                     action = self.get_action(self.current_state)
+                    time_end = time.time()
+                    print("Time taken: ", time_end - time_start)
                     self.current_state.select(selected_piece)
                     self.current_state.place(action[0], action[1])
                     self.current_state.set_selected_piece(action[2])
@@ -193,6 +206,7 @@ class QLearningPlayer:
                     if 1 - self.current_state.check_winner() == 0:
                         logging.info('QL-MCTS won')
                         reward = 1
+                        wins += 1
                     else:
                         logging.info('Random won')
                         reward = -1
@@ -202,6 +216,15 @@ class QLearningPlayer:
                 else:
                     self.update_Q(
                         self.previous_state, self.previous_action, reward, self.current_state)
+
+            tries += 1
+            if i % 10 == 0:
+                print('Iteration', i)
+                print('Wins:', wins)
+                print('Tries:', tries)
+                print('Win rate:', wins/tries)
+                wins = 0
+                tries = 0
 
 
 if __name__ == '__main__':
