@@ -1,3 +1,7 @@
+'''
+Finding similar boards
+'''
+
 import copy
 import numpy as np
 
