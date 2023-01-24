@@ -3,12 +3,15 @@ Genetic Algorithm for Quarto
 '''
 from copy import deepcopy
 import itertools
+import json
 import logging
 import random
 from QLearningPlayer import QLearningPlayer
 
 from lib.players import Player, RandomPlayer
 from quarto.objects import Quarto
+
+logging.basicConfig(level=logging.INFO)
 
 
 class Genome:
@@ -21,6 +24,12 @@ class Genome:
 
     def set_thresholds(self, thresholds):
         self.thresholds = thresholds
+
+    def toJSON(self):
+        return {
+            'thresholds': self.thresholds,
+            'fitness': self.fitness
+        }
 
 
 class FinalPlayer(Player):
@@ -182,11 +191,12 @@ class FinalPlayer(Player):
         return genome
 
     def evolve(self):
-        self.population_size = 100
-        self.offspring_size = 10
+        self.population_size = 70
+        self.offspring_size = 40
         population = self.generate_population(self.population_size)
 
         for gen in range(100):
+            logging.info('Generation: {}'.format(gen))
             offpsring = []
             for i in range(self.offspring_size):
                 parent1 = random.choice(population)
@@ -199,12 +209,18 @@ class FinalPlayer(Player):
             population = sorted(
                 population, key=lambda x: x.fitness, reverse=True)[:self.population_size]
 
+            if gen % 5 == 0:
+                logging.info('Saving population')
+                with open('/Volume/USB/population.json', 'w') as f:
+                    json.dump([genome.toJSON() for genome in population], f)
+
         # return the best genome's thresholds
         return population[0].thresholds
 
     def play_game(self, thresholds, num_games=10):
         wins = 0
         for game in range(num_games):
+            logging.debug('Game: {}'.format(game))
             state = Quarto()
             player = 0
 
@@ -218,6 +234,7 @@ class FinalPlayer(Player):
             self.ql_mcts.clear_and_set_current_state(state)
 
             while True:
+                # num pieces are the number of places on the board that are occupied
                 num_pieces_in_board = 16 - list(itertools.chain.from_iterable(
                     state.state_as_array())).count(-1)
                 if player == 0:
@@ -275,16 +292,18 @@ class FinalPlayer(Player):
 
                 if self.current_state.check_is_game_over():
                     if 1 - self.current_state.check_winner() == 0:
-                        print("Player 1 wins")
+                        logging.debug("Player 1 wins")
                         wins += 1
                         # TODO: QL reward update
                     else:
-                        print("Player 2 wins")
+                        logging.debug("Player 2 wins")
                     break
 
         # fitness is the percentage of games won
+        logging.debug(f"Win rate: {wins/num_games}")
         return wins/num_games
 
 
 final_player = FinalPlayer()
-final_player.evolve()
+best_thresholds = final_player.evolve()
+print(best_thresholds)
