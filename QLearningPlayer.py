@@ -299,42 +299,44 @@ class QLearningPlayer:
             self.current_state = board
             self.previous_state = None
             self.previous_action = None
-            player = 0
+            player = 1
+            self.current_state.switch_player()
             selected_piece = random_player.choose_piece()
             self.current_state.set_selected_piece(selected_piece)
             while True:
                 reward = 0
                 if player == 0:
                     # QL-MCTS moves here
-                    # self.previous_state = deepcopy(self.current_state)
-                    # logging.debug("Piece to place: ",
-                    #               self.current_state.get_selected_piece())
-                    # logging.debug("Board: ")
-                    # logging.debug(self.current_state.state_as_array())
-                    # time_start = time.time()
-                    # action = self.get_action(self.current_state)
-                    # time_end = time.time()
-                    # agent_decision_times.append(time_end - time_start)
-                    # self.current_state.select(selected_piece)
-                    # self.current_state.place(action[0], action[1])
-                    # self.current_state.set_selected_piece(action[2])
-                    # self.current_state.switch_player()
-                    # player = 1 - player
-
                     self.previous_state = deepcopy(self.current_state)
-                    winning_piece, position = self.hardcoded_strategy_get_move(
-                        self.current_state)
-                    self.current_state.select(selected_piece)
-                    self.current_state.place(position[0], position[1])
-                    next_piece = self.hardcoded_strategy_get_piece(
-                        self.current_state)
-                    self.current_state.set_selected_piece(next_piece)
-                    self.current_state.switch_player()
-
-                    logging.debug("After QL-MCTS move")
+                    logging.debug("Piece to place: ",
+                                  self.current_state.get_selected_piece())
+                    logging.debug("Board: ")
                     logging.debug(self.current_state.state_as_array())
-
+                    time_start = time.time()
+                    action = self.get_action(self.current_state)
+                    self.previous_action = action
+                    time_end = time.time()
+                    agent_decision_times.append(time_end - time_start)
+                    self.current_state.select(selected_piece)
+                    self.current_state.place(action[0], action[1])
+                    self.current_state.set_selected_piece(action[2])
+                    self.current_state.switch_player()
                     player = 1 - player
+
+                    # self.previous_state = deepcopy(self.current_state)
+                    # winning_piece, position = self.hardcoded_strategy_get_move(
+                    #     self.current_state)
+                    # self.current_state.select(selected_piece)
+                    # self.current_state.place(position[0], position[1])
+                    # next_piece = self.hardcoded_strategy_get_piece(
+                    #     self.current_state)
+                    # self.current_state.set_selected_piece(next_piece)
+                    # self.current_state.switch_player()
+
+                    # logging.debug("After QL-MCTS move")
+                    # logging.debug(self.current_state.state_as_array())
+
+                    # player = 1 - player
                 else:
                     # Random moves here
                     action = random_player.place_piece()
@@ -348,11 +350,9 @@ class QLearningPlayer:
                     self.current_state.set_selected_piece(next_piece)
                     self.current_state.switch_player()
                     player = 1 - player
-                    logging.debug("After random move")
-                    logging.debug(self.current_state.state_as_array())
 
                 if self.current_state.check_is_game_over():
-                    if 1 - self.current_state.check_winner() == 0:
+                    if 1 - self.current_state.check_winner() == 1:
                         logging.info('QL-MCTS won')
                         reward = 1
                         wins += 1
@@ -363,11 +363,12 @@ class QLearningPlayer:
                                   reward, self.current_state)
                     break
                 else:
-                    self.update_Q(
-                        self.previous_state, self.previous_action, reward, self.current_state)
+                    if self.previous_state is not None:
+                        self.update_Q(
+                            self.previous_state, self.previous_action, reward, self.current_state)
 
             tries += 1
-            if i % 50 == 0:
+            if i % 10 == 0:
                 logging.info(f'Iteration {i}')
                 logging.info(f'Wins: {wins}')
                 logging.info(f'Tries: {tries}')
@@ -391,4 +392,4 @@ if __name__ == '__main__':
     # with open('progress.json', 'r') as f:
     #     tree = decode_tree(json.load(f))
     qplayer = QLearningPlayer()
-    qplayer.train(100)
+    qplayer.train(10)
