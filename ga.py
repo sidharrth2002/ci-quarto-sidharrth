@@ -50,7 +50,7 @@ class FinalPlayer(Player):
     def check_if_winning_piece(self, state, piece):
         for i in range(self.BOARD_SIDE):
             for j in range(self.BOARD_SIDE):
-                if state.check_if_move_valid(piece, i, j, piece):
+                if state.check_if_move_valid(piece, i, j, -100):
                     cloned_state = deepcopy(state)
                     cloned_state.select(piece)
                     cloned_state.place(i, j)
@@ -64,7 +64,7 @@ class FinalPlayer(Player):
         for i in range(16):
             # check if the piece is a winning piece
             winning_piece, _ = self.check_if_winning_piece(state, i)
-            if not winning_piece and i not in itertools.chain.from_iterable(state.state_as_array()):
+            if (not winning_piece) and (i not in list(itertools.chain.from_iterable(state.state_as_array()))) and (i != state.get_selected_piece()):
                 possible_pieces.append(i)
 
         # if no pieces can be placed on board anymore (board full/game over), return -1
@@ -168,9 +168,9 @@ class FinalPlayer(Player):
                     if state.check_if_move_valid(selected_piece, i, j, next_piece):
                         return False, [i, j]
 
-        print(f"Selected piece: {selected_piece}")
-        print(f"Board: {board}")
-        print('no move found')
+        logging.debug(f"Selected piece: {selected_piece}")
+        logging.debug(f"Board: {board}")
+        logging.debug('no move found')
 
     def generate_population(self, population_size):
         population = []
@@ -261,7 +261,7 @@ class FinalPlayer(Player):
     def play_game(self, thresholds, num_games=10):
         wins = 0
         for game in range(num_games):
-            print('Game: {}'.format(game))
+            logging.info('Game: {}'.format(game))
             state = Quarto()
             player = 0
 
@@ -304,14 +304,12 @@ class FinalPlayer(Player):
                             self.current_state)
                         self.current_state.select(state.get_selected_piece())
                         self.current_state.place(position[0], position[1])
-
                         self.current_state.set_selected_piece(next_piece)
                         self.current_state.switch_player()
                         player = 1 - player
                     else:
                         # play using QL-MCTS
-                        # time to go pro
-                        print('ql-mcts')
+                        logging.debug('ql-mcts')
                         self.ql_mcts.previous_state = deepcopy(
                             self.current_state)
                         action = self.ql_mcts.get_action(self.current_state)
@@ -323,6 +321,7 @@ class FinalPlayer(Player):
                             action[2])
                         self.ql_mcts.current_state.switch_player()
                         player = 1 - player
+
                 else:
                     # opponent is random
                     action = self.random_player.place_piece()
@@ -330,6 +329,7 @@ class FinalPlayer(Player):
                     while self.current_state.check_if_move_valid(self.current_state.get_selected_piece(), action[0], action[1], next_piece) is False:
                         action = self.random_player.place_piece()
                         next_piece = self.random_player.choose_piece()
+                        # WARNING: very often stuck in this loop
                     self.current_state.select(
                         self.current_state.get_selected_piece())
                     self.current_state.place(action[0], action[1])

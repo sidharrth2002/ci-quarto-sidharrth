@@ -12,8 +12,6 @@ from gym import spaces
 
 from quarto.objects import *
 
-# logging.basicConfig(level=logging.DEBUG)
-
 
 class Player(object):
 
