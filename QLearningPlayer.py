@@ -206,7 +206,7 @@ class QLearningPlayer:
         for i in range(16):
             # check if the piece is a winning piece
             winning_piece, _ = self.check_if_winning_piece(state, i)
-            if not winning_piece and i not in itertools.chain.from_iterable(state.state_as_array()):
+            if (not winning_piece) and (i not in list(itertools.chain.from_iterable(state.state_as_array()))) and (i != state.get_selected_piece()):
                 possible_pieces.append(i)
 
         return random.choice(possible_pieces)
