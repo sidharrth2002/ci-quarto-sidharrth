@@ -36,6 +36,10 @@ class QLearningPlayer:
             # load new tree
             self.tree = MonteCarloTreeSearch(board=board)
 
+    def clear_and_set_current_state(self, state: Quarto):
+        self.current_state = state
+        self.tree = MonteCarloTreeSearch(board=state)
+
     def reduce_normal_form(self, state: Quarto):
         '''
         Reduce the Quarto board to normal form (i.e. the board is symmetric)
