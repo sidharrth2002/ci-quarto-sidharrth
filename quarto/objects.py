@@ -12,6 +12,8 @@ from gym import spaces
 
 from quarto.objects import *
 
+# logging.basicConfig(level=logging.DEBUG)
+
 
 class Player(object):
 
@@ -312,7 +314,7 @@ class QuartoParent(object):
         '''
         winner = -1
         while winner < 0 and not self.check_finished():
-            logging.info("Player ", self._current_player, "turn")
+            logging.info(f"Player {self._current_player} turn")
             # self.print()
             piece_ok = False
             while not piece_ok:
@@ -605,10 +607,10 @@ class Quarto(QuartoParent):
             return False
 
         if self._board[y, x] > -1:
-            logging.debug("position y, x ", y, x, "already occupied")
+            logging.debug(f"position y, x: , {y}, {x} already occupied")
             logging.debug(self._board)
             logging.debug("move to position already occupied")
-            logging.debug("Index of -1: ", np.where(self._board == -1))
+            logging.debug(f"Index of -1: {np.where(self._board == -1)}")
             return False
 
         # move to position already occupied

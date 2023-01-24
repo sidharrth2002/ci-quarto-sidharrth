@@ -124,7 +124,7 @@ class Node:
         player_who_last_moved = 1 - board.get_current_player()
 
         # 1 if plays second, 0 if plays first
-        agent_position = 1
+        agent_position = 0
 
         if player_who_last_moved == agent_position and 1 - board.check_winner() == agent_position:
             # agent won

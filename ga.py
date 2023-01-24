@@ -11,7 +11,7 @@ from QLearningPlayer import QLearningPlayer
 from lib.players import Player, RandomPlayer
 from quarto.objects import Quarto
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 
 class Genome:
@@ -45,6 +45,7 @@ class FinalPlayer(Player):
         super().__init__(quarto)
         self.ql_mcts = QLearningPlayer(quarto)
         self.random_player = RandomPlayer(quarto)
+        self.BOARD_SIDE = 4
 
     def check_if_winning_piece(self, state, piece):
         for i in range(self.BOARD_SIDE):
@@ -66,7 +67,11 @@ class FinalPlayer(Player):
             if not winning_piece and i not in itertools.chain.from_iterable(state.state_as_array()):
                 possible_pieces.append(i)
 
-        return random.choice(possible_pieces)
+        # if no pieces can be placed on board anymore (board full/game over), return -1
+        if len(possible_pieces) == 0:
+            return -1
+        else:
+            return random.choice(possible_pieces)
 
     def hardcoded_strategy_get_move(self, state):
         #  1. Play the piece handed over by the opponent:
@@ -163,14 +168,31 @@ class FinalPlayer(Player):
                     if state.check_if_move_valid(selected_piece, i, j, next_piece):
                         return False, [i, j]
 
+        print(f"Selected piece: {selected_piece}")
+        print(f"Board: {board}")
+        print('no move found')
+
     def generate_population(self, population_size):
         population = []
         for i in range(population_size):
-            threshold = {
-                'random': random.random(),
-                'hardcoded': random.random(),
-                'ql-mcts': random.random()
-            }
+            threshold = {}
+
+            # make sure that value for random < hardcoded < ql-mcts
+
+            threshold['random'] = random.random() * 15
+            # find random number between random and 15
+            threshold['hardcoded'] = threshold['random'] + \
+                random.random() * (15 - threshold['random'])
+
+            # find random number between hardcoded and 15
+            threshold['ql-mcts'] = threshold['hardcoded'] + \
+                random.random() * (15 - threshold['hardcoded'])
+
+            # threshold = {
+            #     'random': random.random() * 15,
+            #     'hardcoded': random.random() * 15,
+            #     'ql-mcts': random.random() * 15,
+            # }
             population.append(Genome(threshold, 0))
         return population
 
@@ -179,23 +201,42 @@ class FinalPlayer(Player):
         for key in genome1.thresholds:
             new_thresholds[key] = random.choice(
                 [genome1.thresholds[key], genome2.thresholds[key]])
+
+        # make sure that value for random < hardcoded < ql-mcts
+        if new_thresholds['random'] > new_thresholds['hardcoded']:
+            new_thresholds['random'], new_thresholds['hardcoded'] = new_thresholds['hardcoded'], new_thresholds['random']
+        if new_thresholds['hardcoded'] > new_thresholds['ql-mcts']:
+            new_thresholds['hardcoded'], new_thresholds['ql-mcts'] = new_thresholds['ql-mcts'], new_thresholds['hardcoded']
+        if new_thresholds['random'] > new_thresholds['hardcoded']:
+            new_thresholds['random'], new_thresholds['hardcoded'] = new_thresholds['hardcoded'], new_thresholds['random']
+
         return Genome(new_thresholds, 0)
 
     def mutate(self, genome):
         new_thresholds = {}
+        genome_thresholds = genome.thresholds
         if random.random() < 0.4:
-            for key in genome.thresholds:
-                new_thresholds[key] = random.choice(
-                    [genome.thresholds[key], random.random()])
+            new_thresholds['random'] = random.random() * 15
+            new_thresholds['hardcoded'] = random.choice(
+                [genome_thresholds['random'], genome_thresholds['random'] +
+                 random.random() * (15 - genome_thresholds['random'])])
+            new_thresholds['ql-mcts'] = random.choice(
+                [genome_thresholds['hardcoded'], genome_thresholds['hardcoded'] +
+                 random.random() * (15 - genome_thresholds['hardcoded'])])
+
+            # for key in genome.thresholds:
+            #     new_thresholds[key] = random.choice(
+            #         [genome.thresholds[key], random.random() * 15])
+
             return Genome(new_thresholds, 0)
         return genome
 
     def evolve(self):
-        self.population_size = 70
-        self.offspring_size = 40
+        self.population_size = 50
+        self.offspring_size = 10
         population = self.generate_population(self.population_size)
 
-        for gen in range(100):
+        for gen in range(50):
             logging.info('Generation: {}'.format(gen))
             offpsring = []
             for i in range(self.offspring_size):
@@ -211,7 +252,7 @@ class FinalPlayer(Player):
 
             if gen % 5 == 0:
                 logging.info('Saving population')
-                with open('/Volume/USB/population.json', 'w') as f:
+                with open('/Volumes/USB/population2.json', 'w') as f:
                     json.dump([genome.toJSON() for genome in population], f)
 
         # return the best genome's thresholds
@@ -220,7 +261,7 @@ class FinalPlayer(Player):
     def play_game(self, thresholds, num_games=10):
         wins = 0
         for game in range(num_games):
-            logging.debug('Game: {}'.format(game))
+            print('Game: {}'.format(game))
             state = Quarto()
             player = 0
 
@@ -239,6 +280,7 @@ class FinalPlayer(Player):
                     state.state_as_array())).count(-1)
                 if player == 0:
                     if num_pieces_in_board < thresholds['random']:
+                        logging.debug('random')
                         # play randomly
                         action = self.random_player.place_piece()
                         next_piece = self.random_player.choose_piece()
@@ -250,21 +292,26 @@ class FinalPlayer(Player):
                         self.current_state.place(action[0], action[1])
                         self.current_state.set_selected_piece(next_piece)
                         self.current_state.switch_player()
+                        player = 1 - player
 
-                    elif num_pieces_in_board > thresholds['random'] and num_pieces_in_board < thresholds['hardcoded']:
+                    elif num_pieces_in_board >= thresholds['random'] and num_pieces_in_board < thresholds['hardcoded']:
                         # play using hardcoded strategy
+                        logging.debug('hardcoded')
                         self.previous_state = deepcopy(self.current_state)
                         winning_piece, position = self.hardcoded_strategy_get_move(
                             self.current_state)
-                        self.current_state.select(state.get_selected_piece())
-                        self.current_state.place(position[0], position[1])
                         next_piece = self.hardcoded_strategy_get_piece(
                             self.current_state)
+                        self.current_state.select(state.get_selected_piece())
+                        self.current_state.place(position[0], position[1])
+
                         self.current_state.set_selected_piece(next_piece)
                         self.current_state.switch_player()
+                        player = 1 - player
                     else:
                         # play using QL-MCTS
                         # time to go pro
+                        print('ql-mcts')
                         self.ql_mcts.previous_state = deepcopy(
                             self.current_state)
                         action = self.ql_mcts.get_action(self.current_state)
@@ -303,7 +350,18 @@ class FinalPlayer(Player):
         logging.debug(f"Win rate: {wins/num_games}")
         return wins/num_games
 
+    def test_thresholds(self):
+        thresholds = {
+            'random': 9.3073010693339,
+            'hardcoded': 11.51727589859944,
+            'ql_mcts': 14.99980333051413
+        }
+        win_rate = self.play_game(thresholds, num_games=10)
+        print(win_rate)
+
 
 final_player = FinalPlayer()
 best_thresholds = final_player.evolve()
 print(best_thresholds)
+
+# final_player.test_thresholds()
