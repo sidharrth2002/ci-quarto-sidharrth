@@ -182,8 +182,9 @@ class FinalPlayer(Player):
         return genome
 
     def evolve(self):
-        population = self.generate_population(100)
+        self.population_size = 100
         self.offspring_size = 10
+        population = self.generate_population(self.population_size)
 
         for gen in range(100):
             offpsring = []
@@ -194,6 +195,12 @@ class FinalPlayer(Player):
                 child = self.mutate(child)
                 child.fitness = self.play_game(child.thresholds, num_games=5)
                 offpsring.append(child)
+            population += offpsring
+            population = sorted(
+                population, key=lambda x: x.fitness, reverse=True)[:self.population_size]
+
+        # return the best genome's thresholds
+        return population[0].thresholds
 
     def play_game(self, thresholds, num_games=10):
         wins = 0
