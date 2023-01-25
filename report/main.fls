@@ -2036,6 +2036,7 @@ INPUT ./final-project.tex
 INPUT final-project.tex
 INPUT ./final-project.tex
 INPUT final-project.tex
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/tfm/jknappen/ec/tcrm1440.tfm
 INPUT main.aux
 INPUT ./lab1.aux
 INPUT lab1.aux
@@ -2051,8 +2052,8 @@ INPUT final-project.aux
 INPUT final-project.aux
 INPUT ./main.out
 INPUT ./main.out
-INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc
+INPUT /usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb
 INPUT /usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb
