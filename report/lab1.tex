@@ -450,3 +450,174 @@ Bests
 \end{tcolorbox}
 
 \subsection{Given Reviews}
+
+\subsubsection{Shayan}
+
+Shayan's code
+
+\begin{mintedbox}{python}
+import random
+import logging
+logging.getLogger().setLevel(logging.INFO)
+
+def custom_search(N, seed):
+    goal = set(range(N))
+    covered = set()
+    solution = list()
+    all_lists = problem(N, seed=42)
+    random.seed(seed)
+    random.shuffle(all_lists) #shuffle list to pop random
+    while goal != covered: #while set of covered nums is not equal to goal
+        x = all_lists.pop(0) #pick a list from all_lists
+        if not set(x) < covered: #if set of picked list is not a subset of covered
+            solution.append(x) #append it to the solution
+            covered |= set(x) #covered gets updated and becomes a union of covered plus picked set
+
+
+    logging.info(
+        f"custom search solution for N={N}: w={sum(len(_) for _ in solution)} (bloat={(sum(len(_) for _ in solution)-N)/N*100:.0f}%)"
+    )
+logging.getLogger().setLevel(logging.DEBUG)
+for N in [5, 10, 20, 100, 500, 1000]:
+    custom_search(N, 99)
+\end{mintedbox}
+
+Hi Shayan,
+
+I had a look at your code and had a few thoughts:
+
+1. You seem to be using a completely random approach to solving the problem, making a random, uninformed choice at each iteration of the loop. When running the algorithm with different random seeds, a different bloat factor and $w$ are produced. The gist is that picking subsets randomly neither guarantees a heuristically optimal solution nor is the runtime optimised.
+
+2. One suggestion to make informed decisions when choosing subsets is to sort the list by undiscovered elements / length of the list / other factors that affect the efficiency of the solution. This would still be a greedy, heuristically approximate solution that could improve both performance and runtime. Furthermore, you could consider traversing the list through more powerful search algorithms such as Djikstra or A-Star.
+
+2. (Miscellaneous) While the results are in the notebook, perhaps you can add them to the markdown file to compare it with other algorithms in the future.
+
+Thank you! If there are any other details I can add, please do let me know.
+
+\subsubsection{Arman}
+
+Arman's code
+
+\begin{mintedbox}{python}
+    import enum
+    from itertools import count
+    import logging
+    import random
+    from gx_utils import *
+    from heapq import heappush
+    from typing import Callable
+    import statistics
+    # import queues
+
+    logging.basicConfig(format="%(message)s", level=logging.INFO)
+
+    N = 1000
+    NUMBERS = {x for x in range(N)}
+
+
+    def problem(N, seed=None):
+        random.seed(seed)
+        return [
+            list(set(random.randint(0, N - 1) for n in range(random.randint(N // 5, N // 2))))
+            for n in range(random.randint(N, N * 5))
+        ]
+
+    class State:
+        def __init__(self, list_numbers:set):
+            self.lists_ = list_numbers.copy()
+        def add(self,item):
+            self.lists_.add(item)
+            return self
+        def __hash__(self):
+            #return hash(bytes(self.lists_))
+            return hash(str(self.lists_))
+        def __eq__(self, other):
+            #return bytes(self.lists_) == bytes(other.lists_)
+            return str(self.lists_) == str(other.lists_)
+        def __lt__(self, other):
+            #return bytes(self.lists_) < bytes(other.lists_)
+            return str(self.lists_) < str(other.lists_)
+        def __str__(self):
+            return str(self.lists_)
+        def __repr__(self):
+            return repr(self.lists_)
+        def copy_data(self):
+            return self.lists_.copy()
+        def get_weight(self,ref_lists):
+            return len([x for n in self.lists_ for x in ref_lists[n]])
+        def get_items(self,ref_lists):
+            return set([x for n in self.lists_ for x in ref_lists[n]])
+
+
+    def goal_test(current_state:State,ref_lists):
+        """get all the members of the lists in the current_state and check if it covers N"""
+
+        current_numbers = {x for n in current_state.lists_ for x in ref_lists[n]}
+        return current_numbers == NUMBERS
+
+    def valid_actions(current_state:State,ref_lists):
+        """returns set of indexes not currently added to this state"""
+        return {indx for indx,_ in enumerate(ref_lists) if indx not in current_state.lists_}
+
+    def result(current_state,action):
+        next_state=State(current_state.copy_data()).add(action)
+        return next_state
+
+    def search(initial_state:State, ref_lists,priority_function:Callable):
+        frontier = PriorityQueue()
+        state = initial_state
+        state_count = 0
+        while state is not None and not goal_test(state,ref_lists):
+            for a in valid_actions(state,ref_lists):
+                new_state = result(state,a)
+                if new_state not in frontier:
+                    frontier.push(new_state,p=priority_function(new_state))
+                elif new_state in frontier:
+                    pass
+            if frontier:
+                state = frontier.pop()
+                state_count+=1
+            else:
+                state = None
+
+        logging.info(f"Found a solution with cost: {state.get_weight(ref_lists)} and {state_count} number of visited states, last state: {state}")
+
+    def heuristic(state:State,ref_lists,N):
+        remained = NUMBERS - state.get_items(ref_lists)
+        return len(remained) + random.randint(0,len(remained)//2)
+
+
+    if __name__ == "__main__":
+        ref_lists = problem(N,seed=42)
+        #print(ref_lists)
+        initial_state = State(set())
+
+        # #Breath_first
+        # search(initial_state, ref_lists,priority_function=lambda state: state.get_weight(ref_lists))
+
+        # #Depth_first
+        # search(initial_state, ref_lists,priority_function=lambda state: -state.get_weight(ref_lists))
+
+        # #Heuristic
+        search(initial_state, ref_lists,priority_function=lambda state: heuristic(state,ref_lists, N))
+\end{mintedbox}
+
+Hi Arman,
+
+Here are my observations with regard to your solution for Lab 1:
+
+1. The priority queue is a suitable choice to store and select subsets in each iteration of your loop. All 4 traversal algorithms are compared by editing the priority function, and similar to mine, A-star performed best.
+
+2. Your heuristic function is particularly interesting because it combines the "potential new elements" with a random number.
+
+\begin{mintedbox}{python}
+def heuristic(state:State,ref_lists,N):
+    remained = NUMBERS - state.get_items(ref_lists)
+    return len(remained) + random.randint(0,len(remained)//2)
+\end{mintedbox}
+
+There also wasn't an explanation in the Readme, so I'm very curious as to the reason behind this heuristic. I ran your code with and without this random component and found that using it improves performance for larger values of N such as $N=100$ or $N=500$, but not so for smaller values like $N=20$. If you could add an explanation to your Readme about the heuristic, I would be very interested to read it.
+
+3. Your algorithm does not hit a bottleneck for values of $N>50$, in which case most people's code "exploded". Therefore, any solution, though not necessarily optimal, is reached.
+
+4. One suggestion I have is to experiment with other heuristic functions, such as those that consider both the number of attainable new elements and the length of the incoming subset.

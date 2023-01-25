@@ -1,0 +1,103 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{k+kn}{import} \PYG{n+nn}{enum}
+    \PYG{k+kn}{from} \PYG{n+nn}{itertools} \PYG{k+kn}{import} \PYG{n}{count}
+    \PYG{k+kn}{import} \PYG{n+nn}{logging}
+    \PYG{k+kn}{import} \PYG{n+nn}{random}
+    \PYG{k+kn}{from} \PYG{n+nn}{gx\PYGZus{}utils} \PYG{k+kn}{import} \PYG{o}{*}
+    \PYG{k+kn}{from} \PYG{n+nn}{heapq} \PYG{k+kn}{import} \PYG{n}{heappush}
+    \PYG{k+kn}{from} \PYG{n+nn}{typing} \PYG{k+kn}{import} \PYG{n}{Callable}
+    \PYG{k+kn}{import} \PYG{n+nn}{statistics}
+    \PYG{c+c1}{\PYGZsh{} import queues}
+
+    \PYG{n}{logging}\PYG{o}{.}\PYG{n}{basicConfig}\PYG{p}{(}\PYG{n+nb}{format}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+si}{\PYGZpc{}(message)s}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,} \PYG{n}{level}\PYG{o}{=}\PYG{n}{logging}\PYG{o}{.}\PYG{n}{INFO}\PYG{p}{)}
+
+    \PYG{n}{N} \PYG{o}{=} \PYG{l+m+mi}{1000}
+    \PYG{n}{NUMBERS} \PYG{o}{=} \PYG{p}{\PYGZob{}}\PYG{n}{x} \PYG{k}{for} \PYG{n}{x} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{N}\PYG{p}{)\PYGZcb{}}
+
+
+    \PYG{k}{def} \PYG{n+nf}{problem}\PYG{p}{(}\PYG{n}{N}\PYG{p}{,} \PYG{n}{seed}\PYG{o}{=}\PYG{k+kc}{None}\PYG{p}{):}
+        \PYG{n}{random}\PYG{o}{.}\PYG{n}{seed}\PYG{p}{(}\PYG{n}{seed}\PYG{p}{)}
+        \PYG{k}{return} \PYG{p}{[}
+            \PYG{n+nb}{list}\PYG{p}{(}\PYG{n+nb}{set}\PYG{p}{(}\PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n}{N} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{k}{for} \PYG{n}{n} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{n}{N} \PYG{o}{//} \PYG{l+m+mi}{5}\PYG{p}{,} \PYG{n}{N} \PYG{o}{//} \PYG{l+m+mi}{2}\PYG{p}{))))}
+            \PYG{k}{for} \PYG{n}{n} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{n}{N}\PYG{p}{,} \PYG{n}{N} \PYG{o}{*} \PYG{l+m+mi}{5}\PYG{p}{))}
+        \PYG{p}{]}
+
+    \PYG{k}{class} \PYG{n+nc}{State}\PYG{p}{:}
+        \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{list\PYGZus{}numbers}\PYG{p}{:}\PYG{n+nb}{set}\PYG{p}{):}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{lists\PYGZus{}} \PYG{o}{=} \PYG{n}{list\PYGZus{}numbers}\PYG{o}{.}\PYG{n}{copy}\PYG{p}{()}
+        \PYG{k}{def} \PYG{n+nf}{add}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,}\PYG{n}{item}\PYG{p}{):}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{lists\PYGZus{}}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{item}\PYG{p}{)}
+            \PYG{k}{return} \PYG{n+nb+bp}{self}
+        \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}hash\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+            \PYG{c+c1}{\PYGZsh{}return hash(bytes(self.lists\PYGZus{}))}
+            \PYG{k}{return} \PYG{n+nb}{hash}\PYG{p}{(}\PYG{n+nb}{str}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{lists\PYGZus{}}\PYG{p}{))}
+        \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}eq\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{other}\PYG{p}{):}
+            \PYG{c+c1}{\PYGZsh{}return bytes(self.lists\PYGZus{}) == bytes(other.lists\PYGZus{})}
+            \PYG{k}{return} \PYG{n+nb}{str}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{lists\PYGZus{}}\PYG{p}{)} \PYG{o}{==} \PYG{n+nb}{str}\PYG{p}{(}\PYG{n}{other}\PYG{o}{.}\PYG{n}{lists\PYGZus{}}\PYG{p}{)}
+        \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}lt\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{other}\PYG{p}{):}
+            \PYG{c+c1}{\PYGZsh{}return bytes(self.lists\PYGZus{}) \PYGZlt{} bytes(other.lists\PYGZus{})}
+            \PYG{k}{return} \PYG{n+nb}{str}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{lists\PYGZus{}}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{n+nb}{str}\PYG{p}{(}\PYG{n}{other}\PYG{o}{.}\PYG{n}{lists\PYGZus{}}\PYG{p}{)}
+        \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}str\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+            \PYG{k}{return} \PYG{n+nb}{str}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{lists\PYGZus{}}\PYG{p}{)}
+        \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}repr\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+            \PYG{k}{return} \PYG{n+nb}{repr}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{lists\PYGZus{}}\PYG{p}{)}
+        \PYG{k}{def} \PYG{n+nf}{copy\PYGZus{}data}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+            \PYG{k}{return} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{lists\PYGZus{}}\PYG{o}{.}\PYG{n}{copy}\PYG{p}{()}
+        \PYG{k}{def} \PYG{n+nf}{get\PYGZus{}weight}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,}\PYG{n}{ref\PYGZus{}lists}\PYG{p}{):}
+            \PYG{k}{return} \PYG{n+nb}{len}\PYG{p}{([}\PYG{n}{x} \PYG{k}{for} \PYG{n}{n} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{lists\PYGZus{}} \PYG{k}{for} \PYG{n}{x} \PYG{o+ow}{in} \PYG{n}{ref\PYGZus{}lists}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]])}
+        \PYG{k}{def} \PYG{n+nf}{get\PYGZus{}items}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,}\PYG{n}{ref\PYGZus{}lists}\PYG{p}{):}
+            \PYG{k}{return} \PYG{n+nb}{set}\PYG{p}{([}\PYG{n}{x} \PYG{k}{for} \PYG{n}{n} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{lists\PYGZus{}} \PYG{k}{for} \PYG{n}{x} \PYG{o+ow}{in} \PYG{n}{ref\PYGZus{}lists}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]])}
+
+
+    \PYG{k}{def} \PYG{n+nf}{goal\PYGZus{}test}\PYG{p}{(}\PYG{n}{current\PYGZus{}state}\PYG{p}{:}\PYG{n}{State}\PYG{p}{,}\PYG{n}{ref\PYGZus{}lists}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}get all the members of the lists in the current\PYGZus{}state and check if it covers N\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+
+        \PYG{n}{current\PYGZus{}numbers} \PYG{o}{=} \PYG{p}{\PYGZob{}}\PYG{n}{x} \PYG{k}{for} \PYG{n}{n} \PYG{o+ow}{in} \PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{lists\PYGZus{}} \PYG{k}{for} \PYG{n}{x} \PYG{o+ow}{in} \PYG{n}{ref\PYGZus{}lists}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]\PYGZcb{}}
+        \PYG{k}{return} \PYG{n}{current\PYGZus{}numbers} \PYG{o}{==} \PYG{n}{NUMBERS}
+
+    \PYG{k}{def} \PYG{n+nf}{valid\PYGZus{}actions}\PYG{p}{(}\PYG{n}{current\PYGZus{}state}\PYG{p}{:}\PYG{n}{State}\PYG{p}{,}\PYG{n}{ref\PYGZus{}lists}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}returns set of indexes not currently added to this state\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{k}{return} \PYG{p}{\PYGZob{}}\PYG{n}{indx} \PYG{k}{for} \PYG{n}{indx}\PYG{p}{,}\PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{ref\PYGZus{}lists}\PYG{p}{)} \PYG{k}{if} \PYG{n}{indx} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{lists\PYGZus{}}\PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{def} \PYG{n+nf}{result}\PYG{p}{(}\PYG{n}{current\PYGZus{}state}\PYG{p}{,}\PYG{n}{action}\PYG{p}{):}
+        \PYG{n}{next\PYGZus{}state}\PYG{o}{=}\PYG{n}{State}\PYG{p}{(}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{copy\PYGZus{}data}\PYG{p}{())}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{action}\PYG{p}{)}
+        \PYG{k}{return} \PYG{n}{next\PYGZus{}state}
+
+    \PYG{k}{def} \PYG{n+nf}{search}\PYG{p}{(}\PYG{n}{initial\PYGZus{}state}\PYG{p}{:}\PYG{n}{State}\PYG{p}{,} \PYG{n}{ref\PYGZus{}lists}\PYG{p}{,}\PYG{n}{priority\PYGZus{}function}\PYG{p}{:}\PYG{n}{Callable}\PYG{p}{):}
+        \PYG{n}{frontier} \PYG{o}{=} \PYG{n}{PriorityQueue}\PYG{p}{()}
+        \PYG{n}{state} \PYG{o}{=} \PYG{n}{initial\PYGZus{}state}
+        \PYG{n}{state\PYGZus{}count} \PYG{o}{=} \PYG{l+m+mi}{0}
+        \PYG{k}{while} \PYG{n}{state} \PYG{o+ow}{is} \PYG{o+ow}{not} \PYG{k+kc}{None} \PYG{o+ow}{and} \PYG{o+ow}{not} \PYG{n}{goal\PYGZus{}test}\PYG{p}{(}\PYG{n}{state}\PYG{p}{,}\PYG{n}{ref\PYGZus{}lists}\PYG{p}{):}
+            \PYG{k}{for} \PYG{n}{a} \PYG{o+ow}{in} \PYG{n}{valid\PYGZus{}actions}\PYG{p}{(}\PYG{n}{state}\PYG{p}{,}\PYG{n}{ref\PYGZus{}lists}\PYG{p}{):}
+                \PYG{n}{new\PYGZus{}state} \PYG{o}{=} \PYG{n}{result}\PYG{p}{(}\PYG{n}{state}\PYG{p}{,}\PYG{n}{a}\PYG{p}{)}
+                \PYG{k}{if} \PYG{n}{new\PYGZus{}state} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n}{frontier}\PYG{p}{:}
+                    \PYG{n}{frontier}\PYG{o}{.}\PYG{n}{push}\PYG{p}{(}\PYG{n}{new\PYGZus{}state}\PYG{p}{,}\PYG{n}{p}\PYG{o}{=}\PYG{n}{priority\PYGZus{}function}\PYG{p}{(}\PYG{n}{new\PYGZus{}state}\PYG{p}{))}
+                \PYG{k}{elif} \PYG{n}{new\PYGZus{}state} \PYG{o+ow}{in} \PYG{n}{frontier}\PYG{p}{:}
+                    \PYG{k}{pass}
+            \PYG{k}{if} \PYG{n}{frontier}\PYG{p}{:}
+                \PYG{n}{state} \PYG{o}{=} \PYG{n}{frontier}\PYG{o}{.}\PYG{n}{pop}\PYG{p}{()}
+                \PYG{n}{state\PYGZus{}count}\PYG{o}{+=}\PYG{l+m+mi}{1}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{n}{state} \PYG{o}{=} \PYG{k+kc}{None}
+
+        \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Found a solution with cost: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{state}\PYG{o}{.}\PYG{n}{get\PYGZus{}weight}\PYG{p}{(}\PYG{n}{ref\PYGZus{}lists}\PYG{p}{)}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ and }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{state\PYGZus{}count}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ number of visited states, last state: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{state}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{heuristic}\PYG{p}{(}\PYG{n}{state}\PYG{p}{:}\PYG{n}{State}\PYG{p}{,}\PYG{n}{ref\PYGZus{}lists}\PYG{p}{,}\PYG{n}{N}\PYG{p}{):}
+        \PYG{n}{remained} \PYG{o}{=} \PYG{n}{NUMBERS} \PYG{o}{\PYGZhy{}} \PYG{n}{state}\PYG{o}{.}\PYG{n}{get\PYGZus{}items}\PYG{p}{(}\PYG{n}{ref\PYGZus{}lists}\PYG{p}{)}
+        \PYG{k}{return} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{remained}\PYG{p}{)} \PYG{o}{+} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{remained}\PYG{p}{)}\PYG{o}{//}\PYG{l+m+mi}{2}\PYG{p}{)}
+
+
+    \PYG{k}{if} \PYG{n+nv+vm}{\PYGZus{}\PYGZus{}name\PYGZus{}\PYGZus{}} \PYG{o}{==} \PYG{l+s+s2}{\PYGZdq{}\PYGZus{}\PYGZus{}main\PYGZus{}\PYGZus{}\PYGZdq{}}\PYG{p}{:}
+        \PYG{n}{ref\PYGZus{}lists} \PYG{o}{=} \PYG{n}{problem}\PYG{p}{(}\PYG{n}{N}\PYG{p}{,}\PYG{n}{seed}\PYG{o}{=}\PYG{l+m+mi}{42}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{}print(ref\PYGZus{}lists)}
+        \PYG{n}{initial\PYGZus{}state} \PYG{o}{=} \PYG{n}{State}\PYG{p}{(}\PYG{n+nb}{set}\PYG{p}{())}
+
+        \PYG{c+c1}{\PYGZsh{} \PYGZsh{}Breath\PYGZus{}first}
+        \PYG{c+c1}{\PYGZsh{} search(initial\PYGZus{}state, ref\PYGZus{}lists,priority\PYGZus{}function=lambda state: state.get\PYGZus{}weight(ref\PYGZus{}lists))}
+
+        \PYG{c+c1}{\PYGZsh{} \PYGZsh{}Depth\PYGZus{}first}
+        \PYG{c+c1}{\PYGZsh{} search(initial\PYGZus{}state, ref\PYGZus{}lists,priority\PYGZus{}function=lambda state: \PYGZhy{}state.get\PYGZus{}weight(ref\PYGZus{}lists))}
+
+        \PYG{c+c1}{\PYGZsh{} \PYGZsh{}Heuristic}
+        \PYG{n}{search}\PYG{p}{(}\PYG{n}{initial\PYGZus{}state}\PYG{p}{,} \PYG{n}{ref\PYGZus{}lists}\PYG{p}{,}\PYG{n}{priority\PYGZus{}function}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{state}\PYG{p}{:} \PYG{n}{heuristic}\PYG{p}{(}\PYG{n}{state}\PYG{p}{,}\PYG{n}{ref\PYGZus{}lists}\PYG{p}{,} \PYG{n}{N}\PYG{p}{))}
+\end{Verbatim}

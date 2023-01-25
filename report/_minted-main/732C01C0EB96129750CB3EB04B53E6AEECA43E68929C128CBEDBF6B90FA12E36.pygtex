@@ -1,0 +1,5 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{def} \PYG{n+nf}{heuristic}\PYG{p}{(}\PYG{n}{state}\PYG{p}{:}\PYG{n}{State}\PYG{p}{,}\PYG{n}{ref\PYGZus{}lists}\PYG{p}{,}\PYG{n}{N}\PYG{p}{):}
+    \PYG{n}{remained} \PYG{o}{=} \PYG{n}{NUMBERS} \PYG{o}{\PYGZhy{}} \PYG{n}{state}\PYG{o}{.}\PYG{n}{get\PYGZus{}items}\PYG{p}{(}\PYG{n}{ref\PYGZus{}lists}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{remained}\PYG{p}{)} \PYG{o}{+} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{remained}\PYG{p}{)}\PYG{o}{//}\PYG{l+m+mi}{2}\PYG{p}{)}
+\end{Verbatim}
