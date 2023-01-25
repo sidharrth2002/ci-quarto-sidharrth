@@ -1,0 +1,35 @@
+Hi Eric,\markdownRendererInterblockSeparator
+{}Here's my review concerning your approach to lab 2.\markdownRendererInterblockSeparator
+{}There are a few high-level, cosmetic attributes you did well: 1. Each function is well-documented and well-labelled, so I could easily understand the purpose of each one. One way to improve could be to leverage Python docstrings, where you can also explain input parameters and output values. To do this, add:\markdownRendererInterblockSeparator
+{}\markdownRendererCodeSpan{python
+def mutation(genome):
+'''
+Function mutates genome using .... strategy, etc.
+args:
+genome: str - Input genome
+'''
+}\markdownRendererInterblockSeparator
+{}\markdownRendererOlBeginTight
+\markdownRendererOlItemWithNumber{3}Using a Python script made it easy for me to run code iteratively for many different values of N/Offspring sizes/etc. without having to run all the cells. I was able to reproduce your best results after a few tries.\markdownRendererOlItemEnd 
+\markdownRendererOlEndTight \markdownRendererInterblockSeparator
+{}Let's break down the solution itself: 1. I noticed that you leveraged a completely random roulette-wheel-based selection, which leverages completely on random chance, compared to a fitness-based tournament selection which performed better (at least from my experience with this lab). Perhaps, you could try experimenting with different parent selection methods instead of just one.\markdownRendererInterblockSeparator
+{}\markdownRendererOlBeginTight
+\markdownRendererOlItemWithNumber{2}Your fitness function is particularly interesting, standing out from most others I've seen. It takes into account duplicates in the subset:\markdownRendererOlItemEnd 
+\markdownRendererOlEndTight \markdownRendererInterblockSeparator
+{}\markdownRendererCodeSpan{python
+def fitness\markdownRendererUnderscore{}function(entry, goal\markdownRendererUnderscore{}set):
+    duplicates = len(entry) - len(set(tuple(entry)))
+    miss = len(goal\markdownRendererUnderscore{}set.difference(set(entry)))
+    return (-1000 * miss) - duplicates
+}\markdownRendererInterblockSeparator
+{}I understand that the infinitesimal blowup by \markdownRendererDollarSign{}*1000\markdownRendererDollarSign{} may theoretically help punish the algorithm if it is far from the goal. I modified your code with 2 different fitness functions: \markdownRendererCodeSpan{python
+return miss-duplicates} ```\markdownRendererInterblockSeparator
+{}\markdownRendererCodeSpan{python
+return (-1000 * miss)-duplicates} ``` and the results were the same, so I look forward to reading about your motivation for this in the README. Since you're only subtracting the two values (one is much larger than the other), you can do 1 of 2 things to improve convergence: divide the values, or return them as a tuple (like we did for the first lab). You could also try different mathematical equations for the fitness function, that takes into account duplicates, undiscovered elements, length, etc., kind of like the heuristic functions we used early for graph algorithms.\markdownRendererInterblockSeparator
+{}\markdownRendererOlBegin
+\markdownRendererOlItemWithNumber{3}Only one type of mutation is used (randomly flipping a bit). You could try other mutation methods and randomly choose between them to increase exploration power.\markdownRendererOlItemEnd 
+\markdownRendererOlItemWithNumber{4}The probability to decide whether to mutate is quite high. In the Telegram chat, most people reported that mutations were detrimental to reaching minima, so I understand why you might have limited your mutations, but perhaps you could vary this number based on the changing fitness. Perhaps, mutate more often/more extensively to explore and reduce the vigour to exploit. You can also experiment with permutations of evolution like recombination + mutation, recombination only, mutation only, etc. All these contribute to the exploration power of your approach.\markdownRendererOlItemEnd 
+\markdownRendererOlItemWithNumber{5}There is definitely a scaling problem for large values of N, such as \markdownRendererDollarSign{}N=1000\markdownRendererDollarSign{}. One thing to note is that minima is often reached within a fraction of 1000 generations (I logged your generational results out).\markdownRendererOlItemEnd 
+\markdownRendererOlItemWithNumber{6}Representing the problem space as 0s and 1s could result in cleaner code and faster computation, but this is more of a personal preference and does not really affect the solution.\markdownRendererOlItemEnd 
+\markdownRendererOlEnd \markdownRendererInterblockSeparator
+{}All in all, good job! I just want to read more about your exciting fitness function. Let's discuss below!\relax

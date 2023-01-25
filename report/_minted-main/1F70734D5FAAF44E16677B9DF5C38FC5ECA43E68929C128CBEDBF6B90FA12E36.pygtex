@@ -1,0 +1,290 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k}{as} \PYG{n+nn}{np}
+\PYG{k+kn}{import} \PYG{n+nn}{itertools}
+
+\PYG{k}{def} \PYG{n+nf}{calculate\PYGZus{}fitness}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Calculates the fitness of the given genome.}
+\PYG{l+s+sd}{    The fitness is the number of unique elements}
+\PYG{l+s+sd}{    The weight is the total number of elements in the genome}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{c+c1}{\PYGZsh{} fitness is number of distinct elements in genome}
+    \PYG{n}{all\PYGZus{}elements} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{n}{distinct\PYGZus{}elements} \PYG{o}{=} \PYG{n+nb}{set}\PYG{p}{()}
+    \PYG{n}{weight} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{k}{for} \PYG{n}{subset}\PYG{p}{,} \PYG{n}{gene} \PYG{o+ow}{in} \PYG{n+nb}{zip}\PYG{p}{(}\PYG{n}{prob}\PYG{p}{,} \PYG{n}{genome}\PYG{p}{):}
+        \PYG{c+c1}{\PYGZsh{} if the particular element should be taken}
+        \PYG{k}{if} \PYG{n}{gene} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{:}
+            \PYG{n}{distinct\PYGZus{}elements}\PYG{o}{.}\PYG{n}{update}\PYG{p}{(}\PYG{n}{subset}\PYG{p}{)}
+            \PYG{n}{weight} \PYG{o}{+=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{subset}\PYG{p}{)}
+            \PYG{n}{all\PYGZus{}elements} \PYG{o}{+=} \PYG{n}{subset}
+    \PYG{n}{num\PYGZus{}duplicates} \PYG{o}{=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{all\PYGZus{}elements}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb}{set}\PYG{p}{(}\PYG{n}{all\PYGZus{}elements}\PYG{p}{))}
+    \PYG{n}{num\PYGZus{}undiscovered\PYGZus{}elements} \PYG{o}{=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb}{set}\PYG{p}{(}\PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{N}\PYG{p}{))} \PYG{o}{\PYGZhy{}} \PYG{n}{distinct\PYGZus{}elements}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} print(set(range(N)) \PYGZhy{} distinct\PYGZus{}elements)}
+    \PYG{c+c1}{\PYGZsh{} print(\PYGZdq{}num\PYGZus{}undiscovered\PYGZus{}elements\PYGZdq{}, num\PYGZus{}undiscovered\PYGZus{}elements)}
+    \PYG{c+c1}{\PYGZsh{} return num\PYGZus{}undiscovered\PYGZus{}elements, \PYGZhy{}weight}
+    \PYG{c+c1}{\PYGZsh{} return len(distinct\PYGZus{}elements), \PYGZhy{}weight}
+    \PYG{c+c1}{\PYGZsh{} return num\PYGZus{}undiscovered\PYGZus{}elements / (len(distinct\PYGZus{}elements) + 1), \PYGZhy{}weight}
+    \PYG{k}{return} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{distinct\PYGZus{}elements}\PYG{p}{)} \PYG{o}{/} \PYG{p}{(}\PYG{n}{num\PYGZus{}undiscovered\PYGZus{}elements} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{),} \PYG{o}{\PYGZhy{}}\PYG{n}{weight}
+    \PYG{c+c1}{\PYGZsh{} other potential fitness functions:}
+    \PYG{c+c1}{\PYGZsh{} return len(distinct\PYGZus{}elements) / (num\PYGZus{}duplicates + 1)}
+    \PYG{c+c1}{\PYGZsh{} return len(distinct\PYGZus{}elements) / (num\PYGZus{}duplicates + 1) \PYGZhy{} num\PYGZus{}undiscovered\PYGZus{}elements, \PYGZhy{}weight}
+    \PYG{c+c1}{\PYGZsh{} return len(distinct\PYGZus{}elements) / (num\PYGZus{}undiscovered\PYGZus{}elements + 1), \PYGZhy{}weight}
+
+\PYG{k}{def} \PYG{n+nf}{generate\PYGZus{}element}\PYG{p}{():}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Randomly generates offspring made up of 0s and 1s.}
+\PYG{l+s+sd}{    1 means the element is taken, 0 means it is not.}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{n}{genome} \PYG{o}{=} \PYG{p}{[}\PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{N}\PYG{p}{)]}
+    \PYG{n}{fitness} \PYG{o}{=} \PYG{n}{calculate\PYGZus{}fitness}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} genome = np.random.choice([True, False], size=PROBLEM\PYGZus{}SIZE)}
+    \PYG{k}{return} \PYG{n}{Individual}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{,} \PYG{n}{fitness}\PYG{p}{)}
+
+\PYG{n}{initial\PYGZus{}population} \PYG{o}{=} \PYG{p}{[}\PYG{n}{generate\PYGZus{}element}\PYG{p}{()} \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{POPULATION\PYGZus{}SIZE}\PYG{p}{)]}
+
+\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{initial\PYGZus{}population}\PYG{p}{)}
+
+\PYG{n}{fitness\PYGZus{}log} \PYG{o}{=} \PYG{p}{[]}
+
+\PYG{k}{def} \PYG{n+nf}{calculate\PYGZus{}weight}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Weight Function}
+\PYG{l+s+sd}{    Weight is the sum of the lengths of the subsets that are taken}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{c+c1}{\PYGZsh{} select the subsets from prob based on the best individual}
+    \PYG{n}{final} \PYG{o}{=} \PYG{p}{[}\PYG{n}{prob}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{k}{for} \PYG{n}{i}\PYG{p}{,} \PYG{n}{gene} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{)} \PYG{k}{if} \PYG{n}{gene} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{]}
+    \PYG{n}{weight} \PYG{o}{=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{itertools}\PYG{o}{.}\PYG{n}{chain}\PYG{o}{.}\PYG{n}{from\PYGZus{}iterable}\PYG{p}{(}\PYG{n}{final}\PYG{p}{)))}
+    \PYG{k}{return} \PYG{n}{weight}
+
+\PYG{k}{def} \PYG{n+nf}{choose\PYGZus{}mutation\PYGZus{}rate}\PYG{p}{(}\PYG{n}{fitness\PYGZus{}log}\PYG{p}{):}
+    \PYG{c+c1}{\PYGZsh{} choose mutation rate based on change in fitness\PYGZus{}log}
+    \PYG{k}{if} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{fitness\PYGZus{}log}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+        \PYG{k}{return} \PYG{l+m+mf}{0.2}
+    \PYG{k}{if} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{fitness\PYGZus{}log}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{:}
+        \PYG{n}{considered\PYGZus{}elements} \PYG{o}{=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{fitness\PYGZus{}log}\PYG{p}{)}
+    \PYG{k}{else}\PYG{p}{:}
+        \PYG{n}{considered\PYGZus{}elements} \PYG{o}{=} \PYG{l+m+mi}{3}
+    \PYG{n}{growth\PYGZus{}rate} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{diff}\PYG{p}{(}\PYG{n}{fitness\PYGZus{}log}\PYG{p}{[}\PYG{o}{\PYGZhy{}}\PYG{n}{considered\PYGZus{}elements}\PYG{p}{:]))}
+    \PYG{k}{if} \PYG{n}{growth\PYGZus{}rate} \PYG{o}{\PYGZlt{}=} \PYG{l+m+mi}{0}\PYG{p}{:}
+        \PYG{k}{return} \PYG{l+m+mf}{0.4}
+    \PYG{k}{elif} \PYG{n}{growth\PYGZus{}rate} \PYG{o}{\PYGZlt{}} \PYG{l+m+mf}{0.5}\PYG{p}{:}
+        \PYG{k}{return} \PYG{l+m+mf}{0.3}
+    \PYG{k}{elif} \PYG{n}{growth\PYGZus{}rate} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{1}\PYG{p}{:}
+        \PYG{k}{return} \PYG{l+m+mf}{0.01}
+    \PYG{k}{else}\PYG{p}{:}
+        \PYG{k}{return} \PYG{l+m+mf}{0.1}
+
+\PYG{k}{def} \PYG{n+nf}{plateau\PYGZus{}detection}\PYG{p}{(}\PYG{n}{num\PYGZus{}generations}\PYG{p}{,} \PYG{n}{fitness\PYGZus{}log}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Checks if the fitness has plateaued for the last num\PYGZus{}generations.}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{k}{if} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{fitness\PYGZus{}log}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{n}{num\PYGZus{}generations}\PYG{p}{:}
+        \PYG{k}{return} \PYG{k+kc}{False}
+    \PYG{k}{return} \PYG{n+nb}{all}\PYG{p}{(}\PYG{n}{fitness\PYGZus{}log}\PYG{p}{[}\PYG{o}{\PYGZhy{}}\PYG{n}{num\PYGZus{}generations}\PYG{p}{]} \PYG{o}{==} \PYG{n}{fitness\PYGZus{}log}\PYG{p}{[}\PYG{o}{\PYGZhy{}}\PYG{n}{i}\PYG{p}{]} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{num\PYGZus{}generations}\PYG{p}{))}
+
+\PYG{k}{def} \PYG{n+nf}{flip\PYGZus{}mutation}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{,} \PYG{n}{mutate\PYGZus{}only\PYGZus{}one\PYGZus{}element}\PYG{o}{=}\PYG{k+kc}{False}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Flips random bit(s) in the genome.}
+\PYG{l+s+sd}{    Parameters:}
+\PYG{l+s+sd}{    mutate\PYGZus{}only\PYGZus{}one\PYGZus{}element: If True, only one bit is flipped.}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{n}{modified\PYGZus{}genome} \PYG{o}{=} \PYG{n}{genome}\PYG{o}{.}\PYG{n}{copy}\PYG{p}{()}
+    \PYG{k}{if} \PYG{n}{mutate\PYGZus{}only\PYGZus{}one\PYGZus{}element}\PYG{p}{:}
+        \PYG{c+c1}{\PYGZsh{} flip a random bit}
+        \PYG{n}{index} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)}
+        \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{index}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{index}\PYG{p}{]}
+    \PYG{k}{else}\PYG{p}{:}
+        \PYG{c+c1}{\PYGZsh{} flip a random number of bits}
+        \PYG{n}{num\PYGZus{}to\PYGZus{}flip} \PYG{o}{=} \PYG{n}{choose\PYGZus{}mutation\PYGZus{}rate}\PYG{p}{(}\PYG{n}{fitness\PYGZus{}log}\PYG{p}{)} \PYG{o}{*} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{)}
+        \PYG{n}{to\PYGZus{}flip} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{(}\PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{)),} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{num\PYGZus{}to\PYGZus{}flip}\PYG{p}{))}
+        \PYG{c+c1}{\PYGZsh{} to\PYGZus{}flip = random.sample(range(len(modified\PYGZus{}genome)), random.randint(0, len(modified\PYGZus{}genome)))}
+        \PYG{n}{modified\PYGZus{}genome} \PYG{o}{=} \PYG{p}{[}\PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{k}{if} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n}{to\PYGZus{}flip} \PYG{k}{else} \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{))]}
+
+    \PYG{k}{return} \PYG{n}{modified\PYGZus{}genome}
+    \PYG{c+c1}{\PYGZsh{} mutate only if it brings some benefit to the weight}
+    \PYG{c+c1}{\PYGZsh{} if calculate\PYGZus{}weight(modified\PYGZus{}genome) \PYGZlt{} calculate\PYGZus{}weight(genome):}
+    \PYG{c+c1}{\PYGZsh{}     return modified\PYGZus{}genome}
+
+
+\PYG{k}{def} \PYG{n+nf}{return\PYGZus{}best\PYGZus{}genome}\PYG{p}{(}\PYG{n}{genome1}\PYG{p}{,} \PYG{n}{genome2}\PYG{p}{):}
+    \PYG{k}{return} \PYG{n}{genome1}
+    \PYG{c+c1}{\PYGZsh{} if calculate\PYGZus{}fitness(genome1) \PYGZgt{} calculate\PYGZus{}fitness(genome2):}
+    \PYG{c+c1}{\PYGZsh{}     return genome1}
+    \PYG{c+c1}{\PYGZsh{} else:}
+    \PYG{c+c1}{\PYGZsh{}     return genome2}
+
+\PYG{k}{def} \PYG{n+nf}{mutation}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Runs a randomly chosen mutation on the genome. Mutations are:}
+\PYG{l+s+sd}{    1. Bit Flip Mutation}
+\PYG{l+s+sd}{    2. Scramble Mutation}
+\PYG{l+s+sd}{    3. Swap Mutation}
+\PYG{l+s+sd}{    4. Inversion Mutation}
+\PYG{l+s+sd}{    Refer to README for more details.}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{c+c1}{\PYGZsh{} check type of genome (debugging)}
+    \PYG{c+c1}{\PYGZsh{} if type(genome) == tuple:}
+    \PYG{c+c1}{\PYGZsh{}     print(\PYGZdq{}genome is tuple\PYGZdq{})}
+    \PYG{c+c1}{\PYGZsh{}     print(genome)}
+
+    \PYG{n}{possible\PYGZus{}mutations} \PYG{o}{=} \PYG{p}{[}\PYG{n}{flip\PYGZus{}mutation}\PYG{p}{,} \PYG{n}{scramble\PYGZus{}mutation}\PYG{p}{,} \PYG{n}{swap\PYGZus{}mutation}\PYG{p}{,} \PYG{n}{inversion\PYGZus{}mutation}\PYG{p}{]}
+    \PYG{n}{chosen\PYGZus{}mutation} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{possible\PYGZus{}mutations}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{chosen\PYGZus{}mutation}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{} if random.random() \PYGZlt{} 0.1:}
+    \PYG{c+c1}{\PYGZsh{}     for \PYGZus{} in range(num\PYGZus{}elements\PYGZus{}to\PYGZus{}mutate):}
+    \PYG{c+c1}{\PYGZsh{}         index = random.randint(0, len(genome) \PYGZhy{} 1)}
+    \PYG{c+c1}{\PYGZsh{}         genome[index] = 1 \PYGZhy{} genome[index]}
+    \PYG{c+c1}{\PYGZsh{} mutate a random number of elements}
+    \PYG{c+c1}{\PYGZsh{} to\PYGZus{}flip = random.randint(0, len(genome))}
+    \PYG{c+c1}{\PYGZsh{} \PYGZsh{} flip the bits}
+    \PYG{c+c1}{\PYGZsh{} return [1 \PYGZhy{} genome[i] if i \PYGZlt{} to\PYGZus{}flip else genome[i] for i in range(len(genome))]}
+
+\PYG{k}{def} \PYG{n+nf}{scramble\PYGZus{}mutation}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Randomly scrambles the genome.}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{c+c1}{\PYGZsh{} select start and end indices to scramble}
+    \PYG{n}{modified\PYGZus{}genome} \PYG{o}{=} \PYG{n}{genome}\PYG{o}{.}\PYG{n}{copy}\PYG{p}{()}
+    \PYG{n}{start} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)}
+    \PYG{n}{end} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{n}{start}\PYG{p}{,} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} scramble the elements}
+    \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{start}\PYG{p}{:}\PYG{n}{end}\PYG{p}{]} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{start}\PYG{p}{:}\PYG{n}{end}\PYG{p}{],} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{start}\PYG{p}{:}\PYG{n}{end}\PYG{p}{]))}
+    \PYG{k}{return} \PYG{n}{return\PYGZus{}best\PYGZus{}genome}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{,} \PYG{n}{genome}\PYG{p}{)}
+
+\PYG{k}{def} \PYG{n+nf}{swap\PYGZus{}mutation}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Randomly swaps two elements in the genome.}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{n}{modified\PYGZus{}genome} \PYG{o}{=} \PYG{n}{genome}\PYG{o}{.}\PYG{n}{copy}\PYG{p}{()}
+    \PYG{n}{index1} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)}
+    \PYG{n}{index2} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)}
+    \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{index1}\PYG{p}{],} \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{index2}\PYG{p}{]} \PYG{o}{=} \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{index2}\PYG{p}{],} \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{index1}\PYG{p}{]}
+    \PYG{k}{return} \PYG{n}{return\PYGZus{}best\PYGZus{}genome}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{,} \PYG{n}{genome}\PYG{p}{)}
+
+\PYG{k}{def} \PYG{n+nf}{inversion\PYGZus{}mutation}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Randomly inverts the genome.}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{n}{modified\PYGZus{}genome} \PYG{o}{=} \PYG{n}{genome}\PYG{o}{.}\PYG{n}{copy}\PYG{p}{()}
+    \PYG{c+c1}{\PYGZsh{} select start and end indices to invert}
+    \PYG{n}{start} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)}
+    \PYG{n}{end} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{n}{start}\PYG{p}{,} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} invert the elements}
+    \PYG{n}{modified\PYGZus{}genome} \PYG{o}{=} \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[:}\PYG{n}{start}\PYG{p}{]} \PYG{o}{+} \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{start}\PYG{p}{:}\PYG{n}{end}\PYG{p}{][::}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{+} \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{end}\PYG{p}{:]}
+    \PYG{k}{return} \PYG{n}{return\PYGZus{}best\PYGZus{}genome}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{,} \PYG{n}{genome}\PYG{p}{)}
+
+\PYG{k}{def} \PYG{n+nf}{crossover}\PYG{p}{(}\PYG{n}{genome1}\PYG{p}{,} \PYG{n}{genome2}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Crossover the two genomes by randomly selecting a point}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{c+c1}{\PYGZsh{} crossover at a random point}
+    \PYG{n}{crossover\PYGZus{}point} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{genome1}\PYG{p}{))}
+    \PYG{n}{modified\PYGZus{}genome} \PYG{o}{=} \PYG{n}{genome1}\PYG{p}{[:}\PYG{n}{crossover\PYGZus{}point}\PYG{p}{]} \PYG{o}{+} \PYG{n}{genome2}\PYG{p}{[}\PYG{n}{crossover\PYGZus{}point}\PYG{p}{:]}
+    \PYG{k}{return} \PYG{n}{modified\PYGZus{}genome}
+
+\PYG{k}{def} \PYG{n+nf}{roulette\PYGZus{}wheel\PYGZus{}selection}\PYG{p}{(}\PYG{n}{population}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Selects an individual from the population based on the fitness.}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{c+c1}{\PYGZsh{} calculate the total fitness of the population}
+    \PYG{n}{total\PYGZus{}fitness} \PYG{o}{=} \PYG{n+nb}{sum}\PYG{p}{([}\PYG{n}{individual}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{k}{for} \PYG{n}{individual} \PYG{o+ow}{in} \PYG{n}{population}\PYG{p}{])}
+    \PYG{c+c1}{\PYGZsh{} select a random number between 0 and the total fitness}
+    \PYG{n}{random\PYGZus{}number} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{uniform}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n}{total\PYGZus{}fitness}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} select the individual based on the random number}
+    \PYG{n}{current\PYGZus{}fitness} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{k}{for} \PYG{n}{individual} \PYG{o+ow}{in} \PYG{n}{population}\PYG{p}{:}
+        \PYG{n}{current\PYGZus{}fitness} \PYG{o}{+=} \PYG{n}{individual}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}
+        \PYG{k}{if} \PYG{n}{current\PYGZus{}fitness} \PYG{o}{\PYGZgt{}} \PYG{n}{random\PYGZus{}number}\PYG{p}{:}
+            \PYG{k}{return} \PYG{n}{individual}
+
+\PYG{k}{def} \PYG{n+nf}{stochastic\PYGZus{}universal\PYGZus{}sampling}\PYG{p}{(}\PYG{n}{population}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Select using Stochastic Universal Sampling.}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{n}{point\PYGZus{}1} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{uniform}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{)}
+    \PYG{n}{point\PYGZus{}2} \PYG{o}{=} \PYG{n}{point\PYGZus{}1} \PYG{o}{+} \PYG{l+m+mi}{1}
+    \PYG{c+c1}{\PYGZsh{} In Progress}
+
+\PYG{k}{def} \PYG{n+nf}{rank\PYGZus{}selection}\PYG{p}{(}\PYG{n}{population}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Select using Rank Selection. Read more here:}
+\PYG{l+s+sd}{    https://www.tutorialspoint.com/genetic\PYGZus{}algorithms/genetic\PYGZus{}algorithms\PYGZus{}parent\PYGZus{}selection.htm}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{c+c1}{\PYGZsh{} sort the population based on the fitness}
+    \PYG{n}{population}\PYG{o}{.}\PYG{n}{sort}\PYG{p}{(}\PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{x}\PYG{p}{:} \PYG{n}{x}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{reverse}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} calculate the total rank}
+    \PYG{n}{total\PYGZus{}rank} \PYG{o}{=} \PYG{n+nb}{sum}\PYG{p}{([}\PYG{n}{i} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{population}\PYG{p}{))])}
+    \PYG{c+c1}{\PYGZsh{} select a random number between 0 and the total rank}
+    \PYG{n}{random\PYGZus{}number} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{uniform}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n}{total\PYGZus{}rank}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} select the individual based on the random number}
+    \PYG{n}{current\PYGZus{}rank} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{k}{for} \PYG{n}{i}\PYG{p}{,} \PYG{n}{individual} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{population}\PYG{p}{):}
+        \PYG{n}{current\PYGZus{}rank} \PYG{o}{+=} \PYG{n}{i}
+        \PYG{k}{if} \PYG{n}{current\PYGZus{}rank} \PYG{o}{\PYGZgt{}} \PYG{n}{random\PYGZus{}number}\PYG{p}{:}
+            \PYG{k}{return} \PYG{n}{individual}
+
+
+\PYG{k}{def} \PYG{n+nf}{tournament}\PYG{p}{(}\PYG{n}{population}\PYG{p}{,} \PYG{n}{selection\PYGZus{}method}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}tournament\PYGZsq{}}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Selects the best individual from a random sample of the population.}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{k}{if} \PYG{n}{selection\PYGZus{}method} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}roulette\PYGZsq{}}\PYG{p}{:}
+        \PYG{n}{participant} \PYG{o}{=} \PYG{n}{roulette\PYGZus{}wheel\PYGZus{}selection}\PYG{p}{(}\PYG{n}{population}\PYG{p}{)}
+        \PYG{n}{participant} \PYG{o}{=} \PYG{n}{Individual}\PYG{p}{(}\PYG{n}{participant}\PYG{o}{.}\PYG{n}{genome}\PYG{p}{,} \PYG{n}{participant}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{)}
+    \PYG{k}{elif} \PYG{n}{selection\PYGZus{}method} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}rank\PYGZsq{}}\PYG{p}{:}
+        \PYG{n}{participant} \PYG{o}{=} \PYG{n}{rank\PYGZus{}selection}\PYG{p}{(}\PYG{n}{population}\PYG{p}{)}
+        \PYG{n}{participant} \PYG{o}{=} \PYG{n}{Individual}\PYG{p}{(}\PYG{n}{participant}\PYG{o}{.}\PYG{n}{genome}\PYG{p}{,} \PYG{n}{participant}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{)}
+    \PYG{k}{else}\PYG{p}{:}
+        \PYG{n}{participant} \PYG{o}{=} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{random}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{(}\PYG{n}{population}\PYG{p}{,} \PYG{n}{k}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{p}{),} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{x}\PYG{p}{:} \PYG{n}{x}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{)}
+        \PYG{n}{participant} \PYG{o}{=} \PYG{n}{Individual}\PYG{p}{(}\PYG{n}{participant}\PYG{o}{.}\PYG{n}{genome}\PYG{p}{,} \PYG{n}{participant}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{participant}
+
+\PYG{k}{def} \PYG{n+nf}{generate}\PYG{p}{(}\PYG{n}{population}\PYG{p}{,} \PYG{n}{generation}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Create offspring from the population using either:}
+\PYG{l+s+sd}{    1. Cross Over + Mutation}
+\PYG{l+s+sd}{    2. Mutation}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{c+c1}{\PYGZsh{} can either cross over between two parents or mutate a single parent}
+    \PYG{k}{if} \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()} \PYG{o}{\PYGZlt{}} \PYG{l+m+mf}{0.2}\PYG{p}{:}
+        \PYG{n}{parent} \PYG{o}{=} \PYG{n}{tournament}\PYG{p}{(}\PYG{n}{population}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{} if random.random() \PYGZlt{}= 0.3:}
+        \PYG{c+c1}{\PYGZsh{}     genome = mutation(parent.genome)}
+        \PYG{n}{genome} \PYG{o}{=} \PYG{n}{mutation}\PYG{p}{(}\PYG{n}{parent}\PYG{o}{.}\PYG{n}{genome}\PYG{p}{)}
+        \PYG{n}{child} \PYG{o}{=} \PYG{n}{Individual}\PYG{p}{(}\PYG{n}{parent}\PYG{p}{,} \PYG{n}{calculate\PYGZus{}fitness}\PYG{p}{(}\PYG{n}{parent}\PYG{p}{))}
+    \PYG{k}{else}\PYG{p}{:}
+        \PYG{c+c1}{\PYGZsh{} crossover}
+        \PYG{n}{parent1} \PYG{o}{=} \PYG{n}{tournament}\PYG{p}{(}\PYG{n}{population}\PYG{p}{)}
+        \PYG{n}{parent2} \PYG{o}{=} \PYG{n}{tournament}\PYG{p}{(}\PYG{n}{population}\PYG{p}{)}
+        \PYG{n}{genome} \PYG{o}{=} \PYG{n}{crossover}\PYG{p}{(}\PYG{n}{parent1}\PYG{o}{.}\PYG{n}{genome}\PYG{p}{,} \PYG{n}{parent2}\PYG{o}{.}\PYG{n}{genome}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{} if random.random() \PYGZlt{}= 0.3:}
+        \PYG{c+c1}{\PYGZsh{}     genome = mutation(genome)}
+        \PYG{n}{genome} \PYG{o}{=} \PYG{n}{mutation}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{)}
+        \PYG{n}{child} \PYG{o}{=} \PYG{n}{Individual}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{,} \PYG{n}{calculate\PYGZus{}fitness}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{))}
+
+    \PYG{n}{fitness\PYGZus{}log}\PYG{o}{.}\PYG{n}{append}\PYG{p}{((}\PYG{n}{generation} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{child}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]))}
+
+    \PYG{k}{return} \PYG{n}{child}
+
+    \PYG{n}{best} \PYG{o}{=} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{initial\PYGZus{}population}\PYG{p}{,} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{x}\PYG{p}{:} \PYG{n}{x}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{)}
+
+    \PYG{n}{best\PYGZus{}individual} \PYG{o}{=} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{initial\PYGZus{}population}\PYG{p}{,} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{x}\PYG{p}{:} \PYG{n}{x}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{)}
+    \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{NUM\PYGZus{}GENERATIONS}\PYG{p}{):}
+        \PYG{c+c1}{\PYGZsh{} create offspring}
+        \PYG{n}{offspring} \PYG{o}{=} \PYG{p}{[}\PYG{n}{generate}\PYG{p}{(}\PYG{n}{initial\PYGZus{}population}\PYG{p}{,} \PYG{n}{i}\PYG{p}{)} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{OFFSPRING\PYGZus{}SIZE}\PYG{p}{)]}
+        \PYG{c+c1}{\PYGZsh{} calculate fitness}
+        \PYG{c+c1}{\PYGZsh{} offspring = [Individual(child.genome, calculate\PYGZus{}fitness(child.genome)) for child in offspring]}
+
+        \PYG{n}{initial\PYGZus{}population} \PYG{o}{=} \PYG{n}{initial\PYGZus{}population} \PYG{o}{+} \PYG{n}{offspring}
+        \PYG{n}{initial\PYGZus{}population} \PYG{o}{=} \PYG{n+nb}{sorted}\PYG{p}{(}\PYG{n}{initial\PYGZus{}population}\PYG{p}{,} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{x}\PYG{p}{:} \PYG{n}{x}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{,} \PYG{n}{reverse}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{)[:}\PYG{n}{POPULATION\PYGZus{}SIZE}\PYG{p}{]}
+
+        \PYG{n}{fittest\PYGZus{}offspring} \PYG{o}{=} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{initial\PYGZus{}population}\PYG{p}{,} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{x}\PYG{p}{:} \PYG{n}{x}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{)}
+
+        \PYG{k}{if} \PYG{n}{fittest\PYGZus{}offspring}\PYG{o}{.}\PYG{n}{fitness} \PYG{o}{\PYGZgt{}} \PYG{n}{best\PYGZus{}individual}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{:}
+            \PYG{n}{best\PYGZus{}individual} \PYG{o}{=} \PYG{n}{fittest\PYGZus{}offspring}
+
+    \PYG{c+c1}{\PYGZsh{} get the best individual}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{calculate\PYGZus{}weight}\PYG{p}{(}\PYG{n}{best\PYGZus{}individual}\PYG{o}{.}\PYG{n}{genome}\PYG{p}{))}
+\end{Verbatim}

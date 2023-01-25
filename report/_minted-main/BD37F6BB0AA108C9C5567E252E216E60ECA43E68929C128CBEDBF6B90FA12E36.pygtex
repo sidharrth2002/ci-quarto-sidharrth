@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{def} \PYG{n+nf}{mutation}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{):}
+  \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{  Function mutates genome using .... strategy, etc.}
+\PYG{l+s+sd}{  args:}
+\PYG{l+s+sd}{  genome: str \PYGZhy{} Input genome}
+\PYG{l+s+sd}{  \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\end{Verbatim}

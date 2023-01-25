@@ -1,0 +1,11 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{def} \PYG{n+nf}{swap\PYGZus{}mutation}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{):}
+  \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{  Randomly swaps two elements in the genome.}
+\PYG{l+s+sd}{  \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+  \PYG{n}{modified\PYGZus{}genome} \PYG{o}{=} \PYG{n}{genome}\PYG{o}{.}\PYG{n}{copy}\PYG{p}{()}
+  \PYG{n}{index1} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)}
+  \PYG{n}{index2} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)}
+  \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{index1}\PYG{p}{],} \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{index2}\PYG{p}{]} \PYG{o}{=} \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{index2}\PYG{p}{],} \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{index1}\PYG{p}{]}
+  \PYG{k}{return} \PYG{n}{return\PYGZus{}best\PYGZus{}genome}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{,} \PYG{n}{genome}\PYG{p}{)}
+\end{Verbatim}

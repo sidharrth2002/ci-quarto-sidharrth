@@ -1,0 +1,10 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{def} \PYG{n+nf}{cross\PYGZus{}over}\PYG{p}{(}\PYG{n}{parent1}\PYG{p}{,} \PYG{n}{parent2}\PYG{p}{,} \PYG{n}{STATE\PYGZus{}SPACE}\PYG{p}{):}
+    \PYG{n}{cut1} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{parent1}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]))}
+    \PYG{n}{cut2} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{parent2}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]))}
+    \PYG{n}{child} \PYG{o}{=} \PYG{n}{parent1}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{][:}\PYG{n}{cut1}\PYG{p}{]}\PYG{o}{+}\PYG{n}{parent2}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{][}\PYG{n}{cut2}\PYG{p}{:]}
+    \PYG{c+c1}{\PYGZsh{} dynamic\PYGZus{}threshold = do some computation here to derive probability from the change in fitness}
+    \PYG{c+c1}{\PYGZsh{} if random.random() \PYGZlt{} dynamic\PYGZus{}threshold}
+        \PYG{n}{mutate}\PYG{p}{(}\PYG{n}{child}\PYG{p}{,} \PYG{n}{STATE\PYGZus{}SPACE}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{child}
+\end{Verbatim}

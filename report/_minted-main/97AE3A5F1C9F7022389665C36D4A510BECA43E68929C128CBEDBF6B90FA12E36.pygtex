@@ -1,0 +1,5 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{c+c1}{\PYGZsh{} it is worse to lack elements than having duplicates}
+    \PYG{n}{fitness} \PYG{o}{=} \PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{vc}\PYG{p}{),} \PYG{o}{\PYGZhy{}}\PYG{n}{duplicates}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{fitness}
+\end{Verbatim}

@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{if} \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()} \PYG{o}{\PYGZlt{}} \PYG{n}{threshold} \PYG{o+ow}{or} \PYG{n}{some\PYGZus{}fitness\PYGZus{}based\PYGZus{}condition}\PYG{p}{:}
+           \PYG{c+c1}{\PYGZsh{} crossover}
+\PYG{k}{elif} \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()} \PYG{o}{\PYGZlt{}} \PYG{n}{threshold}\PYG{p}{:}
+           \PYG{c+c1}{\PYGZsh{} crossover + mutate}
+\PYG{k}{elif} \PYG{o}{....}\PYG{p}{:}
+            \PYG{c+c1}{\PYGZsh{} mutate}
+\end{Verbatim}

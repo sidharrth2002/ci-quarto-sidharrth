@@ -1,0 +1,26 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{def} \PYG{n+nf}{choose\PYGZus{}mutation\PYGZus{}rate}\PYG{p}{(}\PYG{n}{fitness\PYGZus{}log}\PYG{p}{):}
+  \PYG{c+c1}{\PYGZsh{} choose mutation rate based on change in fitness\PYGZus{}log}
+  \PYG{k}{if} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{fitness\PYGZus{}log}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+      \PYG{k}{return} \PYG{l+m+mf}{0.2}
+  \PYG{k}{if} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{fitness\PYGZus{}log}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{3}\PYG{p}{:}
+      \PYG{n}{considered\PYGZus{}elements} \PYG{o}{=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{fitness\PYGZus{}log}\PYG{p}{)}
+  \PYG{k}{else}\PYG{p}{:}
+      \PYG{n}{considered\PYGZus{}elements} \PYG{o}{=} \PYG{l+m+mi}{3}
+  \PYG{n}{growth\PYGZus{}rate} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{mean}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{diff}\PYG{p}{(}\PYG{n}{fitness\PYGZus{}log}\PYG{p}{[}\PYG{o}{\PYGZhy{}}\PYG{n}{considered\PYGZus{}elements}\PYG{p}{:]))}
+  \PYG{k}{if} \PYG{n}{growth\PYGZus{}rate} \PYG{o}{\PYGZlt{}=} \PYG{l+m+mi}{0}\PYG{p}{:}
+      \PYG{k}{return} \PYG{l+m+mf}{0.4}
+  \PYG{k}{elif} \PYG{n}{growth\PYGZus{}rate} \PYG{o}{\PYGZlt{}} \PYG{l+m+mf}{0.5}\PYG{p}{:}
+      \PYG{k}{return} \PYG{l+m+mf}{0.3}
+  \PYG{k}{elif} \PYG{n}{growth\PYGZus{}rate} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{1}\PYG{p}{:}
+      \PYG{k}{return} \PYG{l+m+mf}{0.01}
+  \PYG{k}{else}\PYG{p}{:}
+      \PYG{k}{return} \PYG{l+m+mf}{0.1}
+
+\PYG{k}{def} \PYG{n+nf}{plateau\PYGZus{}detection}\PYG{p}{(}\PYG{n}{num\PYGZus{}generations}\PYG{p}{,} \PYG{n}{fitness\PYGZus{}log}\PYG{p}{):}
+  \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{  Checks if the fitness has plateaued for the last num\PYGZus{}generations.}
+\PYG{l+s+sd}{  \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+  \PYG{c+c1}{\PYGZsh{} this function is not used}
+  \PYG{k}{return} \PYG{n+nb}{all}\PYG{p}{(}\PYG{n}{fitness\PYGZus{}log}\PYG{p}{[}\PYG{o}{\PYGZhy{}}\PYG{n}{num\PYGZus{}generations}\PYG{p}{]} \PYG{o}{==} \PYG{n}{fitness\PYGZus{}log}\PYG{p}{[}\PYG{o}{\PYGZhy{}}\PYG{n}{i}\PYG{p}{]} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{num\PYGZus{}generations}\PYG{p}{))}
+\end{Verbatim}

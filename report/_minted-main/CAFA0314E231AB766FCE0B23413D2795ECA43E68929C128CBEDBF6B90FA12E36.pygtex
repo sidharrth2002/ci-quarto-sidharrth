@@ -1,0 +1,3 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+  \PYG{k}{return} \PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1000} \PYG{o}{*} \PYG{n}{miss}\PYG{p}{)}\PYG{o}{\PYGZhy{}}\PYG{n}{duplicates}
+\end{Verbatim}

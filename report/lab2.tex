@@ -4,7 +4,476 @@
 
 \subsection{Solution}
 
+In this lab, we will take a GA approach to solving the set-covering problem. As a background, let's assume we have 500 potential lists that should form a complete subset.
+
+The final product should be a list of 0s and 1s that indicate which lists should be included in the final set. We use a genetic approach to obtain this list via:
+
+\begin{enumerate}
+  \item Mutation: randomly change a 0 to a 1 or vice versa
+  \item Crossover: randomly select a point in the list and swap the values after that point
+\end{enumerate}
+
+\subsubsection{Representing the problem}
+We will represent the problem as a list of 0s and 1s. The length of the list will be the number of lists we have. The 0s and 1s will indicate whether or not the list should be included in the final set.
+
+The objective of the algorithm is to find an optimal (or at least as optimal as possible) set of 0s and 1s that will cover all the elements in the list.
+
+\subsubsection{Assessing Fitness}
+
+Based on knowledge obtained in previous labs, the heuristic function evolved and these were the factors I considered:
+
+\begin{enumerate}
+  \item Potential duplicates
+  \item Undiscovered elements
+  \item Length of subset
+\end{enumerate}
+
+The following equations were formulated for fitness assessment:
+
+\begin{equation}
+  len(distinct\_elements)
+\end{equation}
+
+\begin{equation}
+  len(distinct\_elements) / (num\_duplicates + 1)
+\end{equation}
+
+\begin{equation}
+  len(distinct\_elements) / (num\_duplicates + 1) - num\_undiscovered\_elements
+\end{equation}
+
+\begin{equation}
+  len(distinct\_elements) / (num\_undiscovered\_elements + 1)
+\end{equation}
+
+After multiple trials, the best fitness function is the simplest, which is simply the number of distinct elements.
+
 \subsection{Results}
+
+The following are the results of the algorithm after 1000 generations (only the best results are reported):
+
+\begin{table}
+  \centering
+  \begin{tabular}{|c|c|}
+    \hline
+    N & W \\
+    \hline
+    5 & . \\
+    10 & 10 \\
+    20 & 24 \\
+    50 & 100 \\
+    100 & 197 \\
+    500 & 1639 \\
+    1000 & 3624 \\
+    \hline
+  \end{tabular}
+  \caption{Results of the algorithm}
+
+\end{table}
+
+With larger values of $N$, a smaller population and offspring size is sufficient. Early stopping is used to detect the plateau, so the algorithm doesn't run endlessly. However, the minima is often reached in less than 100 generations.
+
+\subsubsection{The Case of Mutations}
+
+\paragraph{Plateau Detection and Dynamic Change of Mutation Rate}
+
+Based on the rate of change of the fitness, the mutation rate (number of elements in genome to mutate) is adjusted.
+
+\begin{mintedbox}{python}
+def choose_mutation_rate(fitness_log):
+  # choose mutation rate based on change in fitness_log
+  if len(fitness_log) == 0:
+      return 0.2
+  if len(fitness_log) < 3:
+      considered_elements = len(fitness_log)
+  else:
+      considered_elements = 3
+  growth_rate = np.mean(np.diff(fitness_log[-considered_elements:]))
+  if growth_rate <= 0:
+      return 0.4
+  elif growth_rate < 0.5:
+      return 0.3
+  elif growth_rate < 1:
+      return 0.01
+  else:
+      return 0.1
+
+def plateau_detection(num_generations, fitness_log):
+  '''
+  Checks if the fitness has plateaued for the last num_generations.
+  '''
+  # this function is not used
+  return all(fitness_log[-num_generations] == fitness_log[-i] for i in range(1, num_generations))
+\end{mintedbox}
+
+\subsection{Mutation Functions}
+
+\subsubsection{Flip Mutation}
+
+\begin{mintedbox}{python}
+  def flip_mutation(genome, mutate_only_one_element=False):
+    '''
+    Flips random bit(s) in the genome.
+    Parameters:
+    mutate_only_one_element: If True, only one bit is flipped.
+    '''
+    modified_genome = genome.copy()
+    if mutate_only_one_element:
+        # flip a random bit
+        index = random.randint(0, len(modified_genome) - 1)
+        modified_genome[index] = 1 - modified_genome[index]
+    else:
+        # flip a random number of bits
+        num_to_flip = choose_mutation_rate(fitness_log) * len(modified_genome)
+        to_flip = random.sample(range(len(modified_genome)), int(num_to_flip))
+        # to_flip = random.sample(range(len(modified_genome)), random.randint(0, len(modified_genome)))
+        modified_genome = [1 - modified_genome[i] if i in to_flip else modified_genome[i] for i in range(len(modified_genome))]
+
+    # mutate only if it brings some benefit to the weight
+    # if calculate_weight(modified_genome) < calculate_weight(genome):
+    #     return modified_genome
+
+    return return_best_genome(modified_genome, genome)
+\end{mintedbox}
+
+\subsubsection{Scramble Mutation}
+
+\begin{mintedbox}{python}
+def scramble_mutation(genome):
+  '''
+  Randomly scrambles the genome.
+  '''
+  # select start and end indices to scramble
+  modified_genome = genome.copy()
+  start = random.randint(0, len(modified_genome) - 1)
+  end = random.randint(start, len(modified_genome) - 1)
+  # scramble the elements
+  modified_genome[start:end] = random.sample(modified_genome[start:end], len(modified_genome[start:end]))
+  return return_best_genome(modified_genome, genome)
+\end{mintedbox}
+
+\subsubsection{Swap Mutation}
+
+\begin{mintedbox}{python}
+def swap_mutation(genome):
+  '''
+  Randomly swaps two elements in the genome.
+  '''
+  modified_genome = genome.copy()
+  index1 = random.randint(0, len(modified_genome) - 1)
+  index2 = random.randint(0, len(modified_genome) - 1)
+  modified_genome[index1], modified_genome[index2] = modified_genome[index2], modified_genome[index1]
+  return return_best_genome(modified_genome, genome)
+\end{mintedbox}
+
+\subsubsection{Inversion Mutation}
+
+\begin{mintedbox}{python}
+def inversion_mutation(genome):
+  '''
+  Randomly inverts the genome.
+  '''
+  modified_genome = genome.copy()
+  # select start and end indices to invert
+  start = random.randint(0, len(modified_genome) - 1)
+  end = random.randint(start, len(modified_genome) - 1)
+  # invert the elements
+  modified_genome = modified_genome[:start] + modified_genome[start:end][::-1] + modified_genome[end:]
+  return return_best_genome(modified_genome, genome)
+\end{mintedbox}
+
+\subsection{Full Code}
+
+\begin{mintedbox}{python}
+import numpy as np
+import itertools
+
+def calculate_fitness(genome):
+    '''
+    Calculates the fitness of the given genome.
+    The fitness is the number of unique elements
+    The weight is the total number of elements in the genome
+    '''
+    # fitness is number of distinct elements in genome
+    all_elements = []
+    distinct_elements = set()
+    weight = 0
+    for subset, gene in zip(prob, genome):
+        # if the particular element should be taken
+        if gene == 1:
+            distinct_elements.update(subset)
+            weight += len(subset)
+            all_elements += subset
+    num_duplicates = len(all_elements) - len(set(all_elements))
+    num_undiscovered_elements = len(set(range(N)) - distinct_elements)
+    # print(set(range(N)) - distinct_elements)
+    # print("num_undiscovered_elements", num_undiscovered_elements)
+    # return num_undiscovered_elements, -weight
+    # return len(distinct_elements), -weight
+    # return num_undiscovered_elements / (len(distinct_elements) + 1), -weight
+    return len(distinct_elements) / (num_undiscovered_elements + 1), -weight
+    # other potential fitness functions:
+    # return len(distinct_elements) / (num_duplicates + 1)
+    # return len(distinct_elements) / (num_duplicates + 1) - num_undiscovered_elements, -weight
+    # return len(distinct_elements) / (num_undiscovered_elements + 1), -weight
+
+def generate_element():
+    '''
+    Randomly generates offspring made up of 0s and 1s.
+    1 means the element is taken, 0 means it is not.
+    '''
+    genome = [random.randint(0, 1) for _ in range(N)]
+    fitness = calculate_fitness(genome)
+    # genome = np.random.choice([True, False], size=PROBLEM_SIZE)
+    return Individual(genome, fitness)
+
+initial_population = [generate_element() for _ in range(POPULATION_SIZE)]
+
+len(initial_population)
+
+fitness_log = []
+
+def calculate_weight(genome):
+    '''
+    Weight Function
+    Weight is the sum of the lengths of the subsets that are taken
+    '''
+    # select the subsets from prob based on the best individual
+    final = [prob[i] for i, gene in enumerate(genome) if gene == 1]
+    weight = len(list(itertools.chain.from_iterable(final)))
+    return weight
+
+def choose_mutation_rate(fitness_log):
+    # choose mutation rate based on change in fitness_log
+    if len(fitness_log) == 0:
+        return 0.2
+    if len(fitness_log) < 3:
+        considered_elements = len(fitness_log)
+    else:
+        considered_elements = 3
+    growth_rate = np.mean(np.diff(fitness_log[-considered_elements:]))
+    if growth_rate <= 0:
+        return 0.4
+    elif growth_rate < 0.5:
+        return 0.3
+    elif growth_rate < 1:
+        return 0.01
+    else:
+        return 0.1
+
+def plateau_detection(num_generations, fitness_log):
+    '''
+    Checks if the fitness has plateaued for the last num_generations.
+    '''
+    if len(fitness_log) < num_generations:
+        return False
+    return all(fitness_log[-num_generations] == fitness_log[-i] for i in range(1, num_generations))
+
+def flip_mutation(genome, mutate_only_one_element=False):
+    '''
+    Flips random bit(s) in the genome.
+    Parameters:
+    mutate_only_one_element: If True, only one bit is flipped.
+    '''
+    modified_genome = genome.copy()
+    if mutate_only_one_element:
+        # flip a random bit
+        index = random.randint(0, len(modified_genome) - 1)
+        modified_genome[index] = 1 - modified_genome[index]
+    else:
+        # flip a random number of bits
+        num_to_flip = choose_mutation_rate(fitness_log) * len(modified_genome)
+        to_flip = random.sample(range(len(modified_genome)), int(num_to_flip))
+        # to_flip = random.sample(range(len(modified_genome)), random.randint(0, len(modified_genome)))
+        modified_genome = [1 - modified_genome[i] if i in to_flip else modified_genome[i] for i in range(len(modified_genome))]
+
+    return modified_genome
+    # mutate only if it brings some benefit to the weight
+    # if calculate_weight(modified_genome) < calculate_weight(genome):
+    #     return modified_genome
+
+
+def return_best_genome(genome1, genome2):
+    return genome1
+    # if calculate_fitness(genome1) > calculate_fitness(genome2):
+    #     return genome1
+    # else:
+    #     return genome2
+
+def mutation(genome):
+    '''
+    Runs a randomly chosen mutation on the genome. Mutations are:
+    1. Bit Flip Mutation
+    2. Scramble Mutation
+    3. Swap Mutation
+    4. Inversion Mutation
+    Refer to README for more details.
+    '''
+    # check type of genome (debugging)
+    # if type(genome) == tuple:
+    #     print("genome is tuple")
+    #     print(genome)
+
+    possible_mutations = [flip_mutation, scramble_mutation, swap_mutation, inversion_mutation]
+    chosen_mutation = random.choice(possible_mutations)
+    return chosen_mutation(genome)
+
+    # if random.random() < 0.1:
+    #     for _ in range(num_elements_to_mutate):
+    #         index = random.randint(0, len(genome) - 1)
+    #         genome[index] = 1 - genome[index]
+    # mutate a random number of elements
+    # to_flip = random.randint(0, len(genome))
+    # # flip the bits
+    # return [1 - genome[i] if i < to_flip else genome[i] for i in range(len(genome))]
+
+def scramble_mutation(genome):
+    '''
+    Randomly scrambles the genome.
+    '''
+    # select start and end indices to scramble
+    modified_genome = genome.copy()
+    start = random.randint(0, len(modified_genome) - 1)
+    end = random.randint(start, len(modified_genome) - 1)
+    # scramble the elements
+    modified_genome[start:end] = random.sample(modified_genome[start:end], len(modified_genome[start:end]))
+    return return_best_genome(modified_genome, genome)
+
+def swap_mutation(genome):
+    '''
+    Randomly swaps two elements in the genome.
+    '''
+    modified_genome = genome.copy()
+    index1 = random.randint(0, len(modified_genome) - 1)
+    index2 = random.randint(0, len(modified_genome) - 1)
+    modified_genome[index1], modified_genome[index2] = modified_genome[index2], modified_genome[index1]
+    return return_best_genome(modified_genome, genome)
+
+def inversion_mutation(genome):
+    '''
+    Randomly inverts the genome.
+    '''
+    modified_genome = genome.copy()
+    # select start and end indices to invert
+    start = random.randint(0, len(modified_genome) - 1)
+    end = random.randint(start, len(modified_genome) - 1)
+    # invert the elements
+    modified_genome = modified_genome[:start] + modified_genome[start:end][::-1] + modified_genome[end:]
+    return return_best_genome(modified_genome, genome)
+
+def crossover(genome1, genome2):
+    '''
+    Crossover the two genomes by randomly selecting a point
+    '''
+    # crossover at a random point
+    crossover_point = random.randint(0, len(genome1))
+    modified_genome = genome1[:crossover_point] + genome2[crossover_point:]
+    return modified_genome
+
+def roulette_wheel_selection(population):
+    '''
+    Selects an individual from the population based on the fitness.
+    '''
+    # calculate the total fitness of the population
+    total_fitness = sum([individual.fitness[0] for individual in population])
+    # select a random number between 0 and the total fitness
+    random_number = random.uniform(0, total_fitness)
+    # select the individual based on the random number
+    current_fitness = 0
+    for individual in population:
+        current_fitness += individual.fitness[0]
+        if current_fitness > random_number:
+            return individual
+
+def stochastic_universal_sampling(population):
+    '''
+    Select using Stochastic Universal Sampling.
+    '''
+    point_1 = random.uniform(0, 1)
+    point_2 = point_1 + 1
+    # In Progress
+
+def rank_selection(population):
+    '''
+    Select using Rank Selection. Read more here:
+    https://www.tutorialspoint.com/genetic_algorithms/genetic_algorithms_parent_selection.htm
+    '''
+    # sort the population based on the fitness
+    population.sort(key=lambda x: x.fitness[0], reverse=True)
+    # calculate the total rank
+    total_rank = sum([i for i in range(len(population))])
+    # select a random number between 0 and the total rank
+    random_number = random.uniform(0, total_rank)
+    # select the individual based on the random number
+    current_rank = 0
+    for i, individual in enumerate(population):
+        current_rank += i
+        if current_rank > random_number:
+            return individual
+
+
+def tournament(population, selection_method='tournament'):
+    '''
+    Selects the best individual from a random sample of the population.
+    '''
+    if selection_method == 'roulette':
+        participant = roulette_wheel_selection(population)
+        participant = Individual(participant.genome, participant.fitness)
+    elif selection_method == 'rank':
+        participant = rank_selection(population)
+        participant = Individual(participant.genome, participant.fitness)
+    else:
+        participant = max(random.sample(population, k=2), key=lambda x: x.fitness)
+        participant = Individual(participant.genome, participant.fitness)
+    return participant
+
+def generate(population, generation):
+    '''
+    Create offspring from the population using either:
+    1. Cross Over + Mutation
+    2. Mutation
+    '''
+    # can either cross over between two parents or mutate a single parent
+    if random.random() < 0.2:
+        parent = tournament(population)
+        # if random.random() <= 0.3:
+        #     genome = mutation(parent.genome)
+        genome = mutation(parent.genome)
+        child = Individual(parent, calculate_fitness(parent))
+    else:
+        # crossover
+        parent1 = tournament(population)
+        parent2 = tournament(population)
+        genome = crossover(parent1.genome, parent2.genome)
+        # if random.random() <= 0.3:
+        #     genome = mutation(genome)
+        genome = mutation(genome)
+        child = Individual(genome, calculate_fitness(genome))
+
+    fitness_log.append((generation + 1, child.fitness[0]))
+
+    return child
+
+    best = max(initial_population, key=lambda x: x.fitness)
+
+    best_individual = max(initial_population, key=lambda x: x.fitness)
+    for i in range(NUM_GENERATIONS):
+        # create offspring
+        offspring = [generate(initial_population, i) for i in range(OFFSPRING_SIZE)]
+        # calculate fitness
+        # offspring = [Individual(child.genome, calculate_fitness(child.genome)) for child in offspring]
+
+        initial_population = initial_population + offspring
+        initial_population = sorted(initial_population, key=lambda x: x.fitness, reverse=True)[:POPULATION_SIZE]
+
+        fittest_offspring = max(initial_population, key=lambda x: x.fitness)
+
+        if fittest_offspring.fitness > best_individual.fitness:
+            best_individual = fittest_offspring
+
+    # get the best individual
+    print(calculate_weight(best_individual.genome))
+\end{mintedbox}
 
 \subsection{Received Reviews}
 
@@ -85,3 +554,735 @@ The code and results are very good!
 \end{tcolorbox}
 
 \subsection{Given Reviews}
+
+\subsubsection{Erik}
+
+Erik's code
+
+\begin{mintedbox}{python}
+# Should be used to init solution space, return a list of list
+def select_rand_solution(full_input):
+    population = []
+    random.seed(None)
+    for i in range(POPULATION_SIZE):
+        population.append(random.sample(full_input, random.randint(1, len(full_input))))
+    return population
+
+
+# check if one solution is valid
+def goal_check(curr):
+    curr = [item for sublist in curr for item in sublist]
+    return set(curr) == set(range(N))
+
+
+def fitness_function(entry, goal_set):
+    duplicates = len(entry) - len(set(tuple(entry)))
+    miss = len(goal_set.difference(set(entry)))
+    return (-1000 * miss) - duplicates
+
+
+def calculate_fitness(individual):
+    flat_individual = [item for sublist in individual for item in sublist]
+    fitness_val = fitness_function(flat_individual, set(range(N)))
+    return fitness_val
+
+
+def select_parents(population):
+    nr_of_boxes = int(POPULATION_SIZE * (POPULATION_SIZE + 1) / 2)
+    random.seed(None)
+    random_wheel_nr = random.randint(1, nr_of_boxes)
+    parent_number = POPULATION_SIZE
+    increment = POPULATION_SIZE - 1
+    curr_parent = 0
+    while random_wheel_nr > parent_number:
+        curr_parent += 1
+        parent_number += increment
+        increment -= 1
+    return population[curr_parent]
+
+
+# randomize an index and merge 0-index from parent 1 and index-len of parent two, mutate with 5% chance
+def crossover(first_parent, second_parent):
+    slice_index_one = random.randint(0, min(len(first_parent[0]) - 1, len(second_parent[0]) - 1))
+    child = first_parent[0][:slice_index_one] + second_parent[0][slice_index_one:]
+    return child
+
+
+# mutate child and return
+def mutate_child(individual, problem_space):
+    index = random.randint(0, len(individual) - 1)
+    random_list = problem_space[random.randint(0, len(problem_space) - 1)]
+    random_gene = random_list[random.randint(0, len(random_list) - 1)]
+    individual = individual[:index] + individual[index+1:] + [random_gene]
+    return individual
+
+
+def update_population(population, new_children):
+    new_population = population + new_children
+    sorted_population = sorted(new_population, key=lambda i: i[1], reverse=True)
+    return sorted_population[:POPULATION_SIZE]
+
+
+def main():
+    logging.basicConfig(level=logging.DEBUG)
+    problem_space = problem(N, seed=42)
+    population = select_rand_solution(problem_space)
+
+    # should hold current population with the calculated fitness
+    current_individuals = []
+
+    # setup data structure, list of tuples containing ([entries], fitness) and sort
+    for individual in population:
+        current_individuals.append((individual, calculate_fitness(individual)))
+
+    current_individuals = sorted(current_individuals, key=lambda l: l[1], reverse=True)
+
+    counter = 0
+    while counter < NR_OF_GENERATIONS:
+        # a) Select individuals with a good fitness score for reproduction.
+        cross_over_list = []
+        for i in range(OFFSPRING_SIZE):
+            parent_one = select_parents(current_individuals)
+            parent_two = select_parents(current_individuals)
+
+            # b) Let them produce offspring. Mutate with 5% chance
+            tmp_child = crossover(parent_one, parent_two)
+            if random.random() > 0.95:
+                tmp_child = mutate_child(tmp_child, population)
+
+            cross_over_list.append((tmp_child, calculate_fitness(tmp_child)))
+
+        current_individuals = update_population(current_individuals, cross_over_list)
+        counter += 1
+
+    for solution in current_individuals:
+        if goal_check(solution[0]):
+            logging.info(f'Best solution for N={N} was {current_individuals[0][0]} \nWith a weight of {sum(len(_) for _ in current_individuals[0][0])}')
+            break
+\end{mintedbox}
+
+Hi Eric,
+
+Here's my review concerning your approach to lab 2.
+
+There are a few high-level, cosmetic attributes you did well:
+1. Each function is well-documented and well-labelled, so I could easily understand the purpose of each one. One way to improve could be to leverage Python docstrings, where you can also explain input parameters and output values. To do this, add:
+
+\begin{mintedbox}{python}
+def mutation(genome):
+  '''
+  Function mutates genome using .... strategy, etc.
+  args:
+  genome: str - Input genome
+  '''
+\end{mintedbox}
+
+3. Using a Python script made it easy for me to run code iteratively for many different values of N/Offspring sizes/etc. without having to run all the cells. I was able to reproduce your best results after a few tries.
+
+Let's break down the solution itself:
+
+1. I noticed that you leveraged a completely random roulette-wheel-based selection, which leverages completely on random chance, compared to a fitness-based tournament selection which performed better (at least from my experience with this lab). Perhaps, you could try experimenting with different parent selection methods instead of just one. \\
+
+2. Your fitness function is particularly interesting, standing out from most others I've seen. It takes into account duplicates in the subset:
+
+\begin{mintedbox}{python}
+  def fitness_function(entry, goal_set):
+    duplicates = len(entry) - len(set(tuple(entry)))
+    miss = len(goal_set.difference(set(entry)))
+    return (-1000 * miss) - duplicates
+\end{mintedbox}
+
+I understand that the infinitesimal blowup by $*1000$ may theoretically help punish the algorithm if it is far from the goal. I modified your code with 2 different fitness functions:
+
+\begin{mintedbox}{python}
+  return miss-duplicates
+\end{mintedbox}
+
+\begin{mintedbox}{python}
+  return (-1000 * miss)-duplicates
+\end{mintedbox}
+
+and the results were the same, so I look forward to reading about your motivation for this in the README.
+
+Since you're only subtracting the two values (one is much larger than the other), you can do 1 of 2 things to improve convergence: divide the values, or return them as a tuple (like we did for the first lab).
+You could also try different mathematical equations for the fitness function, that takes into account duplicates, undiscovered elements, length, etc., kind of like the heuristic functions we used early for graph algorithms.
+
+3. Only one type of mutation is used (randomly flipping a bit). You could try other mutation methods and randomly choose between them to increase exploration power.
+
+4. The probability to decide whether to mutate is quite high. In the Telegram chat, most people reported that mutations were detrimental to reaching minima, so I understand why you might have limited your mutations, but perhaps you could vary this number based on the changing fitness. Perhaps, mutate more often/more extensively to explore and reduce the vigour to exploit. You can also experiment with permutations of evolution like recombination + mutation, recombination only, mutation only, etc. All these contribute to the exploration power of your approach.
+
+5. There is definitely a scaling problem for large values of N, such as $N=1000$. One thing to note is that minima is often reached within a fraction of 1000 generations (I logged your generational results out).
+
+5. Representing the problem space as 0s and 1s could result in cleaner code and faster computation, but this is more of a personal preference and does not really affect the solution.
+
+All in all, good job! I just want to read more about your exciting fitness function. Let's discuss below!
+
+\subsubsection{Karl}
+
+Karl's code
+
+\begin{mintedbox}{python}
+  # helping functions
+
+def lists_to_set(genome):
+    """
+    convert genome to set
+    :param genome: the sub-lists with random integers between 0 and N-1
+    :return: set of contained elements in the genome
+    """
+    list_elems = [single_elem for l in genome for single_elem in l]
+    s = set(list_elems)
+    return s
+
+# find out how many duplicates there are in the population
+def count_duplicates(genome):
+    """
+    Count how many duplicates there are in the genome
+    :param genome: the sub-lists with random integers between 0 and N-1
+    :return: the count
+    """
+    list_elems = [single_elem for l in genome for single_elem in l]
+    duplicates = sum([len(list(group))-1 for key, group in groupby(sorted(list_elems))])
+    return duplicates
+# to initialize the population
+def create_population(STATE_SPACE, GOAL):
+    """
+    Initialize the population.
+    :param STATE_SPACE: List of lists generated from problem-function
+    :param GOAL: set of integers from 0 to N-1
+    :return: a list of tuples: (genome,fitness), for each individual in the population.
+    """
+    population = []
+    for _ in range(POPULATION_SIZE):
+        individual = []
+        for _ in range(random.randint(1,len(STATE_SPACE))):
+            l = random.choice(STATE_SPACE)
+            if l not in individual: #check duplicates here
+                individual.append(l)
+        #individual = random.choices(STATE_SPACE,k=random.randint(1,len(STATE_SPACE)))
+        fitness = compute_fitness(individual, GOAL)
+        population.append((individual,fitness))
+    return population
+
+def compute_fitness(genome, GOAL):
+    """
+    fitness is a tuple of (-#of_elems_missing,-#duplicates) which should be maximized
+    :param genome: the sub-lists with random integers between 0 and N-1
+    :param GOAL: set of integers from 0 to N-1
+    :return: the fitness
+    """
+    # violated constraints, i.e. how many elements are missing
+    vc = GOAL.difference(lists_to_set(genome))
+    duplicates = count_duplicates(genome)
+    # it is worse to lack elements than having duplicates
+    fitness = (-len(vc), -duplicates)
+    return fitness
+
+def goal_check(genome, GOAL):
+    """
+    Check if all required elements are in the genome
+    :param genome: the sub-lists with random integers between 0 and N-1
+    :param GOAL: set of integers from 0 to N-1
+    :return: boolean value if goal reached or not
+    """
+    return GOAL==lists_to_set(genome)
+
+def parent_selection(population):
+    """
+    parent selection using ranking system
+    P(choose fittest parent) = POPULATION_SIZE/n_slots
+    P(choose second fittest parent) = (POPULATION_SIZE-1)/n_slots
+    ...
+    P(choose least fit parent) = 1/n_slots
+    :param population: list of individuals
+    :return: parent to generate offspring
+    """
+    ranked_population = sorted(population, key=lambda t : t[1], reverse=True)
+    # number of slots in spinning wheel = POPULATION_SIZE(POPULATION_SIZE+1)/2 (arithmetic sum)
+    n_slots = POPULATION_SIZE*(POPULATION_SIZE+1)/2
+    wheel_number = random.randint(1,n_slots)
+    curr_parent = 0
+    parent_number = POPULATION_SIZE
+    increment = POPULATION_SIZE-1
+    while wheel_number > parent_number:
+        curr_parent +=1
+        parent_number +=increment
+        increment -= 1
+    return ranked_population[curr_parent]
+
+# make one child from each cross-over, and mutate with low prob
+def cross_over(parent1, parent2, STATE_SPACE, mutation_prob = 0.1):
+    """
+    Compute cross-over between two selected parents. Mutate child with mutation_prob.
+    :param parent1: individual
+    :param parent2: individual
+    :param STATE_SPACE: List of lists generated from problem-function
+    :param mutation_prob: the probability to perform mutation
+    :return: the child created
+    """
+    cut1 = random.randint(0,len(parent1[0]))
+    cut2 = random.randint(0,len(parent2[0]))
+    child = parent1[0][:cut1]+parent2[0][cut2:]
+    if random.random() < mutation_prob:
+        mutate(child, STATE_SPACE)
+    return child
+
+
+def mutate(child, STATE_SPACE):
+    """
+    Replace one list in the child with a random one from the state space.
+    :param child:
+    :param STATE_SPACE:
+    :return: the mutated child
+    """
+    idx = random.randint(0,len(child))
+    #child = child[:idx] + child[idx+1:] + STATE_SPACE[random.randint(0,len(STATE_SPACE)-1)]
+    i = 0
+    while i<10:
+        i+=1
+        if STATE_SPACE[random.randint(0,len(STATE_SPACE)-1)] not in child:
+             child = child[:idx] + child[idx+1:] + STATE_SPACE[random.randint(0,len(STATE_SPACE)-1)]
+             break
+    return child
+
+def update_population_plus(population, offspring):
+    """
+    Using the plus strategy to update population to next generation.
+    :param population:
+    :param offspring:
+    :return: the best individuals in union(population, offspring)
+    """
+    tot = population + offspring
+    ranked_population = sorted(tot, key=lambda t : t[1], reverse=True)
+    return ranked_population[:POPULATION_SIZE]
+
+def update_population_comma(offspring):
+    """
+    Using the plus strategy to update population to next generation.
+    :param offspring:
+    :return: the best individuals in from offspring
+    """
+    ranked_pop = sorted(offspring, key=lambda t : t[1], reverse=True)
+    return ranked_pop[:POPULATION_SIZE]
+
+def update_mutation_prob(best_solution, best_this_iter, mutation_param, it):
+    """
+    Update the mutation probability according to how the performance evolves. If no improvement, mutation probability increases (favour exploration). If improvement, mutation probability decreases (favour exploitation).
+    :param best_solution: The best solution so far
+    :param best_this_iter: The best solution of this generation
+    :param mutation_param:
+    :param it: iteration number
+    :return: the new mutation probability
+    """
+    if best_solution[1] >= best_this_iter[1]:
+        mutation_param +=1
+    elif best_solution[1] >= best_this_iter[1] and mutation_param>0:
+        mutation_param -= 1
+    return mutation_param/(1+it), mutation_param
+def solve_problem(N):
+    STATE_SPACE = problem(N,seed=42)
+    GOAL = set(range(N))
+    population = create_population(STATE_SPACE, GOAL)
+    best_sol = population[0] #to be updated after each iter
+    found_in_iter = 0 #to be updated
+    mutation_param = 1 #increase if solution doesn't improve
+    mutation_prob = 0.1 #init value
+    for i in range(ITERS):
+        offspring = []
+        for __ in range(OFFSPRING_SIZE):
+            parent1, parent2 = parent_selection(population), parent_selection(population)
+            child = cross_over(parent1,parent2, STATE_SPACE, mutation_prob)
+            child_fitness = compute_fitness(child, GOAL)
+            offspring.append((child,child_fitness))
+        population = update_population_plus(population, offspring)
+        #population = update_population_comma(offspring)
+        best_curr = sorted(population, key=lambda l:l[1], reverse=True)[0]
+        mutation_prob, mutation_param = update_mutation_prob(best_sol, best_curr, mutation_param, i)
+        if goal_check(best_curr[0],GOAL) and best_curr[1] > best_sol[1]:
+            best_sol = best_curr
+            found_in_iter = i
+    logging.info(f'Best solution found in {found_in_iter} iters and has weight {-best_sol[1][1]}')
+    return best_sol
+# main
+
+# settings
+POPULATION_SIZE = 50
+OFFSPRING_SIZE = 30
+ITERS = 100
+
+for N in [5,10,20,50,100,1000,2000]:
+    best_sol = solve_problem(N)
+    print(f'N = {N}')
+    logging.info(f'The best weight for N = {N}: {-best_sol[1][1]+N}')
+\end{mintedbox}
+
+Hi Karl,
+
+Here's my review about your approach to lab 2.
+The key positives (cosmetic and logical):
+
+1. The notebook is well-documented and cells are used appropriately. I also like that you described the steps of the algorithm before implementing it.
+
+2. You were the only other person who compared both the (parent, offspring) and (parent + offspring) method for the algorithm. As evident in the results, parent + offspring produced more optimal weights for smaller values of $N$.
+
+3. Parent selection also accounts for the second and third-best genomes, which could add more diversity to the selection algorithm. I don't fully understand how your wheel selection works and would love to read more about this either through comments/README.
+
+Potential Improvements:
+
+1. Your fitness function also includes duplicates, which can be detrimental to the optimality of any solution, and using a tuple is a good idea. You could also try different mathematical heuristic-like combinations of these various factors, like subtracting/dividing.
+
+\begin{mintedbox}{python}
+    # it is worse to lack elements than having duplicates
+    fitness = (-len(vc), -duplicates)
+    return fitness
+\end{mintedbox}
+
+2. Only one type of mutation is used, so you could try multiple different mutation methods and randomly choose between them. Specific methods are more aggressive than others, so the choice between methods could also be based on fitness improvement.
+
+4. The mutation probability is constant, and could potentially be dynamic, with the same intuition behind (2) above. In cases where the fitness is worsening, you could mutate more aggressively, and when it's time to exploit, it could be reduced as a solution is nearing.
+
+\begin{mintedbox}{python}
+def cross_over(parent1, parent2, STATE_SPACE):
+    cut1 = random.randint(0,len(parent1[0]))
+    cut2 = random.randint(0,len(parent2[0]))
+    child = parent1[0][:cut1]+parent2[0][cut2:]
+    # dynamic_threshold = do some computation here to derive probability from the change in fitness
+    # if random.random() < dynamic_threshold
+        mutate(child, STATE_SPACE)
+    return child
+\end{mintedbox}
+
+6. You could experiment with different combinations of crossover and mutation, based on different probabilities instead of simply crossover followed by mutation. Certain evolution methods are more aggressive than others, so this could mix it up a bit.
+
+All in all, good job!
+
+\subsubsection{Ricardo}
+
+Ricardo's code
+
+\begin{mintedbox}{python}
+  from itertools import compress
+  from collections import namedtuple
+  N = 5
+  POPULATION_SIZE = 10
+  OFFSPRING_SIZE = 2
+  GENERATIONS = 5
+  PROB = 0.5 # probability to choose 1 for each one of the locus in the population
+  Individual = namedtuple('Individual', ('genome', 'fitness','goal_reached', 'w'))
+  # this function evaluats the fitness and if the goal was reached
+  def fitness_goal_eval(list_of_lists, genome, goal):
+      current_goal = goal
+      solution = list(compress(list_of_lists, genome))
+      # fitness = 0
+      new_elements = 0
+      repeated_elements = 0
+      w = 0
+      goal_reached = False
+
+      if len(solution) == 0:
+          return 0, False, 0
+
+      for list_ in solution:
+          list_length = len(list_)
+          list_ = set(list_)
+          cg_length = len(current_goal)
+          current_goal = current_goal - list_
+          cg_new_length = len(current_goal)
+
+          # fitness += cg_length - cg_new_length   # new elements (positive)
+          # fitness += (cg_length - cg_new_length) - list_length # repeated elements (negative)
+          new_elements += cg_length - cg_new_length   # new elements
+          repeated_elements += list_length - (cg_length - cg_new_length) # repeated elements
+
+          w += list_length
+
+      if cg_new_length == 0:
+          goal_reached = True
+
+      fitness = new_elements - repeated_elements
+
+      return fitness, goal_reached, w
+
+
+  def generate_population(list_of_lists, goal):
+      population = list()
+
+      genomes = [tuple(random.choices([1, 0], weights=(PROB,1-PROB), k=len(list_of_lists))) for _ in range(POPULATION_SIZE)]
+
+      for genome in genomes:
+          fitness, goal_reached, w = fitness_goal_eval(list_of_lists, genome, goal)
+          population.append(Individual(genome, fitness, goal_reached, w))
+      return population
+
+
+  def select_parent(population, tournament_size=2):
+      subset = random.choices(population, k=tournament_size)
+      return max(subset, key=lambda i: i.fitness)
+
+
+  def cross_over(p1, p2, genome_size, list_of_lists, goal):
+      g1, f1 = p1.genome, p1.fitness
+      g2, f2 = p2.genome, p2.fitness
+      cut = int((f1+1e-6)/(f1+f2+1e-6)*genome_size)   # the cut is proportional to the fitness of the genome
+      ng1 = g1[:cut] + g2[cut:]
+      return ng1
+
+
+  def mutation(g, genome_size, k=1):  # for larger N try to eliminate some of the 1 in the genome because the bloat was getting to high
+      for _ in range(k):
+          cut = random.randint(1, genome_size)
+          if N < 20:
+              ng = g[:cut-1] + (1-g[cut-1],) + g[cut:]
+          elif N< 500:
+              cut_size = int(genome_size*0.2)
+              new_genome_cut = tuple(random.choices([1, 0], weights=(1, 39), k=2*cut_size))
+              ng = g[:cut-1-cut_size] + new_genome_cut + g[cut+cut_size:]
+          else:
+              cut_size = int(genome_size*0.2)
+              new_genome_cut = tuple(random.choices([1, 0], weights=(1, 99), k=2*cut_size))
+              ng = g[:cut-1-cut_size] + new_genome_cut + g[cut+cut_size:]
+      return ng
+  def genetic_algorithm():
+      # create problem
+      list_of_lists = problem(N, seed=42)
+      genome_size = len(list_of_lists)
+      goal = set(range(N))
+
+      # create the population
+      population = generate_population(list_of_lists, goal)
+
+      for g in range(GENERATIONS):
+          population = sorted(population, key=lambda i: i.fitness, reverse=True)[:POPULATION_SIZE-OFFSPRING_SIZE]
+
+          for i in range(OFFSPRING_SIZE):
+              p1 = select_parent(population, tournament_size=int(0.2*genome_size))
+              p2 = select_parent(population, tournament_size=int(0.2*genome_size))
+              o = cross_over(p1, p2, genome_size, list_of_lists, goal)
+              fitness, goal_reached, w = fitness_goal_eval(list_of_lists, o, goal)
+              o = mutation(o, genome_size, k=2)
+
+              population.append(Individual(o, fitness, goal_reached, w))
+
+
+
+      for i in population:
+          if i.goal_reached:
+              return i, population
+
+      print(f"No solution for current population (N={N})")
+      return None, population
+  N = 500
+  POPULATION_SIZE = 100
+  OFFSPRING_SIZE = 20
+  GENERATIONS = 200
+  PROB = 0.5
+
+  logging.getLogger().setLevel(logging.INFO)
+
+  solution, population = genetic_algorithm()
+  if solution != None:
+      logging.info(
+          f" Genetic algorithm solution for N={N:,}: "
+          + f"fitness={solution.fitness:,} "
+          + f"w={solution.w:,} "
+          + f"(bloat={solution.w/N*100:.0f}%)"
+      )
+  INFO:root: Genetic algorithm solution for N=500: fitness=-1,980 w=2,980 (bloat=596%)
+  POPULATION_SIZE = 50
+  OFFSPRING_SIZE = 20
+  GENERATIONS = 200
+  PROB = 0.5
+
+  logging.getLogger().setLevel(logging.INFO)
+
+  for N in [5, 10, 20, 100, 500, 1000]:
+      solution, population = genetic_algorithm()
+      if solution != None:
+          logging.info(
+              f" Genetic algorithm solution for N={N:,}: "
+              + f"fitness={solution.fitness:,} "
+              + f"w={solution.w:,} "
+              + f"(bloat={solution.w/N*100:.0f}%)"
+          )
+\end{mintedbox}
+
+Hi Ricardo,
+
+Here is my review pertaining to your approach to Lab 2.
+
+Positives (both cosmetic and logical):
+
+1. Your dynamic mutation method where you changed the strategy for different values of $N$ is quite interesting. Larger $N$ values will have 1s removed more aggressively, which is quite intuitive. Though this is not completely "dynamic", it is a good start. Just like your crossover is proportional to fitness, the same could be done for the "aggression" of the mutation.
+
+\begin{mintedbox}{python}
+        if N < 20:
+            ng = g[:cut-1] + (1-g[cut-1],) + g[cut:]
+        elif N< 500:
+            cut_size = int(genome_size*0.2)
+            new_genome_cut = tuple(random.choices([1, 0], weights=(1, 39), k=2*cut_size))
+            ng = g[:cut-1-cut_size] + new_genome_cut + g[cut+cut_size:]
+        else:
+            cut_size = int(genome_size*0.2)
+            new_genome_cut = tuple(random.choices([1, 0], weights=(1, 99), k=2*cut_size))
+            ng = g[:cut-1-cut_size] + new_genome_cut + g[cut+cut_size:]
+\end{mintedbox}
+> A quick tip: both the `elif` and `else` have the same code block, so it could just be an `if` an `else`.
+
+2. The tournament size dynamically changes based on the genome size. Yuri et al. (2018) advocated against the indiscriminate tournament size of $k=2$.
+
+3. The fitness function seems to be heuristic-like, considering both the number of new and repeated elements.
+
+4. You used a list of 0s and 1s as binary indicators of whether to take a list in the subset. I feel that this is an efficient and intuitive representation.
+
+5. You added an extra attribute `goal\_reached` to each element of the population, so when you loop through to find the final solution at the end, you not only get a working solution, but the one which produces the highest fitness.
+
+Things to look at:
+
+1. A mutation of some form is *always* applied in each generation after crossover. To balance between exploitation and exploration, you could choose to mutate based on a random probability/change of the fitness function. I personally found that aggressive mutations worked well in early generations, but as minima is nearing, continually mutating did not improve the solution. One option is to choose between (i) crossover only, (ii) crossover then mutate, (iii) mutate only, etc. in each generation.
+
+\begin{mintedbox}{python}
+if random.random() < threshold or some_fitness_based_condition:
+           # crossover
+elif random.random() < threshold:
+           # crossover + mutate
+elif ....:
+            # mutate
+\end{mintedbox}
+
+2. MINOR- Reporting results in a table in the README makes it easier to compare.
+
+All in all, good job!
+
+\subsubsection{Francesco}
+
+Francesco's code
+
+\begin{mintedbox}{python}
+  import random
+  import logging
+  import numpy as np
+  from collections import namedtuple
+  def problem(N, seed=None):
+      random.seed(seed)
+      return [
+          list(set(random.randint(0, N - 1) for n in range(random.randint(N // 5, N // 2))))
+          for n in range(random.randint(N, N * 5))
+      ]
+  def tournament(population, tournament_size=2):
+      return max(random.choices(population, k=tournament_size), key=lambda i: i.fitness)
+
+  def w(genome):
+      return sum(len(_) for _ in genome)
+
+  def covering(genome):
+      s = set()
+      for _ in genome:
+         s =  s.union(set(_))
+      return len(s)
+
+  def intersection(lst1, lst2):
+      lst3 = [value for value in lst1 if value in lst2]
+      return lst3
+
+  def shuffle(g1,g2,g3):
+      a = [l for l in g1 if l not in g3]
+      b = [l for l in g2 if l not in g3]
+      gnew = g3.copy()
+
+      if a:
+          c = 1
+      else:
+          c = 0
+      for i in range(max(len(a),len(b))):
+          if c :
+              if a and i < len(a):
+                  gnew.append(a[i])
+              if b:
+                  c = 0
+
+          else:
+              if b and i < len(b):
+                  gnew.append(b[i])
+              if a:
+                  c = 1
+
+      return gnew
+
+  def cross_over(g1, g2):
+      g3 = intersection(g1,g2)
+      g3 = shuffle(g1,g2,g3)
+      return g3
+
+
+  def mutation(genome):
+
+      mutation = random.choice(all_lists)
+      if mutation in genome:
+          genome.remove(mutation)
+      else:
+          genome.append(mutation)
+
+      return genome
+
+  def create_population(mu):
+      population = []
+      for i in range(mu):
+          g = []
+          while covering(g) != N:
+              if len(g) < N*2:
+                  r = random.choice(all_lists)
+                  if r not in g:
+                      g.append(r)
+              else:
+                  g = []
+          population.append(g)
+      return [Individual(g, tuple((covering(g),-w(g)))) for g in population]
+  N = 1000
+  all_lists = problem(N,seed=42)
+  Individual = namedtuple("Individual", ["genome", "fitness"])
+  mu = 2000
+  GENERATIONS = 100
+  OFFSPRINGS_SIZE = 1100
+  population = create_population(mu)
+
+  for g in range(GENERATIONS):
+      new_population = []
+      for _ in range(OFFSPRINGS_SIZE):
+          o = []
+          if random.random() < 0.001:
+              p = tournament(population)
+              o = mutation(p.genome)
+          else:
+              p1 = tournament(population)
+              p2 = tournament(population)
+              o = cross_over(p1.genome, p2.genome)
+          new_population.append(Individual(o, tuple((covering(o),-w(o)))))
+      population += new_population
+      population = sorted(population, key= lambda i : i.fitness, reverse=True)[:mu]
+
+  print(f'w={w(population[0].genome)}, cov={covering(population[0].genome)}')
+\end{mintedbox}
+
+Hi Francesco,
+
+Here is my quick review pertaining to your approach to Lab 2.
+
+Positives (both cosmetic and logical):
+
+1. The README was well-documented and I was able to come close to your best results when running the notebook locally with the specified hyperparameters.
+
+2. The shuffling after the intersection seems to add a sort of random diversity to the evolved set, so that is great. I'll take inspiration from this. However, I don't fully understand the mechanism of the shuffle function. It would be great if I could read some comments or if the variables $a$, $b$ and $c$ could be renamed.
+
+3. The hyperparameters like offspring size were varied for different sizes of N, which was the same thing I did. I was wondering if there was an intuition for choosing certain values. This could be explained in the README.
+
+Some things to look at:
+
+1. Mutations are rarely applied in each generation (at an extremely low probability of 0.001). I recall there was a discussion on the Telegram group about the detrimental effect mutating had on the final solution, so I understand why you might have done this. However, I found that mutating in early generations helps improve exploration power.
+
+2. A constant `tournament\_size` of 2 is used for all values of N. Although early papers suggested the use of a constant, indiscriminate tournament size, recent papers like Yuri et al. advocated for adapting this parameter. I also used a constant size in my work, but this is something we can look at.
+
+3. In the instances where mutation is done, only one type of mutation is used. You could try a diverse mix of mutation strategies like flipping, inversion, scrambling, etc. Since mutations haven't worked too well for you so far, the choice of strategy and aggression could be something to explore.
+
+4. Runtime is rather slow for large values of $N$, which was the same case for me. This could also be because of the large number of generations (2000) the solution has to iterate through.
+
+All in all, good job.

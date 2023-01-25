@@ -1,0 +1,6 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+  \PYG{k}{def} \PYG{n+nf}{fitness\PYGZus{}function}\PYG{p}{(}\PYG{n}{entry}\PYG{p}{,} \PYG{n}{goal\PYGZus{}set}\PYG{p}{):}
+    \PYG{n}{duplicates} \PYG{o}{=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{entry}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb}{set}\PYG{p}{(}\PYG{n+nb}{tuple}\PYG{p}{(}\PYG{n}{entry}\PYG{p}{)))}
+    \PYG{n}{miss} \PYG{o}{=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{goal\PYGZus{}set}\PYG{o}{.}\PYG{n}{difference}\PYG{p}{(}\PYG{n+nb}{set}\PYG{p}{(}\PYG{n}{entry}\PYG{p}{)))}
+    \PYG{k}{return} \PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1000} \PYG{o}{*} \PYG{n}{miss}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{n}{duplicates}
+\end{Verbatim}

@@ -1,0 +1,105 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+  \PYG{k+kn}{import} \PYG{n+nn}{random}
+  \PYG{k+kn}{import} \PYG{n+nn}{logging}
+  \PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k}{as} \PYG{n+nn}{np}
+  \PYG{k+kn}{from} \PYG{n+nn}{collections} \PYG{k+kn}{import} \PYG{n}{namedtuple}
+  \PYG{k}{def} \PYG{n+nf}{problem}\PYG{p}{(}\PYG{n}{N}\PYG{p}{,} \PYG{n}{seed}\PYG{o}{=}\PYG{k+kc}{None}\PYG{p}{):}
+      \PYG{n}{random}\PYG{o}{.}\PYG{n}{seed}\PYG{p}{(}\PYG{n}{seed}\PYG{p}{)}
+      \PYG{k}{return} \PYG{p}{[}
+          \PYG{n+nb}{list}\PYG{p}{(}\PYG{n+nb}{set}\PYG{p}{(}\PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n}{N} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{k}{for} \PYG{n}{n} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{n}{N} \PYG{o}{//} \PYG{l+m+mi}{5}\PYG{p}{,} \PYG{n}{N} \PYG{o}{//} \PYG{l+m+mi}{2}\PYG{p}{))))}
+          \PYG{k}{for} \PYG{n}{n} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{n}{N}\PYG{p}{,} \PYG{n}{N} \PYG{o}{*} \PYG{l+m+mi}{5}\PYG{p}{))}
+      \PYG{p}{]}
+  \PYG{k}{def} \PYG{n+nf}{tournament}\PYG{p}{(}\PYG{n}{population}\PYG{p}{,} \PYG{n}{tournament\PYGZus{}size}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{p}{):}
+      \PYG{k}{return} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{random}\PYG{o}{.}\PYG{n}{choices}\PYG{p}{(}\PYG{n}{population}\PYG{p}{,} \PYG{n}{k}\PYG{o}{=}\PYG{n}{tournament\PYGZus{}size}\PYG{p}{),} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{i}\PYG{p}{:} \PYG{n}{i}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{)}
+
+  \PYG{k}{def} \PYG{n+nf}{w}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{):}
+      \PYG{k}{return} \PYG{n+nb}{sum}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{\PYGZus{}}\PYG{p}{)} \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n}{genome}\PYG{p}{)}
+
+  \PYG{k}{def} \PYG{n+nf}{covering}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{):}
+      \PYG{n}{s} \PYG{o}{=} \PYG{n+nb}{set}\PYG{p}{()}
+      \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n}{genome}\PYG{p}{:}
+         \PYG{n}{s} \PYG{o}{=}  \PYG{n}{s}\PYG{o}{.}\PYG{n}{union}\PYG{p}{(}\PYG{n+nb}{set}\PYG{p}{(}\PYG{n}{\PYGZus{}}\PYG{p}{))}
+      \PYG{k}{return} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{s}\PYG{p}{)}
+
+  \PYG{k}{def} \PYG{n+nf}{intersection}\PYG{p}{(}\PYG{n}{lst1}\PYG{p}{,} \PYG{n}{lst2}\PYG{p}{):}
+      \PYG{n}{lst3} \PYG{o}{=} \PYG{p}{[}\PYG{n}{value} \PYG{k}{for} \PYG{n}{value} \PYG{o+ow}{in} \PYG{n}{lst1} \PYG{k}{if} \PYG{n}{value} \PYG{o+ow}{in} \PYG{n}{lst2}\PYG{p}{]}
+      \PYG{k}{return} \PYG{n}{lst3}
+
+  \PYG{k}{def} \PYG{n+nf}{shuffle}\PYG{p}{(}\PYG{n}{g1}\PYG{p}{,}\PYG{n}{g2}\PYG{p}{,}\PYG{n}{g3}\PYG{p}{):}
+      \PYG{n}{a} \PYG{o}{=} \PYG{p}{[}\PYG{n}{l} \PYG{k}{for} \PYG{n}{l} \PYG{o+ow}{in} \PYG{n}{g1} \PYG{k}{if} \PYG{n}{l} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n}{g3}\PYG{p}{]}
+      \PYG{n}{b} \PYG{o}{=} \PYG{p}{[}\PYG{n}{l} \PYG{k}{for} \PYG{n}{l} \PYG{o+ow}{in} \PYG{n}{g2} \PYG{k}{if} \PYG{n}{l} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n}{g3}\PYG{p}{]}
+      \PYG{n}{gnew} \PYG{o}{=} \PYG{n}{g3}\PYG{o}{.}\PYG{n}{copy}\PYG{p}{()}
+
+      \PYG{k}{if} \PYG{n}{a}\PYG{p}{:}
+          \PYG{n}{c} \PYG{o}{=} \PYG{l+m+mi}{1}
+      \PYG{k}{else}\PYG{p}{:}
+          \PYG{n}{c} \PYG{o}{=} \PYG{l+m+mi}{0}
+      \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb}{max}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{a}\PYG{p}{),}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{b}\PYG{p}{))):}
+          \PYG{k}{if} \PYG{n}{c} \PYG{p}{:}
+              \PYG{k}{if} \PYG{n}{a} \PYG{o+ow}{and} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{a}\PYG{p}{):}
+                  \PYG{n}{gnew}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{a}\PYG{p}{[}\PYG{n}{i}\PYG{p}{])}
+              \PYG{k}{if} \PYG{n}{b}\PYG{p}{:}
+                  \PYG{n}{c} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+          \PYG{k}{else}\PYG{p}{:}
+              \PYG{k}{if} \PYG{n}{b} \PYG{o+ow}{and} \PYG{n}{i} \PYG{o}{\PYGZlt{}} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{b}\PYG{p}{):}
+                  \PYG{n}{gnew}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{b}\PYG{p}{[}\PYG{n}{i}\PYG{p}{])}
+              \PYG{k}{if} \PYG{n}{a}\PYG{p}{:}
+                  \PYG{n}{c} \PYG{o}{=} \PYG{l+m+mi}{1}
+
+      \PYG{k}{return} \PYG{n}{gnew}
+
+  \PYG{k}{def} \PYG{n+nf}{cross\PYGZus{}over}\PYG{p}{(}\PYG{n}{g1}\PYG{p}{,} \PYG{n}{g2}\PYG{p}{):}
+      \PYG{n}{g3} \PYG{o}{=} \PYG{n}{intersection}\PYG{p}{(}\PYG{n}{g1}\PYG{p}{,}\PYG{n}{g2}\PYG{p}{)}
+      \PYG{n}{g3} \PYG{o}{=} \PYG{n}{shuffle}\PYG{p}{(}\PYG{n}{g1}\PYG{p}{,}\PYG{n}{g2}\PYG{p}{,}\PYG{n}{g3}\PYG{p}{)}
+      \PYG{k}{return} \PYG{n}{g3}
+
+
+  \PYG{k}{def} \PYG{n+nf}{mutation}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{):}
+
+      \PYG{n}{mutation} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{all\PYGZus{}lists}\PYG{p}{)}
+      \PYG{k}{if} \PYG{n}{mutation} \PYG{o+ow}{in} \PYG{n}{genome}\PYG{p}{:}
+          \PYG{n}{genome}\PYG{o}{.}\PYG{n}{remove}\PYG{p}{(}\PYG{n}{mutation}\PYG{p}{)}
+      \PYG{k}{else}\PYG{p}{:}
+          \PYG{n}{genome}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{mutation}\PYG{p}{)}
+
+      \PYG{k}{return} \PYG{n}{genome}
+
+  \PYG{k}{def} \PYG{n+nf}{create\PYGZus{}population}\PYG{p}{(}\PYG{n}{mu}\PYG{p}{):}
+      \PYG{n}{population} \PYG{o}{=} \PYG{p}{[]}
+      \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{mu}\PYG{p}{):}
+          \PYG{n}{g} \PYG{o}{=} \PYG{p}{[]}
+          \PYG{k}{while} \PYG{n}{covering}\PYG{p}{(}\PYG{n}{g}\PYG{p}{)} \PYG{o}{!=} \PYG{n}{N}\PYG{p}{:}
+              \PYG{k}{if} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{g}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{n}{N}\PYG{o}{*}\PYG{l+m+mi}{2}\PYG{p}{:}
+                  \PYG{n}{r} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{all\PYGZus{}lists}\PYG{p}{)}
+                  \PYG{k}{if} \PYG{n}{r} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n}{g}\PYG{p}{:}
+                      \PYG{n}{g}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{r}\PYG{p}{)}
+              \PYG{k}{else}\PYG{p}{:}
+                  \PYG{n}{g} \PYG{o}{=} \PYG{p}{[]}
+          \PYG{n}{population}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{g}\PYG{p}{)}
+      \PYG{k}{return} \PYG{p}{[}\PYG{n}{Individual}\PYG{p}{(}\PYG{n}{g}\PYG{p}{,} \PYG{n+nb}{tuple}\PYG{p}{((}\PYG{n}{covering}\PYG{p}{(}\PYG{n}{g}\PYG{p}{),}\PYG{o}{\PYGZhy{}}\PYG{n}{w}\PYG{p}{(}\PYG{n}{g}\PYG{p}{))))} \PYG{k}{for} \PYG{n}{g} \PYG{o+ow}{in} \PYG{n}{population}\PYG{p}{]}
+  \PYG{n}{N} \PYG{o}{=} \PYG{l+m+mi}{1000}
+  \PYG{n}{all\PYGZus{}lists} \PYG{o}{=} \PYG{n}{problem}\PYG{p}{(}\PYG{n}{N}\PYG{p}{,}\PYG{n}{seed}\PYG{o}{=}\PYG{l+m+mi}{42}\PYG{p}{)}
+  \PYG{n}{Individual} \PYG{o}{=} \PYG{n}{namedtuple}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Individual\PYGZdq{}}\PYG{p}{,} \PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}genome\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}fitness\PYGZdq{}}\PYG{p}{])}
+  \PYG{n}{mu} \PYG{o}{=} \PYG{l+m+mi}{2000}
+  \PYG{n}{GENERATIONS} \PYG{o}{=} \PYG{l+m+mi}{100}
+  \PYG{n}{OFFSPRINGS\PYGZus{}SIZE} \PYG{o}{=} \PYG{l+m+mi}{1100}
+  \PYG{n}{population} \PYG{o}{=} \PYG{n}{create\PYGZus{}population}\PYG{p}{(}\PYG{n}{mu}\PYG{p}{)}
+
+  \PYG{k}{for} \PYG{n}{g} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{GENERATIONS}\PYG{p}{):}
+      \PYG{n}{new\PYGZus{}population} \PYG{o}{=} \PYG{p}{[]}
+      \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{OFFSPRINGS\PYGZus{}SIZE}\PYG{p}{):}
+          \PYG{n}{o} \PYG{o}{=} \PYG{p}{[]}
+          \PYG{k}{if} \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()} \PYG{o}{\PYGZlt{}} \PYG{l+m+mf}{0.001}\PYG{p}{:}
+              \PYG{n}{p} \PYG{o}{=} \PYG{n}{tournament}\PYG{p}{(}\PYG{n}{population}\PYG{p}{)}
+              \PYG{n}{o} \PYG{o}{=} \PYG{n}{mutation}\PYG{p}{(}\PYG{n}{p}\PYG{o}{.}\PYG{n}{genome}\PYG{p}{)}
+          \PYG{k}{else}\PYG{p}{:}
+              \PYG{n}{p1} \PYG{o}{=} \PYG{n}{tournament}\PYG{p}{(}\PYG{n}{population}\PYG{p}{)}
+              \PYG{n}{p2} \PYG{o}{=} \PYG{n}{tournament}\PYG{p}{(}\PYG{n}{population}\PYG{p}{)}
+              \PYG{n}{o} \PYG{o}{=} \PYG{n}{cross\PYGZus{}over}\PYG{p}{(}\PYG{n}{p1}\PYG{o}{.}\PYG{n}{genome}\PYG{p}{,} \PYG{n}{p2}\PYG{o}{.}\PYG{n}{genome}\PYG{p}{)}
+          \PYG{n}{new\PYGZus{}population}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{Individual}\PYG{p}{(}\PYG{n}{o}\PYG{p}{,} \PYG{n+nb}{tuple}\PYG{p}{((}\PYG{n}{covering}\PYG{p}{(}\PYG{n}{o}\PYG{p}{),}\PYG{o}{\PYGZhy{}}\PYG{n}{w}\PYG{p}{(}\PYG{n}{o}\PYG{p}{)))))}
+      \PYG{n}{population} \PYG{o}{+=} \PYG{n}{new\PYGZus{}population}
+      \PYG{n}{population} \PYG{o}{=} \PYG{n+nb}{sorted}\PYG{p}{(}\PYG{n}{population}\PYG{p}{,} \PYG{n}{key}\PYG{o}{=} \PYG{k}{lambda} \PYG{n}{i} \PYG{p}{:} \PYG{n}{i}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{,} \PYG{n}{reverse}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{)[:}\PYG{n}{mu}\PYG{p}{]}
+
+  \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}w=}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{w}\PYG{p}{(}\PYG{n}{population}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}\PYG{o}{.}\PYG{n}{genome}\PYG{p}{)}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{, cov=}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{covering}\PYG{p}{(}\PYG{n}{population}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}\PYG{o}{.}\PYG{n}{genome}\PYG{p}{)}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+\end{Verbatim}

@@ -1,0 +1,194 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+  \PYG{c+c1}{\PYGZsh{} helping functions}
+
+\PYG{k}{def} \PYG{n+nf}{lists\PYGZus{}to\PYGZus{}set}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{    convert genome to set}
+\PYG{l+s+sd}{    :param genome: the sub\PYGZhy{}lists with random integers between 0 and N\PYGZhy{}1}
+\PYG{l+s+sd}{    :return: set of contained elements in the genome}
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{list\PYGZus{}elems} \PYG{o}{=} \PYG{p}{[}\PYG{n}{single\PYGZus{}elem} \PYG{k}{for} \PYG{n}{l} \PYG{o+ow}{in} \PYG{n}{genome} \PYG{k}{for} \PYG{n}{single\PYGZus{}elem} \PYG{o+ow}{in} \PYG{n}{l}\PYG{p}{]}
+    \PYG{n}{s} \PYG{o}{=} \PYG{n+nb}{set}\PYG{p}{(}\PYG{n}{list\PYGZus{}elems}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{s}
+
+\PYG{c+c1}{\PYGZsh{} find out how many duplicates there are in the population}
+\PYG{k}{def} \PYG{n+nf}{count\PYGZus{}duplicates}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{    Count how many duplicates there are in the genome}
+\PYG{l+s+sd}{    :param genome: the sub\PYGZhy{}lists with random integers between 0 and N\PYGZhy{}1}
+\PYG{l+s+sd}{    :return: the count}
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{list\PYGZus{}elems} \PYG{o}{=} \PYG{p}{[}\PYG{n}{single\PYGZus{}elem} \PYG{k}{for} \PYG{n}{l} \PYG{o+ow}{in} \PYG{n}{genome} \PYG{k}{for} \PYG{n}{single\PYGZus{}elem} \PYG{o+ow}{in} \PYG{n}{l}\PYG{p}{]}
+    \PYG{n}{duplicates} \PYG{o}{=} \PYG{n+nb}{sum}\PYG{p}{([}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{group}\PYG{p}{))}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1} \PYG{k}{for} \PYG{n}{key}\PYG{p}{,} \PYG{n}{group} \PYG{o+ow}{in} \PYG{n}{groupby}\PYG{p}{(}\PYG{n+nb}{sorted}\PYG{p}{(}\PYG{n}{list\PYGZus{}elems}\PYG{p}{))])}
+    \PYG{k}{return} \PYG{n}{duplicates}
+\PYG{c+c1}{\PYGZsh{} to initialize the population}
+\PYG{k}{def} \PYG{n+nf}{create\PYGZus{}population}\PYG{p}{(}\PYG{n}{STATE\PYGZus{}SPACE}\PYG{p}{,} \PYG{n}{GOAL}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{    Initialize the population.}
+\PYG{l+s+sd}{    :param STATE\PYGZus{}SPACE: List of lists generated from problem\PYGZhy{}function}
+\PYG{l+s+sd}{    :param GOAL: set of integers from 0 to N\PYGZhy{}1}
+\PYG{l+s+sd}{    :return: a list of tuples: (genome,fitness), for each individual in the population.}
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{population} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{POPULATION\PYGZus{}SIZE}\PYG{p}{):}
+        \PYG{n}{individual} \PYG{o}{=} \PYG{p}{[]}
+        \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{STATE\PYGZus{}SPACE}\PYG{p}{))):}
+            \PYG{n}{l} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{STATE\PYGZus{}SPACE}\PYG{p}{)}
+            \PYG{k}{if} \PYG{n}{l} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n}{individual}\PYG{p}{:} \PYG{c+c1}{\PYGZsh{}check duplicates here}
+                \PYG{n}{individual}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{l}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{}individual = random.choices(STATE\PYGZus{}SPACE,k=random.randint(1,len(STATE\PYGZus{}SPACE)))}
+        \PYG{n}{fitness} \PYG{o}{=} \PYG{n}{compute\PYGZus{}fitness}\PYG{p}{(}\PYG{n}{individual}\PYG{p}{,} \PYG{n}{GOAL}\PYG{p}{)}
+        \PYG{n}{population}\PYG{o}{.}\PYG{n}{append}\PYG{p}{((}\PYG{n}{individual}\PYG{p}{,}\PYG{n}{fitness}\PYG{p}{))}
+    \PYG{k}{return} \PYG{n}{population}
+
+\PYG{k}{def} \PYG{n+nf}{compute\PYGZus{}fitness}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{,} \PYG{n}{GOAL}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{    fitness is a tuple of (\PYGZhy{}\PYGZsh{}of\PYGZus{}elems\PYGZus{}missing,\PYGZhy{}\PYGZsh{}duplicates) which should be maximized}
+\PYG{l+s+sd}{    :param genome: the sub\PYGZhy{}lists with random integers between 0 and N\PYGZhy{}1}
+\PYG{l+s+sd}{    :param GOAL: set of integers from 0 to N\PYGZhy{}1}
+\PYG{l+s+sd}{    :return: the fitness}
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{c+c1}{\PYGZsh{} violated constraints, i.e. how many elements are missing}
+    \PYG{n}{vc} \PYG{o}{=} \PYG{n}{GOAL}\PYG{o}{.}\PYG{n}{difference}\PYG{p}{(}\PYG{n}{lists\PYGZus{}to\PYGZus{}set}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{))}
+    \PYG{n}{duplicates} \PYG{o}{=} \PYG{n}{count\PYGZus{}duplicates}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} it is worse to lack elements than having duplicates}
+    \PYG{n}{fitness} \PYG{o}{=} \PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{vc}\PYG{p}{),} \PYG{o}{\PYGZhy{}}\PYG{n}{duplicates}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{fitness}
+
+\PYG{k}{def} \PYG{n+nf}{goal\PYGZus{}check}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{,} \PYG{n}{GOAL}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{    Check if all required elements are in the genome}
+\PYG{l+s+sd}{    :param genome: the sub\PYGZhy{}lists with random integers between 0 and N\PYGZhy{}1}
+\PYG{l+s+sd}{    :param GOAL: set of integers from 0 to N\PYGZhy{}1}
+\PYG{l+s+sd}{    :return: boolean value if goal reached or not}
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{k}{return} \PYG{n}{GOAL}\PYG{o}{==}\PYG{n}{lists\PYGZus{}to\PYGZus{}set}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{)}
+
+\PYG{k}{def} \PYG{n+nf}{parent\PYGZus{}selection}\PYG{p}{(}\PYG{n}{population}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{    parent selection using ranking system}
+\PYG{l+s+sd}{    P(choose fittest parent) = POPULATION\PYGZus{}SIZE/n\PYGZus{}slots}
+\PYG{l+s+sd}{    P(choose second fittest parent) = (POPULATION\PYGZus{}SIZE\PYGZhy{}1)/n\PYGZus{}slots}
+\PYG{l+s+sd}{    ...}
+\PYG{l+s+sd}{    P(choose least fit parent) = 1/n\PYGZus{}slots}
+\PYG{l+s+sd}{    :param population: list of individuals}
+\PYG{l+s+sd}{    :return: parent to generate offspring}
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{ranked\PYGZus{}population} \PYG{o}{=} \PYG{n+nb}{sorted}\PYG{p}{(}\PYG{n}{population}\PYG{p}{,} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{t} \PYG{p}{:} \PYG{n}{t}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{reverse}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{)}
+    \PYG{c+c1}{\PYGZsh{} number of slots in spinning wheel = POPULATION\PYGZus{}SIZE(POPULATION\PYGZus{}SIZE+1)/2 (arithmetic sum)}
+    \PYG{n}{n\PYGZus{}slots} \PYG{o}{=} \PYG{n}{POPULATION\PYGZus{}SIZE}\PYG{o}{*}\PYG{p}{(}\PYG{n}{POPULATION\PYGZus{}SIZE}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{)}\PYG{o}{/}\PYG{l+m+mi}{2}
+    \PYG{n}{wheel\PYGZus{}number} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{n}{n\PYGZus{}slots}\PYG{p}{)}
+    \PYG{n}{curr\PYGZus{}parent} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{n}{parent\PYGZus{}number} \PYG{o}{=} \PYG{n}{POPULATION\PYGZus{}SIZE}
+    \PYG{n}{increment} \PYG{o}{=} \PYG{n}{POPULATION\PYGZus{}SIZE}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}
+    \PYG{k}{while} \PYG{n}{wheel\PYGZus{}number} \PYG{o}{\PYGZgt{}} \PYG{n}{parent\PYGZus{}number}\PYG{p}{:}
+        \PYG{n}{curr\PYGZus{}parent} \PYG{o}{+=}\PYG{l+m+mi}{1}
+        \PYG{n}{parent\PYGZus{}number} \PYG{o}{+=}\PYG{n}{increment}
+        \PYG{n}{increment} \PYG{o}{\PYGZhy{}=} \PYG{l+m+mi}{1}
+    \PYG{k}{return} \PYG{n}{ranked\PYGZus{}population}\PYG{p}{[}\PYG{n}{curr\PYGZus{}parent}\PYG{p}{]}
+
+\PYG{c+c1}{\PYGZsh{} make one child from each cross\PYGZhy{}over, and mutate with low prob}
+\PYG{k}{def} \PYG{n+nf}{cross\PYGZus{}over}\PYG{p}{(}\PYG{n}{parent1}\PYG{p}{,} \PYG{n}{parent2}\PYG{p}{,} \PYG{n}{STATE\PYGZus{}SPACE}\PYG{p}{,} \PYG{n}{mutation\PYGZus{}prob} \PYG{o}{=} \PYG{l+m+mf}{0.1}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{    Compute cross\PYGZhy{}over between two selected parents. Mutate child with mutation\PYGZus{}prob.}
+\PYG{l+s+sd}{    :param parent1: individual}
+\PYG{l+s+sd}{    :param parent2: individual}
+\PYG{l+s+sd}{    :param STATE\PYGZus{}SPACE: List of lists generated from problem\PYGZhy{}function}
+\PYG{l+s+sd}{    :param mutation\PYGZus{}prob: the probability to perform mutation}
+\PYG{l+s+sd}{    :return: the child created}
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{cut1} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{parent1}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]))}
+    \PYG{n}{cut2} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{parent2}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]))}
+    \PYG{n}{child} \PYG{o}{=} \PYG{n}{parent1}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{][:}\PYG{n}{cut1}\PYG{p}{]}\PYG{o}{+}\PYG{n}{parent2}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{][}\PYG{n}{cut2}\PYG{p}{:]}
+    \PYG{k}{if} \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()} \PYG{o}{\PYGZlt{}} \PYG{n}{mutation\PYGZus{}prob}\PYG{p}{:}
+        \PYG{n}{mutate}\PYG{p}{(}\PYG{n}{child}\PYG{p}{,} \PYG{n}{STATE\PYGZus{}SPACE}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{child}
+
+
+\PYG{k}{def} \PYG{n+nf}{mutate}\PYG{p}{(}\PYG{n}{child}\PYG{p}{,} \PYG{n}{STATE\PYGZus{}SPACE}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{    Replace one list in the child with a random one from the state space.}
+\PYG{l+s+sd}{    :param child:}
+\PYG{l+s+sd}{    :param STATE\PYGZus{}SPACE:}
+\PYG{l+s+sd}{    :return: the mutated child}
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{idx} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{child}\PYG{p}{))}
+    \PYG{c+c1}{\PYGZsh{}child = child[:idx] + child[idx+1:] + STATE\PYGZus{}SPACE[random.randint(0,len(STATE\PYGZus{}SPACE)\PYGZhy{}1)]}
+    \PYG{n}{i} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{k}{while} \PYG{n}{i}\PYG{o}{\PYGZlt{}}\PYG{l+m+mi}{10}\PYG{p}{:}
+        \PYG{n}{i}\PYG{o}{+=}\PYG{l+m+mi}{1}
+        \PYG{k}{if} \PYG{n}{STATE\PYGZus{}SPACE}\PYG{p}{[}\PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{STATE\PYGZus{}SPACE}\PYG{p}{)}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)]} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n}{child}\PYG{p}{:}
+             \PYG{n}{child} \PYG{o}{=} \PYG{n}{child}\PYG{p}{[:}\PYG{n}{idx}\PYG{p}{]} \PYG{o}{+} \PYG{n}{child}\PYG{p}{[}\PYG{n}{idx}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{p}{:]} \PYG{o}{+} \PYG{n}{STATE\PYGZus{}SPACE}\PYG{p}{[}\PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{STATE\PYGZus{}SPACE}\PYG{p}{)}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{)]}
+             \PYG{k}{break}
+    \PYG{k}{return} \PYG{n}{child}
+
+\PYG{k}{def} \PYG{n+nf}{update\PYGZus{}population\PYGZus{}plus}\PYG{p}{(}\PYG{n}{population}\PYG{p}{,} \PYG{n}{offspring}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{    Using the plus strategy to update population to next generation.}
+\PYG{l+s+sd}{    :param population:}
+\PYG{l+s+sd}{    :param offspring:}
+\PYG{l+s+sd}{    :return: the best individuals in union(population, offspring)}
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{tot} \PYG{o}{=} \PYG{n}{population} \PYG{o}{+} \PYG{n}{offspring}
+    \PYG{n}{ranked\PYGZus{}population} \PYG{o}{=} \PYG{n+nb}{sorted}\PYG{p}{(}\PYG{n}{tot}\PYG{p}{,} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{t} \PYG{p}{:} \PYG{n}{t}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{reverse}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{ranked\PYGZus{}population}\PYG{p}{[:}\PYG{n}{POPULATION\PYGZus{}SIZE}\PYG{p}{]}
+
+\PYG{k}{def} \PYG{n+nf}{update\PYGZus{}population\PYGZus{}comma}\PYG{p}{(}\PYG{n}{offspring}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{    Using the plus strategy to update population to next generation.}
+\PYG{l+s+sd}{    :param offspring:}
+\PYG{l+s+sd}{    :return: the best individuals in from offspring}
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{ranked\PYGZus{}pop} \PYG{o}{=} \PYG{n+nb}{sorted}\PYG{p}{(}\PYG{n}{offspring}\PYG{p}{,} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{t} \PYG{p}{:} \PYG{n}{t}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{reverse}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{ranked\PYGZus{}pop}\PYG{p}{[:}\PYG{n}{POPULATION\PYGZus{}SIZE}\PYG{p}{]}
+
+\PYG{k}{def} \PYG{n+nf}{update\PYGZus{}mutation\PYGZus{}prob}\PYG{p}{(}\PYG{n}{best\PYGZus{}solution}\PYG{p}{,} \PYG{n}{best\PYGZus{}this\PYGZus{}iter}\PYG{p}{,} \PYG{n}{mutation\PYGZus{}param}\PYG{p}{,} \PYG{n}{it}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{    Update the mutation probability according to how the performance evolves. If no improvement, mutation probability increases (favour exploration). If improvement, mutation probability decreases (favour exploitation).}
+\PYG{l+s+sd}{    :param best\PYGZus{}solution: The best solution so far}
+\PYG{l+s+sd}{    :param best\PYGZus{}this\PYGZus{}iter: The best solution of this generation}
+\PYG{l+s+sd}{    :param mutation\PYGZus{}param:}
+\PYG{l+s+sd}{    :param it: iteration number}
+\PYG{l+s+sd}{    :return: the new mutation probability}
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{k}{if} \PYG{n}{best\PYGZus{}solution}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{\PYGZgt{}=} \PYG{n}{best\PYGZus{}this\PYGZus{}iter}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]:}
+        \PYG{n}{mutation\PYGZus{}param} \PYG{o}{+=}\PYG{l+m+mi}{1}
+    \PYG{k}{elif} \PYG{n}{best\PYGZus{}solution}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{\PYGZgt{}=} \PYG{n}{best\PYGZus{}this\PYGZus{}iter}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o+ow}{and} \PYG{n}{mutation\PYGZus{}param}\PYG{o}{\PYGZgt{}}\PYG{l+m+mi}{0}\PYG{p}{:}
+        \PYG{n}{mutation\PYGZus{}param} \PYG{o}{\PYGZhy{}=} \PYG{l+m+mi}{1}
+    \PYG{k}{return} \PYG{n}{mutation\PYGZus{}param}\PYG{o}{/}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{+}\PYG{n}{it}\PYG{p}{),} \PYG{n}{mutation\PYGZus{}param}
+\PYG{k}{def} \PYG{n+nf}{solve\PYGZus{}problem}\PYG{p}{(}\PYG{n}{N}\PYG{p}{):}
+    \PYG{n}{STATE\PYGZus{}SPACE} \PYG{o}{=} \PYG{n}{problem}\PYG{p}{(}\PYG{n}{N}\PYG{p}{,}\PYG{n}{seed}\PYG{o}{=}\PYG{l+m+mi}{42}\PYG{p}{)}
+    \PYG{n}{GOAL} \PYG{o}{=} \PYG{n+nb}{set}\PYG{p}{(}\PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{N}\PYG{p}{))}
+    \PYG{n}{population} \PYG{o}{=} \PYG{n}{create\PYGZus{}population}\PYG{p}{(}\PYG{n}{STATE\PYGZus{}SPACE}\PYG{p}{,} \PYG{n}{GOAL}\PYG{p}{)}
+    \PYG{n}{best\PYGZus{}sol} \PYG{o}{=} \PYG{n}{population}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{c+c1}{\PYGZsh{}to be updated after each iter}
+    \PYG{n}{found\PYGZus{}in\PYGZus{}iter} \PYG{o}{=} \PYG{l+m+mi}{0} \PYG{c+c1}{\PYGZsh{}to be updated}
+    \PYG{n}{mutation\PYGZus{}param} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{c+c1}{\PYGZsh{}increase if solution doesn\PYGZsq{}t improve}
+    \PYG{n}{mutation\PYGZus{}prob} \PYG{o}{=} \PYG{l+m+mf}{0.1} \PYG{c+c1}{\PYGZsh{}init value}
+    \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{ITERS}\PYG{p}{):}
+        \PYG{n}{offspring} \PYG{o}{=} \PYG{p}{[]}
+        \PYG{k}{for} \PYG{n}{\PYGZus{}\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{OFFSPRING\PYGZus{}SIZE}\PYG{p}{):}
+            \PYG{n}{parent1}\PYG{p}{,} \PYG{n}{parent2} \PYG{o}{=} \PYG{n}{parent\PYGZus{}selection}\PYG{p}{(}\PYG{n}{population}\PYG{p}{),} \PYG{n}{parent\PYGZus{}selection}\PYG{p}{(}\PYG{n}{population}\PYG{p}{)}
+            \PYG{n}{child} \PYG{o}{=} \PYG{n}{cross\PYGZus{}over}\PYG{p}{(}\PYG{n}{parent1}\PYG{p}{,}\PYG{n}{parent2}\PYG{p}{,} \PYG{n}{STATE\PYGZus{}SPACE}\PYG{p}{,} \PYG{n}{mutation\PYGZus{}prob}\PYG{p}{)}
+            \PYG{n}{child\PYGZus{}fitness} \PYG{o}{=} \PYG{n}{compute\PYGZus{}fitness}\PYG{p}{(}\PYG{n}{child}\PYG{p}{,} \PYG{n}{GOAL}\PYG{p}{)}
+            \PYG{n}{offspring}\PYG{o}{.}\PYG{n}{append}\PYG{p}{((}\PYG{n}{child}\PYG{p}{,}\PYG{n}{child\PYGZus{}fitness}\PYG{p}{))}
+        \PYG{n}{population} \PYG{o}{=} \PYG{n}{update\PYGZus{}population\PYGZus{}plus}\PYG{p}{(}\PYG{n}{population}\PYG{p}{,} \PYG{n}{offspring}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{}population = update\PYGZus{}population\PYGZus{}comma(offspring)}
+        \PYG{n}{best\PYGZus{}curr} \PYG{o}{=} \PYG{n+nb}{sorted}\PYG{p}{(}\PYG{n}{population}\PYG{p}{,} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{l}\PYG{p}{:}\PYG{n}{l}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{reverse}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{)[}\PYG{l+m+mi}{0}\PYG{p}{]}
+        \PYG{n}{mutation\PYGZus{}prob}\PYG{p}{,} \PYG{n}{mutation\PYGZus{}param} \PYG{o}{=} \PYG{n}{update\PYGZus{}mutation\PYGZus{}prob}\PYG{p}{(}\PYG{n}{best\PYGZus{}sol}\PYG{p}{,} \PYG{n}{best\PYGZus{}curr}\PYG{p}{,} \PYG{n}{mutation\PYGZus{}param}\PYG{p}{,} \PYG{n}{i}\PYG{p}{)}
+        \PYG{k}{if} \PYG{n}{goal\PYGZus{}check}\PYG{p}{(}\PYG{n}{best\PYGZus{}curr}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],}\PYG{n}{GOAL}\PYG{p}{)} \PYG{o+ow}{and} \PYG{n}{best\PYGZus{}curr}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{\PYGZgt{}} \PYG{n}{best\PYGZus{}sol}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]:}
+            \PYG{n}{best\PYGZus{}sol} \PYG{o}{=} \PYG{n}{best\PYGZus{}curr}
+            \PYG{n}{found\PYGZus{}in\PYGZus{}iter} \PYG{o}{=} \PYG{n}{i}
+    \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}Best solution found in }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{found\PYGZus{}in\PYGZus{}iter}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{ iters and has weight }\PYG{l+s+si}{\PYGZob{}}\PYG{o}{\PYGZhy{}}\PYG{n}{best\PYGZus{}sol}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{][}\PYG{l+m+mi}{1}\PYG{p}{]}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{best\PYGZus{}sol}
+\PYG{c+c1}{\PYGZsh{} main}
+
+\PYG{c+c1}{\PYGZsh{} settings}
+\PYG{n}{POPULATION\PYGZus{}SIZE} \PYG{o}{=} \PYG{l+m+mi}{50}
+\PYG{n}{OFFSPRING\PYGZus{}SIZE} \PYG{o}{=} \PYG{l+m+mi}{30}
+\PYG{n}{ITERS} \PYG{o}{=} \PYG{l+m+mi}{100}
+
+\PYG{k}{for} \PYG{n}{N} \PYG{o+ow}{in} \PYG{p}{[}\PYG{l+m+mi}{5}\PYG{p}{,}\PYG{l+m+mi}{10}\PYG{p}{,}\PYG{l+m+mi}{20}\PYG{p}{,}\PYG{l+m+mi}{50}\PYG{p}{,}\PYG{l+m+mi}{100}\PYG{p}{,}\PYG{l+m+mi}{1000}\PYG{p}{,}\PYG{l+m+mi}{2000}\PYG{p}{]:}
+    \PYG{n}{best\PYGZus{}sol} \PYG{o}{=} \PYG{n}{solve\PYGZus{}problem}\PYG{p}{(}\PYG{n}{N}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}N = }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{N}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+    \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}The best weight for N = }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{N}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{: }\PYG{l+s+si}{\PYGZob{}}\PYG{o}{\PYGZhy{}}\PYG{n}{best\PYGZus{}sol}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{][}\PYG{l+m+mi}{1}\PYG{p}{]}\PYG{o}{+}\PYG{n}{N}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+\end{Verbatim}

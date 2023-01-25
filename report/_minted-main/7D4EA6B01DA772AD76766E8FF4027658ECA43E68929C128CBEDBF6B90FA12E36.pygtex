@@ -1,0 +1,12 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+        \PYG{k}{if} \PYG{n}{N} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{20}\PYG{p}{:}
+            \PYG{n}{ng} \PYG{o}{=} \PYG{n}{g}\PYG{p}{[:}\PYG{n}{cut}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{+} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZhy{}}\PYG{n}{g}\PYG{p}{[}\PYG{n}{cut}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{],)} \PYG{o}{+} \PYG{n}{g}\PYG{p}{[}\PYG{n}{cut}\PYG{p}{:]}
+        \PYG{k}{elif} \PYG{n}{N}\PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{500}\PYG{p}{:}
+            \PYG{n}{cut\PYGZus{}size} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{genome\PYGZus{}size}\PYG{o}{*}\PYG{l+m+mf}{0.2}\PYG{p}{)}
+            \PYG{n}{new\PYGZus{}genome\PYGZus{}cut} \PYG{o}{=} \PYG{n+nb}{tuple}\PYG{p}{(}\PYG{n}{random}\PYG{o}{.}\PYG{n}{choices}\PYG{p}{([}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{weights}\PYG{o}{=}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{39}\PYG{p}{),} \PYG{n}{k}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{o}{*}\PYG{n}{cut\PYGZus{}size}\PYG{p}{))}
+            \PYG{n}{ng} \PYG{o}{=} \PYG{n}{g}\PYG{p}{[:}\PYG{n}{cut}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{o}{\PYGZhy{}}\PYG{n}{cut\PYGZus{}size}\PYG{p}{]} \PYG{o}{+} \PYG{n}{new\PYGZus{}genome\PYGZus{}cut} \PYG{o}{+} \PYG{n}{g}\PYG{p}{[}\PYG{n}{cut}\PYG{o}{+}\PYG{n}{cut\PYGZus{}size}\PYG{p}{:]}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n}{cut\PYGZus{}size} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{genome\PYGZus{}size}\PYG{o}{*}\PYG{l+m+mf}{0.2}\PYG{p}{)}
+            \PYG{n}{new\PYGZus{}genome\PYGZus{}cut} \PYG{o}{=} \PYG{n+nb}{tuple}\PYG{p}{(}\PYG{n}{random}\PYG{o}{.}\PYG{n}{choices}\PYG{p}{([}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{weights}\PYG{o}{=}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{99}\PYG{p}{),} \PYG{n}{k}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{o}{*}\PYG{n}{cut\PYGZus{}size}\PYG{p}{))}
+            \PYG{n}{ng} \PYG{o}{=} \PYG{n}{g}\PYG{p}{[:}\PYG{n}{cut}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{o}{\PYGZhy{}}\PYG{n}{cut\PYGZus{}size}\PYG{p}{]} \PYG{o}{+} \PYG{n}{new\PYGZus{}genome\PYGZus{}cut} \PYG{o}{+} \PYG{n}{g}\PYG{p}{[}\PYG{n}{cut}\PYG{o}{+}\PYG{n}{cut\PYGZus{}size}\PYG{p}{:]}
+\end{Verbatim}

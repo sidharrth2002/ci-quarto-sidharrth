@@ -1,0 +1,145 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+  \PYG{k+kn}{from} \PYG{n+nn}{itertools} \PYG{k+kn}{import} \PYG{n}{compress}
+  \PYG{k+kn}{from} \PYG{n+nn}{collections} \PYG{k+kn}{import} \PYG{n}{namedtuple}
+  \PYG{n}{N} \PYG{o}{=} \PYG{l+m+mi}{5}
+  \PYG{n}{POPULATION\PYGZus{}SIZE} \PYG{o}{=} \PYG{l+m+mi}{10}
+  \PYG{n}{OFFSPRING\PYGZus{}SIZE} \PYG{o}{=} \PYG{l+m+mi}{2}
+  \PYG{n}{GENERATIONS} \PYG{o}{=} \PYG{l+m+mi}{5}
+  \PYG{n}{PROB} \PYG{o}{=} \PYG{l+m+mf}{0.5} \PYG{c+c1}{\PYGZsh{} probability to choose 1 for each one of the locus in the population}
+  \PYG{n}{Individual} \PYG{o}{=} \PYG{n}{namedtuple}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Individual\PYGZsq{}}\PYG{p}{,} \PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}genome\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}fitness\PYGZsq{}}\PYG{p}{,}\PYG{l+s+s1}{\PYGZsq{}goal\PYGZus{}reached\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}w\PYGZsq{}}\PYG{p}{))}
+  \PYG{c+c1}{\PYGZsh{} this function evaluats the fitness and if the goal was reached}
+  \PYG{k}{def} \PYG{n+nf}{fitness\PYGZus{}goal\PYGZus{}eval}\PYG{p}{(}\PYG{n}{list\PYGZus{}of\PYGZus{}lists}\PYG{p}{,} \PYG{n}{genome}\PYG{p}{,} \PYG{n}{goal}\PYG{p}{):}
+      \PYG{n}{current\PYGZus{}goal} \PYG{o}{=} \PYG{n}{goal}
+      \PYG{n}{solution} \PYG{o}{=} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{compress}\PYG{p}{(}\PYG{n}{list\PYGZus{}of\PYGZus{}lists}\PYG{p}{,} \PYG{n}{genome}\PYG{p}{))}
+      \PYG{c+c1}{\PYGZsh{} fitness = 0}
+      \PYG{n}{new\PYGZus{}elements} \PYG{o}{=} \PYG{l+m+mi}{0}
+      \PYG{n}{repeated\PYGZus{}elements} \PYG{o}{=} \PYG{l+m+mi}{0}
+      \PYG{n}{w} \PYG{o}{=} \PYG{l+m+mi}{0}
+      \PYG{n}{goal\PYGZus{}reached} \PYG{o}{=} \PYG{k+kc}{False}
+
+      \PYG{k}{if} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{solution}\PYG{p}{)} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+          \PYG{k}{return} \PYG{l+m+mi}{0}\PYG{p}{,} \PYG{k+kc}{False}\PYG{p}{,} \PYG{l+m+mi}{0}
+
+      \PYG{k}{for} \PYG{n}{list\PYGZus{}} \PYG{o+ow}{in} \PYG{n}{solution}\PYG{p}{:}
+          \PYG{n}{list\PYGZus{}length} \PYG{o}{=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{list\PYGZus{}}\PYG{p}{)}
+          \PYG{n}{list\PYGZus{}} \PYG{o}{=} \PYG{n+nb}{set}\PYG{p}{(}\PYG{n}{list\PYGZus{}}\PYG{p}{)}
+          \PYG{n}{cg\PYGZus{}length} \PYG{o}{=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{current\PYGZus{}goal}\PYG{p}{)}
+          \PYG{n}{current\PYGZus{}goal} \PYG{o}{=} \PYG{n}{current\PYGZus{}goal} \PYG{o}{\PYGZhy{}} \PYG{n}{list\PYGZus{}}
+          \PYG{n}{cg\PYGZus{}new\PYGZus{}length} \PYG{o}{=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{current\PYGZus{}goal}\PYG{p}{)}
+
+          \PYG{c+c1}{\PYGZsh{} fitness += cg\PYGZus{}length \PYGZhy{} cg\PYGZus{}new\PYGZus{}length   \PYGZsh{} new elements (positive)}
+          \PYG{c+c1}{\PYGZsh{} fitness += (cg\PYGZus{}length \PYGZhy{} cg\PYGZus{}new\PYGZus{}length) \PYGZhy{} list\PYGZus{}length \PYGZsh{} repeated elements (negative)}
+          \PYG{n}{new\PYGZus{}elements} \PYG{o}{+=} \PYG{n}{cg\PYGZus{}length} \PYG{o}{\PYGZhy{}} \PYG{n}{cg\PYGZus{}new\PYGZus{}length}   \PYG{c+c1}{\PYGZsh{} new elements}
+          \PYG{n}{repeated\PYGZus{}elements} \PYG{o}{+=} \PYG{n}{list\PYGZus{}length} \PYG{o}{\PYGZhy{}} \PYG{p}{(}\PYG{n}{cg\PYGZus{}length} \PYG{o}{\PYGZhy{}} \PYG{n}{cg\PYGZus{}new\PYGZus{}length}\PYG{p}{)} \PYG{c+c1}{\PYGZsh{} repeated elements}
+
+          \PYG{n}{w} \PYG{o}{+=} \PYG{n}{list\PYGZus{}length}
+
+      \PYG{k}{if} \PYG{n}{cg\PYGZus{}new\PYGZus{}length} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+          \PYG{n}{goal\PYGZus{}reached} \PYG{o}{=} \PYG{k+kc}{True}
+
+      \PYG{n}{fitness} \PYG{o}{=} \PYG{n}{new\PYGZus{}elements} \PYG{o}{\PYGZhy{}} \PYG{n}{repeated\PYGZus{}elements}
+
+      \PYG{k}{return} \PYG{n}{fitness}\PYG{p}{,} \PYG{n}{goal\PYGZus{}reached}\PYG{p}{,} \PYG{n}{w}
+
+
+  \PYG{k}{def} \PYG{n+nf}{generate\PYGZus{}population}\PYG{p}{(}\PYG{n}{list\PYGZus{}of\PYGZus{}lists}\PYG{p}{,} \PYG{n}{goal}\PYG{p}{):}
+      \PYG{n}{population} \PYG{o}{=} \PYG{n+nb}{list}\PYG{p}{()}
+
+      \PYG{n}{genomes} \PYG{o}{=} \PYG{p}{[}\PYG{n+nb}{tuple}\PYG{p}{(}\PYG{n}{random}\PYG{o}{.}\PYG{n}{choices}\PYG{p}{([}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{weights}\PYG{o}{=}\PYG{p}{(}\PYG{n}{PROB}\PYG{p}{,}\PYG{l+m+mi}{1}\PYG{o}{\PYGZhy{}}\PYG{n}{PROB}\PYG{p}{),} \PYG{n}{k}\PYG{o}{=}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{list\PYGZus{}of\PYGZus{}lists}\PYG{p}{)))} \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{POPULATION\PYGZus{}SIZE}\PYG{p}{)]}
+
+      \PYG{k}{for} \PYG{n}{genome} \PYG{o+ow}{in} \PYG{n}{genomes}\PYG{p}{:}
+          \PYG{n}{fitness}\PYG{p}{,} \PYG{n}{goal\PYGZus{}reached}\PYG{p}{,} \PYG{n}{w} \PYG{o}{=} \PYG{n}{fitness\PYGZus{}goal\PYGZus{}eval}\PYG{p}{(}\PYG{n}{list\PYGZus{}of\PYGZus{}lists}\PYG{p}{,} \PYG{n}{genome}\PYG{p}{,} \PYG{n}{goal}\PYG{p}{)}
+          \PYG{n}{population}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{Individual}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{,} \PYG{n}{fitness}\PYG{p}{,} \PYG{n}{goal\PYGZus{}reached}\PYG{p}{,} \PYG{n}{w}\PYG{p}{))}
+      \PYG{k}{return} \PYG{n}{population}
+
+
+  \PYG{k}{def} \PYG{n+nf}{select\PYGZus{}parent}\PYG{p}{(}\PYG{n}{population}\PYG{p}{,} \PYG{n}{tournament\PYGZus{}size}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{p}{):}
+      \PYG{n}{subset} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choices}\PYG{p}{(}\PYG{n}{population}\PYG{p}{,} \PYG{n}{k}\PYG{o}{=}\PYG{n}{tournament\PYGZus{}size}\PYG{p}{)}
+      \PYG{k}{return} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{subset}\PYG{p}{,} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{i}\PYG{p}{:} \PYG{n}{i}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{)}
+
+
+  \PYG{k}{def} \PYG{n+nf}{cross\PYGZus{}over}\PYG{p}{(}\PYG{n}{p1}\PYG{p}{,} \PYG{n}{p2}\PYG{p}{,} \PYG{n}{genome\PYGZus{}size}\PYG{p}{,} \PYG{n}{list\PYGZus{}of\PYGZus{}lists}\PYG{p}{,} \PYG{n}{goal}\PYG{p}{):}
+      \PYG{n}{g1}\PYG{p}{,} \PYG{n}{f1} \PYG{o}{=} \PYG{n}{p1}\PYG{o}{.}\PYG{n}{genome}\PYG{p}{,} \PYG{n}{p1}\PYG{o}{.}\PYG{n}{fitness}
+      \PYG{n}{g2}\PYG{p}{,} \PYG{n}{f2} \PYG{o}{=} \PYG{n}{p2}\PYG{o}{.}\PYG{n}{genome}\PYG{p}{,} \PYG{n}{p2}\PYG{o}{.}\PYG{n}{fitness}
+      \PYG{n}{cut} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{((}\PYG{n}{f1}\PYG{o}{+}\PYG{l+m+mf}{1e\PYGZhy{}6}\PYG{p}{)}\PYG{o}{/}\PYG{p}{(}\PYG{n}{f1}\PYG{o}{+}\PYG{n}{f2}\PYG{o}{+}\PYG{l+m+mf}{1e\PYGZhy{}6}\PYG{p}{)}\PYG{o}{*}\PYG{n}{genome\PYGZus{}size}\PYG{p}{)}   \PYG{c+c1}{\PYGZsh{} the cut is proportional to the fitness of the genome}
+      \PYG{n}{ng1} \PYG{o}{=} \PYG{n}{g1}\PYG{p}{[:}\PYG{n}{cut}\PYG{p}{]} \PYG{o}{+} \PYG{n}{g2}\PYG{p}{[}\PYG{n}{cut}\PYG{p}{:]}
+      \PYG{k}{return} \PYG{n}{ng1}
+
+
+  \PYG{k}{def} \PYG{n+nf}{mutation}\PYG{p}{(}\PYG{n}{g}\PYG{p}{,} \PYG{n}{genome\PYGZus{}size}\PYG{p}{,} \PYG{n}{k}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{):}  \PYG{c+c1}{\PYGZsh{} for larger N try to eliminate some of the 1 in the genome because the bloat was getting to high}
+      \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{k}\PYG{p}{):}
+          \PYG{n}{cut} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{genome\PYGZus{}size}\PYG{p}{)}
+          \PYG{k}{if} \PYG{n}{N} \PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{20}\PYG{p}{:}
+              \PYG{n}{ng} \PYG{o}{=} \PYG{n}{g}\PYG{p}{[:}\PYG{n}{cut}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{+} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{o}{\PYGZhy{}}\PYG{n}{g}\PYG{p}{[}\PYG{n}{cut}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{],)} \PYG{o}{+} \PYG{n}{g}\PYG{p}{[}\PYG{n}{cut}\PYG{p}{:]}
+          \PYG{k}{elif} \PYG{n}{N}\PYG{o}{\PYGZlt{}} \PYG{l+m+mi}{500}\PYG{p}{:}
+              \PYG{n}{cut\PYGZus{}size} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{genome\PYGZus{}size}\PYG{o}{*}\PYG{l+m+mf}{0.2}\PYG{p}{)}
+              \PYG{n}{new\PYGZus{}genome\PYGZus{}cut} \PYG{o}{=} \PYG{n+nb}{tuple}\PYG{p}{(}\PYG{n}{random}\PYG{o}{.}\PYG{n}{choices}\PYG{p}{([}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{weights}\PYG{o}{=}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{39}\PYG{p}{),} \PYG{n}{k}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{o}{*}\PYG{n}{cut\PYGZus{}size}\PYG{p}{))}
+              \PYG{n}{ng} \PYG{o}{=} \PYG{n}{g}\PYG{p}{[:}\PYG{n}{cut}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{o}{\PYGZhy{}}\PYG{n}{cut\PYGZus{}size}\PYG{p}{]} \PYG{o}{+} \PYG{n}{new\PYGZus{}genome\PYGZus{}cut} \PYG{o}{+} \PYG{n}{g}\PYG{p}{[}\PYG{n}{cut}\PYG{o}{+}\PYG{n}{cut\PYGZus{}size}\PYG{p}{:]}
+          \PYG{k}{else}\PYG{p}{:}
+              \PYG{n}{cut\PYGZus{}size} \PYG{o}{=} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{genome\PYGZus{}size}\PYG{o}{*}\PYG{l+m+mf}{0.2}\PYG{p}{)}
+              \PYG{n}{new\PYGZus{}genome\PYGZus{}cut} \PYG{o}{=} \PYG{n+nb}{tuple}\PYG{p}{(}\PYG{n}{random}\PYG{o}{.}\PYG{n}{choices}\PYG{p}{([}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{weights}\PYG{o}{=}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{99}\PYG{p}{),} \PYG{n}{k}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{o}{*}\PYG{n}{cut\PYGZus{}size}\PYG{p}{))}
+              \PYG{n}{ng} \PYG{o}{=} \PYG{n}{g}\PYG{p}{[:}\PYG{n}{cut}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{o}{\PYGZhy{}}\PYG{n}{cut\PYGZus{}size}\PYG{p}{]} \PYG{o}{+} \PYG{n}{new\PYGZus{}genome\PYGZus{}cut} \PYG{o}{+} \PYG{n}{g}\PYG{p}{[}\PYG{n}{cut}\PYG{o}{+}\PYG{n}{cut\PYGZus{}size}\PYG{p}{:]}
+      \PYG{k}{return} \PYG{n}{ng}
+  \PYG{k}{def} \PYG{n+nf}{genetic\PYGZus{}algorithm}\PYG{p}{():}
+      \PYG{c+c1}{\PYGZsh{} create problem}
+      \PYG{n}{list\PYGZus{}of\PYGZus{}lists} \PYG{o}{=} \PYG{n}{problem}\PYG{p}{(}\PYG{n}{N}\PYG{p}{,} \PYG{n}{seed}\PYG{o}{=}\PYG{l+m+mi}{42}\PYG{p}{)}
+      \PYG{n}{genome\PYGZus{}size} \PYG{o}{=} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{list\PYGZus{}of\PYGZus{}lists}\PYG{p}{)}
+      \PYG{n}{goal} \PYG{o}{=} \PYG{n+nb}{set}\PYG{p}{(}\PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{N}\PYG{p}{))}
+
+      \PYG{c+c1}{\PYGZsh{} create the population}
+      \PYG{n}{population} \PYG{o}{=} \PYG{n}{generate\PYGZus{}population}\PYG{p}{(}\PYG{n}{list\PYGZus{}of\PYGZus{}lists}\PYG{p}{,} \PYG{n}{goal}\PYG{p}{)}
+
+      \PYG{k}{for} \PYG{n}{g} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{GENERATIONS}\PYG{p}{):}
+          \PYG{n}{population} \PYG{o}{=} \PYG{n+nb}{sorted}\PYG{p}{(}\PYG{n}{population}\PYG{p}{,} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{i}\PYG{p}{:} \PYG{n}{i}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{,} \PYG{n}{reverse}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{)[:}\PYG{n}{POPULATION\PYGZus{}SIZE}\PYG{o}{\PYGZhy{}}\PYG{n}{OFFSPRING\PYGZus{}SIZE}\PYG{p}{]}
+
+          \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{OFFSPRING\PYGZus{}SIZE}\PYG{p}{):}
+              \PYG{n}{p1} \PYG{o}{=} \PYG{n}{select\PYGZus{}parent}\PYG{p}{(}\PYG{n}{population}\PYG{p}{,} \PYG{n}{tournament\PYGZus{}size}\PYG{o}{=}\PYG{n+nb}{int}\PYG{p}{(}\PYG{l+m+mf}{0.2}\PYG{o}{*}\PYG{n}{genome\PYGZus{}size}\PYG{p}{))}
+              \PYG{n}{p2} \PYG{o}{=} \PYG{n}{select\PYGZus{}parent}\PYG{p}{(}\PYG{n}{population}\PYG{p}{,} \PYG{n}{tournament\PYGZus{}size}\PYG{o}{=}\PYG{n+nb}{int}\PYG{p}{(}\PYG{l+m+mf}{0.2}\PYG{o}{*}\PYG{n}{genome\PYGZus{}size}\PYG{p}{))}
+              \PYG{n}{o} \PYG{o}{=} \PYG{n}{cross\PYGZus{}over}\PYG{p}{(}\PYG{n}{p1}\PYG{p}{,} \PYG{n}{p2}\PYG{p}{,} \PYG{n}{genome\PYGZus{}size}\PYG{p}{,} \PYG{n}{list\PYGZus{}of\PYGZus{}lists}\PYG{p}{,} \PYG{n}{goal}\PYG{p}{)}
+              \PYG{n}{fitness}\PYG{p}{,} \PYG{n}{goal\PYGZus{}reached}\PYG{p}{,} \PYG{n}{w} \PYG{o}{=} \PYG{n}{fitness\PYGZus{}goal\PYGZus{}eval}\PYG{p}{(}\PYG{n}{list\PYGZus{}of\PYGZus{}lists}\PYG{p}{,} \PYG{n}{o}\PYG{p}{,} \PYG{n}{goal}\PYG{p}{)}
+              \PYG{n}{o} \PYG{o}{=} \PYG{n}{mutation}\PYG{p}{(}\PYG{n}{o}\PYG{p}{,} \PYG{n}{genome\PYGZus{}size}\PYG{p}{,} \PYG{n}{k}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{p}{)}
+
+              \PYG{n}{population}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{Individual}\PYG{p}{(}\PYG{n}{o}\PYG{p}{,} \PYG{n}{fitness}\PYG{p}{,} \PYG{n}{goal\PYGZus{}reached}\PYG{p}{,} \PYG{n}{w}\PYG{p}{))}
+
+
+
+      \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n}{population}\PYG{p}{:}
+          \PYG{k}{if} \PYG{n}{i}\PYG{o}{.}\PYG{n}{goal\PYGZus{}reached}\PYG{p}{:}
+              \PYG{k}{return} \PYG{n}{i}\PYG{p}{,} \PYG{n}{population}
+
+      \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}No solution for current population (N=}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{N}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{)\PYGZdq{}}\PYG{p}{)}
+      \PYG{k}{return} \PYG{k+kc}{None}\PYG{p}{,} \PYG{n}{population}
+  \PYG{n}{N} \PYG{o}{=} \PYG{l+m+mi}{500}
+  \PYG{n}{POPULATION\PYGZus{}SIZE} \PYG{o}{=} \PYG{l+m+mi}{100}
+  \PYG{n}{OFFSPRING\PYGZus{}SIZE} \PYG{o}{=} \PYG{l+m+mi}{20}
+  \PYG{n}{GENERATIONS} \PYG{o}{=} \PYG{l+m+mi}{200}
+  \PYG{n}{PROB} \PYG{o}{=} \PYG{l+m+mf}{0.5}
+
+  \PYG{n}{logging}\PYG{o}{.}\PYG{n}{getLogger}\PYG{p}{()}\PYG{o}{.}\PYG{n}{setLevel}\PYG{p}{(}\PYG{n}{logging}\PYG{o}{.}\PYG{n}{INFO}\PYG{p}{)}
+
+  \PYG{n}{solution}\PYG{p}{,} \PYG{n}{population} \PYG{o}{=} \PYG{n}{genetic\PYGZus{}algorithm}\PYG{p}{()}
+  \PYG{k}{if} \PYG{n}{solution} \PYG{o}{!=} \PYG{k+kc}{None}\PYG{p}{:}
+      \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}
+          \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{} Genetic algorithm solution for N=}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{N}\PYG{l+s+si}{:}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{: \PYGZdq{}}
+          \PYG{o}{+} \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}fitness=}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{solution}\PYG{o}{.}\PYG{n}{fitness}\PYG{l+s+si}{:}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ \PYGZdq{}}
+          \PYG{o}{+} \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}w=}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{solution}\PYG{o}{.}\PYG{n}{w}\PYG{l+s+si}{:}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ \PYGZdq{}}
+          \PYG{o}{+} \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}(bloat=}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{solution}\PYG{o}{.}\PYG{n}{w}\PYG{o}{/}\PYG{n}{N}\PYG{o}{*}\PYG{l+m+mi}{100}\PYG{l+s+si}{:}\PYG{l+s+s2}{.0f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZpc{})\PYGZdq{}}
+      \PYG{p}{)}
+  \PYG{n}{INFO}\PYG{p}{:}\PYG{n}{root}\PYG{p}{:} \PYG{n}{Genetic} \PYG{n}{algorithm} \PYG{n}{solution} \PYG{k}{for} \PYG{n}{N}\PYG{o}{=}\PYG{l+m+mi}{500}\PYG{p}{:} \PYG{n}{fitness}\PYG{o}{=\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,}\PYG{l+m+mi}{980} \PYG{n}{w}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{p}{,}\PYG{l+m+mi}{980} \PYG{p}{(}\PYG{n}{bloat}\PYG{o}{=}\PYG{l+m+mi}{596}\PYG{o}{\PYGZpc{}}\PYG{p}{)}
+  \PYG{n}{POPULATION\PYGZus{}SIZE} \PYG{o}{=} \PYG{l+m+mi}{50}
+  \PYG{n}{OFFSPRING\PYGZus{}SIZE} \PYG{o}{=} \PYG{l+m+mi}{20}
+  \PYG{n}{GENERATIONS} \PYG{o}{=} \PYG{l+m+mi}{200}
+  \PYG{n}{PROB} \PYG{o}{=} \PYG{l+m+mf}{0.5}
+
+  \PYG{n}{logging}\PYG{o}{.}\PYG{n}{getLogger}\PYG{p}{()}\PYG{o}{.}\PYG{n}{setLevel}\PYG{p}{(}\PYG{n}{logging}\PYG{o}{.}\PYG{n}{INFO}\PYG{p}{)}
+
+  \PYG{k}{for} \PYG{n}{N} \PYG{o+ow}{in} \PYG{p}{[}\PYG{l+m+mi}{5}\PYG{p}{,} \PYG{l+m+mi}{10}\PYG{p}{,} \PYG{l+m+mi}{20}\PYG{p}{,} \PYG{l+m+mi}{100}\PYG{p}{,} \PYG{l+m+mi}{500}\PYG{p}{,} \PYG{l+m+mi}{1000}\PYG{p}{]:}
+      \PYG{n}{solution}\PYG{p}{,} \PYG{n}{population} \PYG{o}{=} \PYG{n}{genetic\PYGZus{}algorithm}\PYG{p}{()}
+      \PYG{k}{if} \PYG{n}{solution} \PYG{o}{!=} \PYG{k+kc}{None}\PYG{p}{:}
+          \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}
+              \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{} Genetic algorithm solution for N=}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{N}\PYG{l+s+si}{:}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{: \PYGZdq{}}
+              \PYG{o}{+} \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}fitness=}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{solution}\PYG{o}{.}\PYG{n}{fitness}\PYG{l+s+si}{:}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ \PYGZdq{}}
+              \PYG{o}{+} \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}w=}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{solution}\PYG{o}{.}\PYG{n}{w}\PYG{l+s+si}{:}\PYG{l+s+s2}{,}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ \PYGZdq{}}
+              \PYG{o}{+} \PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}(bloat=}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{solution}\PYG{o}{.}\PYG{n}{w}\PYG{o}{/}\PYG{n}{N}\PYG{o}{*}\PYG{l+m+mi}{100}\PYG{l+s+si}{:}\PYG{l+s+s2}{.0f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZpc{})\PYGZdq{}}
+          \PYG{p}{)}
+\end{Verbatim}

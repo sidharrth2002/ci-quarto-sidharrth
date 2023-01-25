@@ -1,0 +1,25 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+  \PYG{k}{def} \PYG{n+nf}{flip\PYGZus{}mutation}\PYG{p}{(}\PYG{n}{genome}\PYG{p}{,} \PYG{n}{mutate\PYGZus{}only\PYGZus{}one\PYGZus{}element}\PYG{o}{=}\PYG{k+kc}{False}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Flips random bit(s) in the genome.}
+\PYG{l+s+sd}{    Parameters:}
+\PYG{l+s+sd}{    mutate\PYGZus{}only\PYGZus{}one\PYGZus{}element: If True, only one bit is flipped.}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{n}{modified\PYGZus{}genome} \PYG{o}{=} \PYG{n}{genome}\PYG{o}{.}\PYG{n}{copy}\PYG{p}{()}
+    \PYG{k}{if} \PYG{n}{mutate\PYGZus{}only\PYGZus{}one\PYGZus{}element}\PYG{p}{:}
+        \PYG{c+c1}{\PYGZsh{} flip a random bit}
+        \PYG{n}{index} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{)} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)}
+        \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{index}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{index}\PYG{p}{]}
+    \PYG{k}{else}\PYG{p}{:}
+        \PYG{c+c1}{\PYGZsh{} flip a random number of bits}
+        \PYG{n}{num\PYGZus{}to\PYGZus{}flip} \PYG{o}{=} \PYG{n}{choose\PYGZus{}mutation\PYGZus{}rate}\PYG{p}{(}\PYG{n}{fitness\PYGZus{}log}\PYG{p}{)} \PYG{o}{*} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{)}
+        \PYG{n}{to\PYGZus{}flip} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{(}\PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{)),} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{num\PYGZus{}to\PYGZus{}flip}\PYG{p}{))}
+        \PYG{c+c1}{\PYGZsh{} to\PYGZus{}flip = random.sample(range(len(modified\PYGZus{}genome)), random.randint(0, len(modified\PYGZus{}genome)))}
+        \PYG{n}{modified\PYGZus{}genome} \PYG{o}{=} \PYG{p}{[}\PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{k}{if} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n}{to\PYGZus{}flip} \PYG{k}{else} \PYG{n}{modified\PYGZus{}genome}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{))]}
+
+    \PYG{c+c1}{\PYGZsh{} mutate only if it brings some benefit to the weight}
+    \PYG{c+c1}{\PYGZsh{} if calculate\PYGZus{}weight(modified\PYGZus{}genome) \PYGZlt{} calculate\PYGZus{}weight(genome):}
+    \PYG{c+c1}{\PYGZsh{}     return modified\PYGZus{}genome}
+
+    \PYG{k}{return} \PYG{n}{return\PYGZus{}best\PYGZus{}genome}\PYG{p}{(}\PYG{n}{modified\PYGZus{}genome}\PYG{p}{,} \PYG{n}{genome}\PYG{p}{)}
+\end{Verbatim}

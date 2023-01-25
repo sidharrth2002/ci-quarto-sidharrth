@@ -1,0 +1,3 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+  \PYG{k}{return} \PYG{n}{miss}\PYG{o}{\PYGZhy{}}\PYG{n}{duplicates}
+\end{Verbatim}

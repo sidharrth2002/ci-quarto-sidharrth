@@ -6,6 +6,8 @@ import itertools
 import json
 import logging
 import random
+
+import tqdm
 from QLearningPlayer import QLearningPlayer
 
 from lib.players import Player, RandomPlayer
@@ -69,7 +71,15 @@ class FinalPlayer(Player):
 
         # if no pieces can be placed on board anymore (board full/game over), return -1
         if len(possible_pieces) == 0:
-            return -1
+            # check if number of non-empty cells is 16
+            if len([i for i in list(itertools.chain.from_iterable(state.state_as_array())) if i != -1]) == 16:
+                return -1
+            else:
+                # there are possible pieces to be placed, but they are winning pieces/already in board
+                on_board = list(itertools.chain.from_iterable(
+                    state.state_as_array()))
+                not_on_board = list(set(range(16)) - set(on_board))
+                return random.choice(not_on_board)
         else:
             return random.choice(possible_pieces)
 
@@ -231,13 +241,15 @@ class FinalPlayer(Player):
             return Genome(new_thresholds, 0)
         return genome
 
-    def evolve(self):
+    def evolve(self, num_generations=50):
         self.population_size = 50
         self.offspring_size = 10
         population = self.generate_population(self.population_size)
 
-        for gen in range(50):
-            logging.info('Generation: {}'.format(gen))
+        pbar = tqdm.tqdm(total=num_generations)
+        for gen in range(num_generations):
+            pbar.update(1)
+            logging.debug('Generation: {}'.format(gen))
             offpsring = []
             for i in range(self.offspring_size):
                 parent1 = random.choice(population)
@@ -261,7 +273,7 @@ class FinalPlayer(Player):
     def play_game(self, thresholds, num_games=10):
         wins = 0
         for game in range(num_games):
-            logging.info('Game: {}'.format(game))
+            logging.debug('Game: {}'.format(game))
             state = Quarto()
             player = 0
 
@@ -302,6 +314,15 @@ class FinalPlayer(Player):
                             self.current_state)
                         next_piece = self.hardcoded_strategy_get_piece(
                             self.current_state)
+                        while self.current_state.check_if_move_valid(self.current_state.get_selected_piece(), position[0], position[1], next_piece) is False:
+                            winning_piece, position = self.hardcoded_strategy_get_move(
+                                self.current_state)
+                            next_piece = self.hardcoded_strategy_get_piece(
+                                self.current_state)
+                        # winning_piece, position = self.hardcoded_strategy_get_move(
+                        #     self.current_state)
+                        # next_piece = self.hardcoded_strategy_get_piece(
+                        #     self.current_state)
                         self.current_state.select(state.get_selected_piece())
                         self.current_state.place(position[0], position[1])
                         self.current_state.set_selected_piece(next_piece)
@@ -352,8 +373,8 @@ class FinalPlayer(Player):
 
     def test_thresholds(self):
         thresholds = {
-            'random': 9.3073010693339,
-            'hardcoded': 11.51727589859944,
+            'random': 1,
+            'hardcoded': 14,
             'ql_mcts': 14.99980333051413
         }
         win_rate = self.play_game(thresholds, num_games=10)
@@ -361,7 +382,7 @@ class FinalPlayer(Player):
 
 
 final_player = FinalPlayer()
-best_thresholds = final_player.evolve()
-print(best_thresholds)
+# best_thresholds = final_player.evolve()
+# print(best_thresholds)
 
-# final_player.test_thresholds()
+final_player.test_thresholds()
