@@ -1,0 +1,7 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+    \PYG{p}{\PYGZob{}}
+        \PYG{n+nt}{\PYGZdq{}random\PYGZdq{}}\PYG{p}{:} \PYG{l+m+mi}{3}\PYG{p}{,}
+        \PYG{n+nt}{\PYGZdq{}hardcoded\PYGZdq{}} \PYG{p}{:} \PYG{l+m+mi}{5}\PYG{p}{,}
+        \PYG{n+nt}{\PYGZdq{}ql\PYGZhy{}mcts\PYGZdq{}} \PYG{p}{:} \PYG{l+m+mi}{8}
+    \PYG{p}{\PYGZcb{}}
+\end{Verbatim}

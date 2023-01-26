@@ -99,8 +99,8 @@ class QuartoParent(object):
             self._board[y, x] = self.__selected_piece_index
             return True
         else:
-            print("Not placeable")
-        print("Invalid move: ", x, y)
+            logging.debug("Not placeable")
+        logging.debug("Invalid move: ", x, y)
         # print(self._board)
         return False
 
@@ -117,7 +117,7 @@ class QuartoParent(object):
             for element in row:
                 print(f" {element: >2}", end=" |")
         print("\n -------------------\n")
-        print(f"Selected piece: {self.__selected_piece_index}\n")
+        # print(f"Selected piece: {self.__selected_piece_index}\n")
 
     def get_piece_charachteristics(self, index: int) -> Piece:
         '''
@@ -502,7 +502,7 @@ class Quarto(QuartoParent):
         self._board = board
 
     def get_players(self):
-        return self.__players
+        return super().get_players()
 
     def set_selected_piece(self, index: int):
         '''
@@ -538,19 +538,19 @@ class Quarto(QuartoParent):
         '''
         winner = -1
         while winner < 0 and not self.check_finished():
-            logging.info("Player ", self._current_player, "turn")
+            logging.debug("Player ", self._current_player, "turn")
             # self.print()
             piece_ok = False
             while not piece_ok:
-                piece_ok = self.select(self.__players[self._current_player].choose_piece(
-                    self._board, self.__selected_piece_index))
+                piece_ok = self.select(self.get_players()[self._current_player].choose_piece(
+                    self._board, self.get_selected_piece()))
             piece_ok = False
             self._current_player = (
                 self._current_player + 1) % self.MAX_PLAYERS
             # self.print()
             while not piece_ok:
-                x, y = self.__players[self._current_player].place_piece(
-                    self._board, self.__selected_piece_index)
+                x, y = self.get_players()[self._current_player].place_piece(
+                    self._board, self.get_selected_piece())
                 piece_ok = self.place(x, y)
             # print(self.state())
             winner = self.check_winner()
@@ -596,9 +596,10 @@ class Quarto(QuartoParent):
             logging.debug("piece already in the board")
             return False
 
-        if piece < 0 or piece >= self.MAX_PIECES:
-            logging.debug("piece out of range")
-            return False
+        # TODO: Put this back
+        # if piece < 0 or piece >= self.MAX_PIECES:
+        #     logging.debug("piece out of range")
+        #     return False
         if x < 0 or x >= self.BOARD_SIDE:
             logging.debug("x out of range")
             return False
@@ -721,18 +722,26 @@ class QuartoScape:
         x, y, chosen_next_piece = action
         self.next_piece = chosen_next_piece
         if self.game.check_if_move_valid(chosen_piece, x, y, chosen_next_piece):
-            print(f"Valid move, piece {chosen_piece} placed at {x}, {y}")
+            # print(f"Valid move, piece {chosen_piece} placed at {x}, {y}")
             self.game.select(chosen_piece)
             self.game.place(x, y)
-            self.game.print()
-            if self.game.check_winner() == 0:
+            # self.game.print()
+            if self.game.check_is_game_over():
+                # just playing with itself
                 reward = 1
-                return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
-            elif self.game.check_if_draw():
-                reward = 0.5
                 return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
             else:
                 reward = 0
+                return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
+
+            # if self.game.check_winner() == 0:
+            #     reward = 1
+            #     return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
+            # elif self.game.check_if_draw():
+            #     reward = 0.5
+            #     return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
+            # else:
+            #     reward = 0
             return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
         else:
             print("Invalid move, fuck off")
@@ -756,6 +765,9 @@ class QuartoScapeNew(gym.Env):
         self.observation_space = spaces.MultiDiscrete([18] * 17)
         self.reward_range = (-1, 1)
         self.main_player = None
+
+    def close(self):
+        pass
 
     def set_main_player(self, player):
         self.main_player = player
@@ -823,7 +835,7 @@ class QuartoScapeNew(gym.Env):
         score_before_action = self.score(state)
         cloned_quarto = Quarto(pieces=state)
         cloned_quarto.select(piece)
-        print("Placing in reward")
+        # print("Placing in reward")
         cloned_quarto.place(action[0], action[1])
         score_after_action = self.score(cloned_quarto.state_as_array())
         return score_after_action - score_before_action
@@ -884,14 +896,14 @@ class QuartoScapeNew(gym.Env):
             logging.info(
                 f"Valid move, piece {chosen_piece} placed at {x}, {y}")
             self.game.select(chosen_piece)
-            print(f"Trying to place piece {chosen_piece} at {x}, {y}")
+            # print(f"Trying to place piece {chosen_piece} at {x}, {y}")
             self.game.place(x, y)
             # self.game.print()
             if self.game.check_winner() != -1:
                 # this move resulted in a win
                 # reward = self.reward(self.game.state_as_array(), chosen_piece, action)
                 # bonus
-                print('Winner winner chicken dinner')
+                # print('Winner winner chicken dinner')
                 reward = 1
                 return self.game.state_as_array(), reward, self.game.check_is_game_over(), {}
             # elif self.game.check_if_draw():
@@ -913,9 +925,9 @@ class QuartoScapeNew(gym.Env):
     def reset(self):
         self.game = Quarto()
         self.game.set_players((self.main_player, RandomPlayer(self.game)))
-        print(np.array(list(itertools.chain.from_iterable(
-            self.game.state_as_array())) + [-1]))
-        print(self.observation_space.shape)
+        # print(np.array(list(itertools.chain.from_iterable(
+        #     self.game.state_as_array())) + [-1]))
+        # print(self.observation_space.shape)
         arr = np.array(list(itertools.chain.from_iterable(
             self.game.state_as_array())) + [100])
         # replace -1 with 18

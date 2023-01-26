@@ -9,7 +9,7 @@ import gym
 import numpy as np
 import tensorflow as tf
 from lib.players import RandomPlayer
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.initializers import HeUniform
@@ -93,13 +93,14 @@ class DQNAgent:
         model.add(Dense(24, activation='relu', kernel_initializer=initializer))
         model.add(Dense(48, activation='relu', kernel_initializer=initializer))
         model.add(Dense(96, activation='relu', kernel_initializer=initializer))
-        # model.add(Dense(192, activation='relu', kernel_initializer=initializer))
+        model.add(Dense(192, activation='relu',
+                  kernel_initializer=initializer))
         # model.add(Dense(384, activation='relu', kernel_initializer=initializer))
         # model.add(Dense(768, activation='relu', kernel_initializer=initializer))
         model.add(Dense(4 * 4 * 16, activation='linear',
                   kernel_initializer=initializer))
         model.compile(loss=tf.keras.losses.Huber(), metrics=[
-                      'mae', 'mse'], optimizer=Adam(lr=0.001))
+                      'mae', 'mse'], optimizer=Adam(learning_rate=0.001))
         # print(model.summary())
         return model
 
@@ -111,7 +112,7 @@ class DQNAgent:
         model.add(Dense(16, activation='relu'))
         model.add(Dense(4 * 4 * 16, activation='linear'))
         model.compile(loss='mse', metrics=[
-                      'accuracy'], optimizer=Adam(lr=0.001))
+                      'accuracy'], optimizer=Adam(learning_rate=0.001))
         # print(model.summary())
         return model
 
@@ -151,10 +152,10 @@ class DQNAgent:
         '''Train the network'''
         if len(replay_memory) < self.min_replay_size:
             # print('REPLAY MEMORY TOO SMALL')
-            print("Replay memory ", len(replay_memory))
+            # print("Replay memory ", len(replay_memory))
             return
 
-        print('TRAINING')
+        # print('TRAINING')
         batch_size = 64 * 2
         minibatch = random.sample(replay_memory, batch_size)
         # current_states = [transition[0] for transition in minibatch]
@@ -162,13 +163,13 @@ class DQNAgent:
         current_states = np.array([self.abbellire(state, chosen_piece)
                                   for state, chosen_piece, action, reward, new_current_state, done in minibatch])
         current_qs = self.model.predict(current_states.reshape(batch_size, 17))
-        print('CURRENT QS')
+        # print('CURRENT QS')
         # new current state + chosen_piece for next player -> action (contains chosen_piece for next player)
         new_current_states = np.array([self.abbellire(new_current_state, action[2])
                                       for state, chosen_piece, action, reward, new_current_state, done in minibatch])
         future_qs = self.target_model.predict(
             new_current_states.reshape(batch_size, 17), verbose=0)
-        print('FUTURE QS')
+        # print('FUTURE QS')
         # exclude invalid moves from calculation
         # future_qs = [self.nan_out_invalid_actions(batch[2][2], future_q) for batch, future_q in zip(minibatch, future_qs)]
 
@@ -195,20 +196,21 @@ class DQNAgent:
         # X = np.array(X).reshape(batch_size, 17)
         X = np.array(X).reshape(batch_size, 17)
         Y = np.array(Y).reshape(batch_size, 4 * 4 * 16)
-        print(X)
-        print(Y)
+        # print(X)
+        # print(Y)
         self.model.fit(X, Y, batch_size=batch_size,
                        verbose=1, shuffle=True, epochs=1)
-        print('TRAINING DONE')
+        # print('TRAINING DONE')
 
     def choose_piece(self, state: Any, piece_chosen_for_you: int):
         '''Choose piece for the next guy to play'''
         self.env.game.__board = state
         pred = self.make_prediction(state, piece_chosen_for_you)
-        # pred = self.nan_out_invalid_actions(piece_chosen_for_you, pred)
+        pred = self.nan_out_invalid_actions(-100, pred)
         # print(f'Number of valid moves: {len([i for i in pred if i != np.nan])}')
         best_action = np.nanargmax(pred)
         best_action = self.get_all_actions()[best_action]
+        # print(f'Best action for choose piece: {best_action}')
         return best_action[2]
 
     def place_piece(self, state: Any, piece_chosen_for_you: int):
@@ -220,6 +222,7 @@ class DQNAgent:
         # print(f'Number of valid moves: {len([i for i in pred if i != np.nan])}')
         best_action = np.nanargmax(pred)
         best_action = self.get_all_actions()[best_action]
+        # print(f'Best action for place piece: {best_action}')
         return best_action[0], best_action[1]
 
     def nan_out_invalid_actions(self, current_piece, prediction):
@@ -248,6 +251,9 @@ class DQNAgent:
         steps_to_update_target_model = 0
 
         for episode in range(num_episodes):
+            if episode % 100 == 0:
+                self.model.save(f'/Volumes/USB/qn_weights.h5')
+
             total_training_reward = 0
             print(f'Episode: {episode}')
             state = self.env.reset()
@@ -277,20 +283,20 @@ class DQNAgent:
                         while not self.env.game.check_if_move_valid(chosen_piece, action[0], action[1], action[2]):
                             # print(f'INVALID ACTION: {action}')
                             # print(f'CHOSEN PIECE: {chosen_piece}')
-                            print('RANDOM ACTION')
+                            # print('RANDOM ACTION')
                             action = self.env.action_space.sample()
                     else:
                         action = np.nanargmax(prediction)
                         # action = np.argmax(self.make_prediction(state, chosen_piece))
                         # get action at index of action
                         action = self.get_all_actions()[action]
-                    print('PREDICTED ACTION')
-                    print(action)
+                    # print('PREDICTED ACTION')
+                    # print(action)
 
                 new_state, reward, done, _ = self.env.step(
                     action, chosen_piece)
 
-                print(new_state)
+                # print(new_state)
 
                 replay_memory.append(
                     (state, chosen_piece, action, reward, new_state, done))
@@ -305,12 +311,12 @@ class DQNAgent:
                 state = new_state
                 total_training_reward += reward
 
-                print(total_training_reward)
-                print('game over', done)
+                # print(total_training_reward)
+                # print('game over', done)
 
                 if done:
-                    print(
-                        f'Total reward: {total_training_reward} at episode {episode} after {steps_to_update_target_model} steps')
+                    # print(
+                    #     f'Total reward: {total_training_reward} at episode {episode} after {steps_to_update_target_model} steps')
                     total_training_reward += 1
 
                     if steps_to_update_target_model >= 100:
@@ -325,34 +331,43 @@ class DQNAgent:
             #     test(self)
 
             self.lr = self.decay_lr(self.lr, 0.0001, episode)
-        self.env.close()
-        self.model.save('model.h5')
+        # self.env.close()
+        self.model.save('/Volumes/USB/qn_weights.h5')
 
 
-if __name__ == '__main__':
-    agent = DQNAgent(env)
-    agent.run()
+# if __name__ == '__main__':
+#     agent = DQNAgent(env)
+#     agent.run()
 
-# def main():
-#     dq_wins = 0
-#     for round in range(100):
-#         game = Quarto()
-#         game.set_players((RandomPlayer(game), DQNAgent(game=game)))
-#         winner = game.run()
-#         if winner == 1:
-#             dq_wins += 1
-#         logging.warning(f"main: Winner: player {winner}")
-#     logging.warning(f"main: DQ wins: {dq_wins}")
-#     # game = Quarto()
-#     # game.set_players((RandomPlayer(game), DQNAgent(game=game)))
-#     # dq_wins = 0
-#     # # for round in range(100):
-#     # winner = game.run()
-#     # if winner == 1:
-#     #     dq_wins += 1
-#     # logging.warning(f"main: Winner: player {winner}")
-#     # logging.warning(f"main: DQ wins: {dq_wins}")
 
+def main():
+    dq_wins = 0
+    for round in range(100):
+        game = Quarto()
+        dqn_agent = DQNAgent(game=game)
+        dqn_agent.model = load_model('/Volumes/USB/qn_weights.h5')
+        game.set_players((RandomPlayer(game), DQNAgent(game=game)))
+        winner = game.run()
+        if winner == 1:
+            print('DQ wins')
+            dq_wins += 1
+        else:
+            print('Random wins')
+    print(f'DQ wins: {dq_wins/100}')
+    #     logging.warning(f"main: Winner: player {winner}")
+    # logging.warning(f"main: DQ wins: {dq_wins}")
+    # game = Quarto()
+    # game.set_players((RandomPlayer(game), DQNAgent(game=game)))
+    # dq_wins = 0
+    # # for round in range(100):
+    # winner = game.run()
+    # if winner == 1:
+    #     dq_wins += 1
+    # logging.warning(f"main: Winner: player {winner}")
+    # logging.warning(f"main: DQ wins: {dq_wins}")
+
+
+main()
 
 # if __name__ == '__main__':
 #     parser = argparse.ArgumentParser()

@@ -296,4 +296,4 @@ def score_board(state: Quarto):
 
 if __name__ == '__main__':
     board = Quarto()
-    print(board_score_for_train(board))
+    print(score_board(board))
