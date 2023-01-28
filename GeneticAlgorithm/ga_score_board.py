@@ -8,11 +8,11 @@ import logging
 import random
 
 import tqdm
-from QLearningPlayer import QLearningPlayer
+from QLMCTS import QLearningPlayer
 
 from lib.players import Player, RandomPlayer
 from quarto.objects import Quarto
-from scoring import score_board
+from lib.scoring import score_board
 
 logging.basicConfig(level=logging.DEBUG)
 
