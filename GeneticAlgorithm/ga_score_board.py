@@ -8,11 +8,18 @@ import logging
 import random
 
 import tqdm
-from QLMCTS import QLearningPlayer
+
+# Q: How to import from parent directory?
+# A: https://stackoverflow.com/questions/714063/importing-modules-from-parent-folder
+
+import sys
+sys.path.insert(0, '..')
 
 from lib.players import Player, RandomPlayer
 from quarto.objects import Quarto
 from lib.scoring import score_board
+
+from QLMCTS import QLearningPlayer
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -331,6 +338,8 @@ class FinalPlayer(Player):
                                 self.current_state)
                             next_piece = self.hardcoded_strategy_get_piece(
                                 self.current_state)
+                        # print('winning piece: {}'.format(winning_piece))
+                        # print('position: {}'.format(position))
                         # winning_piece, position = self.hardcoded_strategy_get_move(
                         #     self.current_state)
                         # next_piece = self.hardcoded_strategy_get_piece(
@@ -373,11 +382,11 @@ class FinalPlayer(Player):
 
                 if self.current_state.check_is_game_over():
                     if 1 - self.current_state.check_winner() == 0:
-                        logging.debug("Agent wins")
+                        print("Agent wins")
                         wins += 1
                         # TODO: QL reward update
                     else:
-                        logging.debug("Player 2 wins")
+                        print("Player 2 wins")
                     break
 
         # fitness is the percentage of games won
@@ -391,7 +400,7 @@ class FinalPlayer(Player):
         #     'ql_mcts': 14.99980333051413
         # }
         thresholds = {'random': 1.090773081612301,
-                      'hardcoded': 3.790328881747581, 'ql-mcts': 8.251997327518943}
+                      'hardcoded': 2.790328881747581, 'ql-mcts': 8.251997327518943}
         win_rate = self.play_game(thresholds, num_games=10)
         print(win_rate)
 
