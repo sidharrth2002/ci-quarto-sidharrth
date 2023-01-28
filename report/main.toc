@@ -51,4 +51,5 @@
 \contentsline {subsubsection}{\numberline {5.1.2}Step 2: Analysing the Algorithms}{82}{subsubsection.5.1.2}%
 \contentsline {subsection}{\numberline {5.2}Step 3: Implementing the Hybrid Agent}{83}{subsection.5.2}%
 \contentsline {subsection}{\numberline {5.3}Code}{84}{subsection.5.3}%
-\contentsline {section}{\numberline {6}Conclusion}{85}{section.6}%
+\contentsline {subsection}{\numberline {5.4}Acknowledgements}{84}{subsection.5.4}%
+\contentsline {section}{\numberline {6}Conclusion}{86}{section.6}%

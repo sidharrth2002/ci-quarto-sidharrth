@@ -96,3 +96,18 @@ Once the final thresholds are found, we find the strategy whose threshold has th
 \subsection{Code}
 
 The code for this project is available on GitHub at \url{https://github.com/sidharrth2002/ci-quarto-sidharrth}.
+
+\subsection{Acknowledgements}
+
+Throughout this project, I have discussed with Diego Gasco. We started the project by discussing ideas for strategies.
+
+\begin{itemize}
+    \item After I tried to get a working Deep Q-Network and realised that it wasn't converging in reasonable time, we discussed the possibility of using some tree search algorithm. It was Diego who suggested MCTS.
+    \item When realising that MCTS can be quite slow towards the end of the game, I suggested building a hybrid QL-MCTS player that would use a base Q-table to remember the best moves so the quadratically complex tree wouldn't need to store so many nodes.
+    \item We later built a hardcoded agent using different rules and realised that it performed very well, and was quick to make a move.
+    \item We then decided to combine everything we did into a hybrid agent that would switch between strategies depending on the board score.
+    \item Diego suggested a good scoring function. He also suggested that a genetic algorithm could be used for this.
+    \item I suggested finding score thresholds to switch between strategies using a genetic algorithm.
+\end{itemize}
+
+While we follow the same hybrid strategy, our code is quite different, apart from a few shared utility functions.
