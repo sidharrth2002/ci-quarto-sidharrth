@@ -1,25 +1,24 @@
 '''
 Genetic Algorithm for Quarto
 '''
+import sys
+sys.path.insert(0, '..')
+
+from Hardcoded.hardcoded import HardcodedPlayer
+from QLMCTS import QLearningPlayer
+from lib.scoring import score_board
+from quarto.objects import Quarto
+from lib.players import Player, RandomPlayer
 from copy import deepcopy
 import itertools
 import json
 import logging
 import random
-
 import tqdm
 
 # Q: How to import from parent directory?
 # A: https://stackoverflow.com/questions/714063/importing-modules-from-parent-folder
 
-import sys
-sys.path.insert(0, '..')
-
-from lib.players import Player, RandomPlayer
-from quarto.objects import Quarto
-from lib.scoring import score_board
-
-from QLMCTS import QLearningPlayer
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -50,14 +49,21 @@ class FinalPlayer(Player):
     3. QL-MCTS
     '''
 
-    def __init__(self):
-        quarto = Quarto()
+    def __init__(self, quarto: Quarto = None):
+        if quarto is None:
+            quarto = Quarto()
         super().__init__(quarto)
         self.ql_mcts = QLearningPlayer(quarto)
+        self.hardcoded = HardcodedPlayer(quarto)
         self.random_player = RandomPlayer(quarto)
         self.BOARD_SIDE = 4
         self.GENOME_VAL_UPPER_BOUND = 16
         self.GENOME_VAL_LOWER_BOUND = 0
+        self.thresholds = {
+            'random': 1.090773081612301,
+            'hardcoded': 2.790328881747581,
+            'ql-mcts': 8.251997327518943
+        }
 
     def check_if_winning_piece(self, state, piece):
         for i in range(self.BOARD_SIDE):
@@ -297,6 +303,7 @@ class FinalPlayer(Player):
             # agent will use the state, etc. to update the Q-table
             # this function also wipes the MCTS tree
             self.ql_mcts.clear_and_set_current_state(state)
+            self.hardcoded = HardcodedPlayer(state)
 
             while True:
                 # board score is the number of couples and triplets on the board
@@ -329,21 +336,15 @@ class FinalPlayer(Player):
                         # play using hardcoded strategy
                         logging.debug('hardcoded')
                         self.previous_state = deepcopy(self.current_state)
-                        winning_piece, position = self.hardcoded_strategy_get_move(
+                        winning_piece, position = self.hardcoded.hardcoded_strategy_get_move(
                             self.current_state)
-                        next_piece = self.hardcoded_strategy_get_piece(
+                        next_piece = self.hardcoded.hardcoded_strategy_get_piece(
                             self.current_state)
                         while self.current_state.check_if_move_valid(self.current_state.get_selected_piece(), position[0], position[1], next_piece) is False:
-                            winning_piece, position = self.hardcoded_strategy_get_move(
+                            winning_piece, position = self.hardcoded.hardcoded_strategy_get_move(
                                 self.current_state)
-                            next_piece = self.hardcoded_strategy_get_piece(
+                            next_piece = self.hardcoded.hardcoded_strategy_get_piece(
                                 self.current_state)
-                        # print('winning piece: {}'.format(winning_piece))
-                        # print('position: {}'.format(position))
-                        # winning_piece, position = self.hardcoded_strategy_get_move(
-                        #     self.current_state)
-                        # next_piece = self.hardcoded_strategy_get_piece(
-                        #     self.current_state)
                         self.current_state.select(state.get_selected_piece())
                         self.current_state.place(position[0], position[1])
                         self.current_state.set_selected_piece(next_piece)
@@ -393,20 +394,123 @@ class FinalPlayer(Player):
         logging.debug(f"Win rate: {wins/num_games}")
         return wins/num_games
 
+    def choose_piece(self):
+        '''
+        Choose piece for next player to place
+        '''
+        thresholds = self.thresholds
+
+        # game is stored in parent
+        self.current_state = self.get_game()
+
+        board_score = score_board(self.current_state)
+
+        differences = [abs(board_score - thresholds[key])
+                       for key in thresholds]
+        min_diff = min(differences)
+        index = differences.index(min_diff)
+        key = list(thresholds.keys())[index]
+
+        if key == 'random':
+            logging.debug('random')
+            # play randomly
+            action = self.random_player.place_piece()
+            next_piece = self.random_player.choose_piece()
+            while self.current_state.check_if_move_valid(self.current_state.get_selected_piece(), action[0], action[1], next_piece) is False:
+                action = self.random_player.place_piece()
+                next_piece = self.random_player.choose_piece()
+            return next_piece
+
+        elif key == 'hardcoded':
+            # play using hardcoded strategy
+            logging.debug('hardcoded')
+            self.previous_state = deepcopy(self.current_state)
+            winning_piece, position = self.hardcoded_strategy_get_move(
+                self.current_state)
+            next_piece = self.hardcoded_strategy_get_piece(
+                self.current_state)
+            while self.current_state.check_if_move_valid(self.current_state.get_selected_piece(), position[0], position[1], next_piece) is False:
+                winning_piece, position = self.hardcoded_strategy_get_move(
+                    self.current_state)
+                next_piece = self.hardcoded_strategy_get_piece(
+                    self.current_state)
+            return next_piece
+
+        else:
+            # play using QL-MCTS
+            logging.debug('ql-mcts')
+            self.ql_mcts.previous_state = deepcopy(
+                self.current_state)
+            action = self.ql_mcts.get_action(self.current_state)
+            self.ql_mcts.previous_action = action
+            self.ql_mcts.current_state.select(
+                self.current_state.get_selected_piece())
+            return action[2]
+
+    def place_piece(self):
+        # python passes by reference
+        # agent will use the state, etc. to update the Q-table
+        # this function also wipes the MCTS tree
+        self.current_state = self.get_game()
+        thresholds = self.thresholds
+
+        self.ql_mcts.clear_and_set_current_state(self.current_state)
+
+        while True:
+            # board score is the number of couples and triplets on the board
+            # it is indicative of the change of the board state
+            board_score = score_board(self.current_state)
+
+            differences = [abs(board_score - thresholds[key])
+                           for key in thresholds]
+            min_diff = min(differences)
+            index = differences.index(min_diff)
+            key = list(thresholds.keys())[index]
+
+            if key == 'random':
+                logging.debug('random')
+                # play randomly
+                action = self.random_player.place_piece()
+                next_piece = self.random_player.choose_piece()
+                while self.current_state.check_if_move_valid(self.current_state.get_selected_piece(), action[0], action[1], next_piece) is False:
+                    action = self.random_player.place_piece()
+                    next_piece = self.random_player.choose_piece()
+                return action[0], action[1]
+
+            elif key == 'hardcoded':
+                # play using hardcoded strategy
+                logging.debug('hardcoded')
+                self.previous_state = deepcopy(self.current_state)
+                winning_piece, position = self.hardcoded_strategy_get_move(
+                    self.current_state)
+                next_piece = self.hardcoded_strategy_get_piece(
+                    self.current_state)
+                while self.current_state.check_if_move_valid(self.current_state.get_selected_piece(), position[0], position[1], next_piece) is False:
+                    winning_piece, position = self.hardcoded_strategy_get_move(
+                        self.current_state)
+                    next_piece = self.hardcoded_strategy_get_piece(
+                        self.current_state)
+                return position[0], position[1]
+
+            else:
+                # play using QL-MCTS
+                logging.debug('ql-mcts')
+                self.ql_mcts.previous_state = deepcopy(
+                    self.current_state)
+                action = self.ql_mcts.get_action(self.current_state)
+                self.ql_mcts.previous_action = action
+                return action[0], action[1]
+
     def test_thresholds(self):
-        # thresholds = {
-        #     'random': 1,
-        #     'hardcoded': 14,
-        #     'ql_mcts': 14.99980333051413
-        # }
         thresholds = {'random': 1.090773081612301,
-                      'hardcoded': 2.790328881747581, 'ql-mcts': 8.251997327518943}
+                      'hardcoded': 2.790328881747581, 'ql-mcts': 9.251997327518943}
         win_rate = self.play_game(thresholds, num_games=10)
         print(win_rate)
 
 
-final_player = FinalPlayer()
-# best_thresholds = final_player.evolve()
-# print(best_thresholds)
+if __name__ == "__main__":
+    final_player = FinalPlayer()
+    # best_thresholds = final_player.evolve()
+    # print(best_thresholds)
 
-final_player.test_thresholds()
+    final_player.test_thresholds()
