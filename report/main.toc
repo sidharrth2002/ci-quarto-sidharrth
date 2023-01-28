@@ -45,11 +45,15 @@
 \contentsline {subsection}{\numberline {4.2}Acknowledgements}{78}{subsection.4.2}%
 \contentsline {subsection}{\numberline {4.3}Received Reviews}{78}{subsection.4.3}%
 \contentsline {subsection}{\numberline {4.4}Given Reviews}{80}{subsection.4.4}%
-\contentsline {section}{\numberline {5}Final Project}{81}{section.5}%
-\contentsline {subsection}{\numberline {5.1}My Strategy For Solving the Problem}{81}{subsection.5.1}%
-\contentsline {subsubsection}{\numberline {5.1.1}Step 1: Implement and Tune Multiple Search Algorithms}{81}{subsubsection.5.1.1}%
-\contentsline {subsubsection}{\numberline {5.1.2}Step 2: Analysing the Algorithms}{82}{subsubsection.5.1.2}%
-\contentsline {subsection}{\numberline {5.2}Step 3: Implementing the Hybrid Agent}{83}{subsection.5.2}%
-\contentsline {subsection}{\numberline {5.3}Code}{84}{subsection.5.3}%
-\contentsline {subsection}{\numberline {5.4}Acknowledgements}{84}{subsection.5.4}%
-\contentsline {section}{\numberline {6}Conclusion}{86}{section.6}%
+\contentsline {subsubsection}{\numberline {4.4.1}Karl}{80}{subsubsection.4.4.1}%
+\contentsline {paragraph}{Evolutionary Algorithm}{92}{section*.12}%
+\contentsline {paragraph}{Minimax}{93}{section*.13}%
+\contentsline {paragraph}{Reinforcement Learning}{93}{section*.14}%
+\contentsline {section}{\numberline {5}Final Project}{94}{section.5}%
+\contentsline {subsection}{\numberline {5.1}My Strategy For Solving the Problem}{94}{subsection.5.1}%
+\contentsline {subsubsection}{\numberline {5.1.1}Step 1: Implement and Tune Multiple Search Algorithms}{94}{subsubsection.5.1.1}%
+\contentsline {subsubsection}{\numberline {5.1.2}Step 2: Analysing the Algorithms}{95}{subsubsection.5.1.2}%
+\contentsline {subsection}{\numberline {5.2}Step 3: Implementing the Hybrid Agent}{96}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Code}{97}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Acknowledgements}{97}{subsection.5.4}%
+\contentsline {section}{\numberline {6}Conclusion}{99}{section.6}%
