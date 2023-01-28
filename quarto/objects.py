@@ -1,19 +1,12 @@
-# Free for personal or classroom use; see 'LICENSE.md' for details.
-# https://github.com/squillero/computational-intelligence
-
-import itertools
 import logging
-import random
-import gym
 import numpy as np
 from abc import abstractmethod
 import copy
-from gym import spaces
 
 from quarto.objects import *
 
+# uncomment to see debug messages (e.g. why a move is invalid)
 # logging.basicConfig(level=logging.DEBUG)
-
 
 class Player(object):
 
@@ -42,45 +35,52 @@ class Piece(object):
 
 
 class QuartoParent(object):
+    '''
+    Calabrese Quarto class
+    '''
 
     MAX_PLAYERS = 2
     BOARD_SIDE = 4
     MAX_PIECES = 16
 
     def __init__(self, pieces=None) -> None:
-        self._board = np.ones(
-            shape=(self.BOARD_SIDE, self.BOARD_SIDE), dtype=int) * -1
-        self._pieces = []
-        self._pieces.append(Piece(False, False, False, False))  # 0
-        self._pieces.append(Piece(False, False, False, True))  # 1
-        self._pieces.append(Piece(False, False, True, False))  # 2
-        self._pieces.append(Piece(False, False, True, True))  # 3
-        self._pieces.append(Piece(False, True, False, False))  # 4
-        self._pieces.append(Piece(False, True, False, True))  # 5
-        self._pieces.append(Piece(False, True, True, False))  # 6
-        self._pieces.append(Piece(False, True, True, True))  # 7
-        self._pieces.append(Piece(True, False, False, False))  # 8
-        self._pieces.append(Piece(True, False, False, True))  # 9
-        self._pieces.append(Piece(True, False, True, False))  # 10
-        self._pieces.append(Piece(True, False, True, True))  # 11
-        self._pieces.append(Piece(True, True, False, False))  # 12
-        self._pieces.append(Piece(True, True, False, True))  # 13
-        self._pieces.append(Piece(True, True, True, False))  # 14
-        self._pieces.append(Piece(True, True, True, True))  # 15
-        self._current_player = 0
         self.__players = ()
+        self.reset()
+
+    def reset(self):
+        self.__board = np.ones(
+            shape=(self.BOARD_SIDE, self.BOARD_SIDE), dtype=int) * -1
+        self.__pieces = []
+        self.__pieces.append(Piece(False, False, False, False))  # 0
+        self.__pieces.append(Piece(False, False, False, True))  # 1
+        self.__pieces.append(Piece(False, False, True, False))  # 2
+        self.__pieces.append(Piece(False, False, True, True))  # 3
+        self.__pieces.append(Piece(False, True, False, False))  # 4
+        self.__pieces.append(Piece(False, True, False, True))  # 5
+        self.__pieces.append(Piece(False, True, True, False))  # 6
+        self.__pieces.append(Piece(False, True, True, True))  # 7
+        self.__pieces.append(Piece(True, False, False, False))  # 8
+        self.__pieces.append(Piece(True, False, False, True))  # 9
+        self.__pieces.append(Piece(True, False, True, False))  # 10
+        self.__pieces.append(Piece(True, False, True, True))  # 11
+        self.__pieces.append(Piece(True, True, False, False))  # 12
+        self.__pieces.append(Piece(True, True, False, True))  # 13
+        self.__pieces.append(Piece(True, True, True, False))  # 14
+        self.__pieces.append(Piece(True, True, True, True))  # 15
+        self._current_player = 0
         self.__selected_piece_index = -1
-        if pieces is not None:
-            self._pieces = pieces
 
     def set_players(self, players):
         self.__players = players
 
+    def get_current_player(self) -> int:
+        '''
+        Gets the current player
+        '''
+        return self._current_player
+
     def set_board(self, board):
         self._board = board
-
-    def get_players(self):
-        return self.__players
 
     def select(self, pieceIndex: int) -> bool:
         '''
@@ -98,10 +98,6 @@ class QuartoParent(object):
         if self.__placeable(x, y):
             self._board[y, x] = self.__selected_piece_index
             return True
-        else:
-            logging.debug("Not placeable")
-        logging.debug("Invalid move: ", x, y)
-        # print(self._board)
         return False
 
     def __placeable(self, x: int, y: int) -> bool:
@@ -117,13 +113,13 @@ class QuartoParent(object):
             for element in row:
                 print(f" {element: >2}", end=" |")
         print("\n -------------------\n")
-        # print(f"Selected piece: {self.__selected_piece_index}\n")
+        print(f"Selected piece: {self.__selected_piece_index}\n")
 
     def get_piece_charachteristics(self, index: int) -> Piece:
         '''
         Gets charachteristics of a piece (index-based)
         '''
-        return copy.deepcopy(self._pieces[index])
+        return copy.deepcopy(self.__pieces[index])
 
     def get_board_status(self) -> np.ndarray:
         '''
@@ -137,155 +133,30 @@ class QuartoParent(object):
         '''
         return copy.deepcopy(self.__selected_piece_index)
 
-    def set_selected_piece(self, index: int):
-        '''
-        Set index of selected piece
-        '''
-        print("function called")
-        self.__selected_piece_index = index
-
     def __check_horizontal(self) -> int:
-        for i in range(self.BOARD_SIDE):
-            high_values = [
-                elem for elem in self._board[i] if elem >= 0 and self._pieces[elem].HIGH
-            ]
-            coloured_values = [
-                elem for elem in self._board[i] if elem >= 0 and self._pieces[elem].COLOURED
-            ]
-            solid_values = [
-                elem for elem in self._board[i] if elem >= 0 and self._pieces[elem].SOLID
-            ]
-            square_values = [
-                elem for elem in self._board[i] if elem >= 0 and self._pieces[elem].SQUARE
-            ]
-            low_values = [
-                elem for elem in self._board[i] if elem >= 0 and not self._pieces[elem].HIGH
-            ]
-            noncolor_values = [
-                elem for elem in self._board[i] if elem >= 0 and not self._pieces[elem].COLOURED
-            ]
-            hollow_values = [
-                elem for elem in self._board[i] if elem >= 0 and not self._pieces[elem].SOLID
-            ]
-            circle_values = [
-                elem for elem in self._board[i] if elem >= 0 and not self._pieces[elem].SQUARE
-            ]
-            if len(high_values) == self.BOARD_SIDE or len(
-                    coloured_values
-            ) == self.BOARD_SIDE or len(solid_values) == self.BOARD_SIDE or len(
-                    square_values) == self.BOARD_SIDE or len(low_values) == self.BOARD_SIDE or len(
-                        noncolor_values) == self.BOARD_SIDE or len(
-                            hollow_values) == self.BOARD_SIDE or len(
-                                circle_values) == self.BOARD_SIDE:
-                return self._current_player
-        return -1
+        hsum = np.sum(self._binary_board, axis=1)
+
+        if self.BOARD_SIDE in hsum or 0 in hsum:
+            return self._current_player
+        else:
+            return -1
 
     def __check_vertical(self):
-        for i in range(self.BOARD_SIDE):
-            high_values = [
-                elem for elem in self._board[:, i] if elem >= 0 and self._pieces[elem].HIGH
-            ]
-            coloured_values = [
-                elem for elem in self._board[:, i] if elem >= 0 and self._pieces[elem].COLOURED
-            ]
-            solid_values = [
-                elem for elem in self._board[:, i] if elem >= 0 and self._pieces[elem].SOLID
-            ]
-            square_values = [
-                elem for elem in self._board[:, i] if elem >= 0 and self._pieces[elem].SQUARE
-            ]
-            low_values = [
-                elem for elem in self._board[:, i] if elem >= 0 and not self._pieces[elem].HIGH
-            ]
-            noncolor_values = [
-                elem for elem in self._board[:, i] if elem >= 0 and not self._pieces[elem].COLOURED
-            ]
-            hollow_values = [
-                elem for elem in self._board[:, i] if elem >= 0 and not self._pieces[elem].SOLID
-            ]
-            circle_values = [
-                elem for elem in self._board[:, i] if elem >= 0 and not self._pieces[elem].SQUARE
-            ]
-            if len(high_values) == self.BOARD_SIDE or len(
-                    coloured_values
-            ) == self.BOARD_SIDE or len(solid_values) == self.BOARD_SIDE or len(
-                    square_values) == self.BOARD_SIDE or len(low_values) == self.BOARD_SIDE or len(
-                        noncolor_values) == self.BOARD_SIDE or len(
-                            hollow_values) == self.BOARD_SIDE or len(
-                                circle_values) == self.BOARD_SIDE:
-                return self._current_player
-        return -1
+        vsum = np.sum(self._binary_board, axis=0)
+
+        if self.BOARD_SIDE in vsum or 0 in vsum:
+            return self._current_player
+        else:
+            return -1
 
     def __check_diagonal(self):
-        high_values = []
-        coloured_values = []
-        solid_values = []
-        square_values = []
-        low_values = []
-        noncolor_values = []
-        hollow_values = []
-        circle_values = []
-        for i in range(self.BOARD_SIDE):
-            if self._board[i, i] < 0:
-                break
-            if self._pieces[self._board[i, i]].HIGH:
-                high_values.append(self._board[i, i])
-            else:
-                low_values.append(self._board[i, i])
-            if self._pieces[self._board[i, i]].COLOURED:
-                coloured_values.append(self._board[i, i])
-            else:
-                noncolor_values.append(self._board[i, i])
-            if self._pieces[self._board[i, i]].SOLID:
-                solid_values.append(self._board[i, i])
-            else:
-                hollow_values.append(self._board[i, i])
-            if self._pieces[self._board[i, i]].SQUARE:
-                square_values.append(self._board[i, i])
-            else:
-                circle_values.append(self._board[i, i])
-        if len(high_values) == self.BOARD_SIDE or len(coloured_values) == self.BOARD_SIDE or len(
-                solid_values) == self.BOARD_SIDE or len(square_values) == self.BOARD_SIDE or len(
-                    low_values
-        ) == self.BOARD_SIDE or len(noncolor_values) == self.BOARD_SIDE or len(
-                    hollow_values) == self.BOARD_SIDE or len(circle_values) == self.BOARD_SIDE:
+        dsum1 = np.trace(self._binary_board, axis1=0, axis2=1)
+        dsum2 = np.trace(np.fliplr(self._binary_board), axis1=0, axis2=1)
+
+        if self.BOARD_SIDE in dsum1 or self.BOARD_SIDE in dsum2 or 0 in dsum1 or 0 in dsum2:
             return self._current_player
-        high_values = []
-        coloured_values = []
-        solid_values = []
-        square_values = []
-        low_values = []
-        noncolor_values = []
-        hollow_values = []
-        circle_values = []
-        for i in range(self.BOARD_SIDE):
-            if self._board[i, self.BOARD_SIDE - 1 - i] < 0:
-                break
-            if self._pieces[self._board[i, self.BOARD_SIDE - 1 - i]].HIGH:
-                high_values.append(self._board[i, self.BOARD_SIDE - 1 - i])
-            else:
-                low_values.append(self._board[i, self.BOARD_SIDE - 1 - i])
-            if self._pieces[self._board[i, self.BOARD_SIDE - 1 - i]].COLOURED:
-                coloured_values.append(
-                    self._board[i, self.BOARD_SIDE - 1 - i])
-            else:
-                noncolor_values.append(
-                    self._board[i, self.BOARD_SIDE - 1 - i])
-            if self._pieces[self._board[i, self.BOARD_SIDE - 1 - i]].SOLID:
-                solid_values.append(self._board[i, self.BOARD_SIDE - 1 - i])
-            else:
-                hollow_values.append(self._board[i, self.BOARD_SIDE - 1 - i])
-            if self._pieces[self._board[i, self.BOARD_SIDE - 1 - i]].SQUARE:
-                square_values.append(self._board[i, self.BOARD_SIDE - 1 - i])
-            else:
-                circle_values.append(self._board[i, self.BOARD_SIDE - 1 - i])
-        if len(high_values) == self.BOARD_SIDE or len(coloured_values) == self.BOARD_SIDE or len(
-                solid_values) == self.BOARD_SIDE or len(square_values) == self.BOARD_SIDE or len(
-                    low_values
-        ) == self.BOARD_SIDE or len(noncolor_values) == self.BOARD_SIDE or len(
-                    hollow_values) == self.BOARD_SIDE or len(circle_values) == self.BOARD_SIDE:
-            return self._current_player
-        return -1
+        else:
+            return -1
 
     def check_winner(self) -> int:
         '''
@@ -300,7 +171,7 @@ class QuartoParent(object):
 
     def check_finished(self) -> bool:
         '''
-        Check if the game is finished
+        Check who is the loser
         '''
         for row in self._board:
             for elem in row:
@@ -332,18 +203,6 @@ class QuartoParent(object):
             winner = self.check_winner()
         # self.print()
         return winner
-
-    def state(self) -> str:
-        '''
-        Return the state of the game
-        '''
-        return str(self._board)
-
-    def get_current_player(self):
-        '''
-        Return the current player
-        '''
-        return self._current_player
 
 
 class Quarto(QuartoParent):
@@ -687,252 +546,14 @@ class Quarto(QuartoParent):
         # print(board)
         return board
 
-
-class RandomPlayer(Player):
-    """Random player"""
-
-    def __init__(self, quarto: Quarto):
-        super().__init__(quarto)
-
-    def choose_piece(self, state=None):
-        return random.randint(0, 15)
-
-    def place_piece(self, state=None):
-        return random.randint(0, 3), random.randint(0, 3)
-
-
-class QuartoScape:
-    '''Custom gym environment for Quarto'''
-
-    def __init__(self):
-        self.game = Quarto()
-        self.action_space = spaces.MultiDiscrete([16, 16, 16])
-        self.observation_space = spaces.MultiDiscrete([17] * 17)
-        self.reward_range = (-1, 1)
-        self.main_player = None
-
-    def set_main_player(self, player):
-        self.main_player = player
-        self.game.set_players((player, RandomPlayer(self.game)))
-        return True
-
-    def step(self, action, chosen_piece):
-        # position is the position the previous piece should be moved to
-        # chosen next piece is the piece the agent chooses for the next player to move
-        x, y, chosen_next_piece = action
-        self.next_piece = chosen_next_piece
-        if self.game.check_if_move_valid(chosen_piece, x, y, chosen_next_piece):
-            # print(f"Valid move, piece {chosen_piece} placed at {x}, {y}")
-            self.game.select(chosen_piece)
-            self.game.place(x, y)
-            # self.game.print()
-            if self.game.check_is_game_over():
-                # just playing with itself
-                reward = 1
-                return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
-            else:
-                reward = 0
-                return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
-
-            # if self.game.check_winner() == 0:
-            #     reward = 1
-            #     return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
-            # elif self.game.check_if_draw():
-            #     reward = 0.5
-            #     return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
-            # else:
-            #     reward = 0
-            return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
-        else:
-            print("Invalid move, fuck off")
-            reward = -1
-
-        return self.game.state_as_array(), reward, self.game.check_finished(), {}
-
-    def reset(self):
-        self.game = Quarto()
-        self.game.set_players((self.main_player, RandomPlayer(self.game)))
-        # print(self.game.state_as_array())
-        return self.game.state_as_array()
-
-
-class QuartoScapeNew(gym.Env):
-    '''Custom gym environment for Quarto'''
-
-    def __init__(self):
-        self.game = Quarto()
-        self.action_space = spaces.MultiDiscrete([4, 4, 16])
-        self.observation_space = spaces.MultiDiscrete([18] * 17)
-        self.reward_range = (-1, 1)
-        self.main_player = None
-
-    def close(self):
-        pass
-
-    def set_main_player(self, player):
-        self.main_player = player
-        self.game.set_players((player, RandomPlayer(self.game)))
-        return True
-
-    def score(self, state):
-        self.gb = self.change_representation(state)
-        sum = 0
-        for i in range(4):
-            sum_plane = 0
-            for j in range(4):
-                sum_row = 0
-                for k in range(4):
-                    sum_row += self.gb[j, k, i]
-                if(abs(sum_row) == 4):
-                    sum_plane += 1
-                elif(abs(sum_row) == 3):
-                    sum_plane += 0.7
-                elif(abs(sum_row) == 2):
-                    sum_plane += 0.4
-                elif(abs(sum_row) == 1):
-                    sum_plane += 0.1
-            for k in range(4):
-                sum_col = 0
-                for j in range(4):
-                    sum_col += self.gb[j, k, i]
-                if(abs(sum_col) == 4):
-                    sum_plane += 1
-                elif(abs(sum_col) == 3):
-                    sum_plane += 0.7
-                elif(abs(sum_col) == 2):
-                    sum_plane += 0.4
-                elif(abs(sum_col) == 1):
-                    sum_plane += 0.1
-            sum += sum_plane
-        # now diagonals
-        for i in range(4):
-            sum_diaga = 0
-            sum_diagb = 0
-            for k in range(4):
-                sum_diaga += self.gb[k, k, i]
-                sum_diagb += self.gb[k, 3-k, i]
-            if(abs(sum_diaga) == 4):
-                sum += 1
-            elif(abs(sum_diaga) == 3):
-                sum += 0.7
-            elif(abs(sum_diaga) == 2):
-                sum += 0.4
-            elif(abs(sum_diaga) == 1):
-                sum += 0.1
-            # second diagonal
-            if(abs(sum_diagb) == 4):
-                sum += 1
-            elif(abs(sum_diagb) == 3):
-                sum += 0.7
-            elif(abs(sum_diagb) == 2):
-                sum += 0.4
-            elif(abs(sum_diagb) == 1):
-                sum += 0.1
-        return sum
-
-    def reward(self, state, piece, action):
-        sum = 0
-        score_before_action = self.score(state)
-        cloned_quarto = Quarto(pieces=state)
-        cloned_quarto.select(piece)
-        # print("Placing in reward")
-        cloned_quarto.place(action[0], action[1])
-        score_after_action = self.score(cloned_quarto.state_as_array())
-        return score_after_action - score_before_action
-
-    def change_representation(self, state):
+    def state(self) -> str:
         '''
-        Each piece has 4 dimensions (high, coloured, solid, square)
+        Return the state of the game
         '''
-        new_rep = np.zeros((4, 4, 4))
-        for i in range(4):
-            for j in range(4):
-                piece = state[i, j]
-                if piece == -1:
-                    continue
-                piece = self.game.get_pieces()[piece]
-                high = piece.HIGH
-                coloured = piece.COLOURED
-                solid = piece.SOLID
-                square = piece.SQUARE
-                new_rep[i, j, 0] = high
-                new_rep[i, j, 1] = coloured
-                new_rep[i, j, 2] = solid
-                new_rep[i, j, 3] = square
-        return new_rep
+        return str(self._board)
 
-    # def score(self):
-    #     sum = 0
-    #     board = self.game.state_as_array()
-    #     sum_plane = 0
-    #     for i in range(4):
-    #         sum_row = 0
-    #         for j in range(4):
-    #             sum_row += board[i, j]
-    #         sum_plane += sum_row
-
-    #     for j in range(4):
-    #         sum_col = 0
-    #         for i in range(4):
-    #             sum_col += board[i, j]
-    #         sum_plane += sum_col
-
-    #     sum += sum_plane
-
-    #     for i in range(4):
-    #         sum_diaga = 0
-    #         sum_diagb = 0
-    #         for
-
-    #     return sum_plane
-
-    def step(self, action, chosen_piece):
-        # position is the position the previous piece should be moved to
-        # chosen next piece is the piece the agent chooses for the next player to move
-        x, y, chosen_next_piece = action
-        self.next_piece = chosen_next_piece
-        reward = 0
-        if self.game.check_if_move_valid(chosen_piece, x, y, chosen_next_piece):
-            logging.info(
-                f"Valid move, piece {chosen_piece} placed at {x}, {y}")
-            self.game.select(chosen_piece)
-            # print(f"Trying to place piece {chosen_piece} at {x}, {y}")
-            self.game.place(x, y)
-            # self.game.print()
-            if self.game.check_winner() != -1:
-                # this move resulted in a win
-                # reward = self.reward(self.game.state_as_array(), chosen_piece, action)
-                # bonus
-                # print('Winner winner chicken dinner')
-                reward = 1
-                return self.game.state_as_array(), reward, self.game.check_is_game_over(), {}
-            # elif self.game.check_if_draw():
-            #     # this move resulted in a draw
-            #     reward = 0.5
-            #     return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
-            else:
-                # this move did not result in a win or a draw
-                # print('Nothing happened, reward is 0')
-                reward = self.reward(
-                    self.game.state_as_array(), chosen_piece, action)
-                return self.game.state_as_array(), reward, self.game.check_is_game_over(), {}
-        # else:
-        #     print("Invalid move, fuck off")
-        #     reward = -1
-
-        return self.game.state_as_array(), reward, self.game.check_finished(), {}
-
-    def reset(self):
-        self.game = Quarto()
-        self.game.set_players((self.main_player, RandomPlayer(self.game)))
-        # print(np.array(list(itertools.chain.from_iterable(
-        #     self.game.state_as_array())) + [-1]))
-        # print(self.observation_space.shape)
-        arr = np.array(list(itertools.chain.from_iterable(
-            self.game.state_as_array())) + [100])
-        # replace -1 with 18
-        arr[arr == -1] = 17
-        return arr
-
-    def close(self):
-        print("Closing environment")
+    def get_current_player(self):
+        '''
+        Return the current player
+        '''
+        return self._current_player

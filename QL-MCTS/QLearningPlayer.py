@@ -8,7 +8,7 @@ import os
 import random
 import time
 
-from mcts import MonteCarloTreeSearch, MonteCarloTreeSearchDecoder, decode_tree
+from MCTS import MonteCarloTreeSearch
 from quarto.objects import Quarto
 from lib.players import RandomPlayer
 from lib.isomorphic import BoardTransforms

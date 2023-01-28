@@ -4,7 +4,7 @@
 import logging
 import argparse
 import random
-from dqn import DQNAgent
+from DeepQNetwork import DQNAgent
 import quarto
 
 class RandomPlayer(quarto.Player):

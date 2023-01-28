@@ -1,7 +1,5 @@
 """
-Sidharrth Nagappan
-
-Monte Carlo Tree Search
+In this file, I use Monte Carlo Tree Search to solve Quarto.
 """
 
 from collections import defaultdict

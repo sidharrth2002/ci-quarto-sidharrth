@@ -1,3 +1,7 @@
+"""
+In this file, I build a Deep Q-Network to play Quarto.
+"""
+
 import argparse
 from collections import deque
 import logging
