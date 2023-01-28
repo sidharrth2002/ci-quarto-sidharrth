@@ -10,14 +10,14 @@ import time
 
 from MCTS import MonteCarloTreeSearch
 from quarto.objects import Quarto
-from lib.players import RandomPlayer
+from lib.players import Player, RandomPlayer
 from lib.isomorphic import BoardTransforms
 
 import tqdm
 logging.basicConfig(level=logging.DEBUG)
 
 
-class QLearningPlayer:
+class QLearningPlayer(Player):
     def __init__(self, board: Quarto = Quarto(), epsilon=0.1, alpha=0.5, gamma=0.9, tree: MonteCarloTreeSearch = None):
         self.epsilon = epsilon
         self.alpha = alpha
@@ -35,6 +35,8 @@ class QLearningPlayer:
         else:
             # load new tree
             self.tree = MonteCarloTreeSearch(board=board)
+
+        super().__init__(board)
 
     def clear_and_set_current_state(self, state: Quarto):
         self.current_state = state

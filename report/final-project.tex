@@ -54,7 +54,7 @@ Solution: Instead of keeping an extremely large tree, we record the result of ea
     \item If the agent is called and a particular state-action combination is not present in the Q-table, go to MCTS to find the best move.
 \end{itemize}
 
-\subsection{Step 3: Implementing the Hybrid Agent}
+\subsubsection{Step 3: Implementing the Hybrid Agent}
 
 Using the best performing algorithms, I created a hybrid agent that works in 3 phases. First, to get the game started, it will make random moves. After this, it will switch to a hardcoded strategy where it will attempt to computationally build lines of similar pieces. Finally, it will leverage the QL-MCTS algorithm to find the best moves and win the game. Since QL-MCTS is slow, it is kept as the final phase. This approach is shown in Figure \ref{fig:hybrid-agent}, and is a balance between speed and efficiency.
 
