@@ -50,7 +50,7 @@ After multiple trials, the best fitness function is the simplest, which is simpl
 
 \subsection{Results}
 
-The following are the results of the algorithm after 1000 generations (only the best results are reported):
+The results of the algorithm after 1000 generations (only the best results are reported) are shown in Table \ref{table:results}.
 
 \begin{table}
   \centering
@@ -68,7 +68,7 @@ The following are the results of the algorithm after 1000 generations (only the 
     \hline
   \end{tabular}
   \caption{Results of the algorithm}
-
+  \label{table:results}
 \end{table}
 
 With larger values of $N$, a smaller population and offspring size is sufficient. Early stopping is used to detect the plateau, so the algorithm doesn't run endlessly. However, the minima is often reached in less than 100 generations.

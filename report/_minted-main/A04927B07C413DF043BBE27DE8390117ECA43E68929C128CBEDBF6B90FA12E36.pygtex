@@ -1,0 +1,551 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{Agents based on different strategies playing Nim (description here: https://en.wikipedia.org/wiki/Nim)}
+\PYG{l+s+sd}{    1. Agent based on rules}
+\PYG{l+s+sd}{    2. Agent based on evolved rules}
+\PYG{l+s+sd}{    3. Agent using minmax}
+\PYG{l+s+sd}{    4. Agent using reinforcement learning}
+
+\PYG{l+s+sd}{@Author: Karl Wennerström in collaboration with Erik Bengtsson (s306792)}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+
+\PYG{c+c1}{\PYGZsh{} ...}
+
+\PYG{c+c1}{\PYGZsh{} \PYGZpc{}\PYGZpc{} Q.2 Create own strategy based on cooked information}
+
+\PYG{c+c1}{\PYGZsh{} strategy maker: play by the rules}
+\PYG{k}{def} \PYG{n+nf}{make\PYGZus{}strategy}\PYG{p}{(}\PYG{n}{agent}\PYG{p}{:} \PYG{n}{Evolvable\PYGZus{}agent}\PYG{p}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{Callable}\PYG{p}{:}
+    \PYG{k}{def} \PYG{n+nf}{evolvable}\PYG{p}{(}\PYG{n}{state}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{Nimply}\PYG{p}{:}
+        \PYG{n}{data} \PYG{o}{=} \PYG{n}{cook\PYGZus{}status}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
+
+        \PYG{c+c1}{\PYGZsh{} rule 1}
+        \PYG{k}{if} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}active\PYGZus{}rows\PYGZus{}number\PYGZsq{}}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{:}
+            \PYG{n}{row}\PYG{p}{,} \PYG{n}{elem} \PYG{o}{=} \PYG{n}{agent}\PYG{o}{.}\PYG{n}{rule1}\PYG{p}{(}\PYG{n}{data}\PYG{p}{)}
+            \PYG{n}{ply} \PYG{o}{=} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{row}\PYG{p}{,} \PYG{n}{elem}\PYG{p}{)}
+
+        \PYG{k}{elif} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}one\PYGZus{}multiple\PYGZus{}elem\PYGZus{}row\PYGZsq{}}\PYG{p}{]:}  \PYG{c+c1}{\PYGZsh{} all rows but one have a single elem}
+
+            \PYG{c+c1}{\PYGZsh{} rule2}
+            \PYG{k}{if} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}active\PYGZus{}rows\PYGZus{}number\PYGZsq{}}\PYG{p}{]} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{2} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}  \PYG{c+c1}{\PYGZsh{} even rows}
+                \PYG{n}{row}\PYG{p}{,} \PYG{n}{elem} \PYG{o}{=} \PYG{n}{agent}\PYG{o}{.}\PYG{n}{rule2}\PYG{p}{(}\PYG{n}{data}\PYG{p}{)}
+                \PYG{n}{ply} \PYG{o}{=} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{row}\PYG{p}{,} \PYG{n}{elem}\PYG{p}{)}
+
+            \PYG{c+c1}{\PYGZsh{} rule 3}
+            \PYG{k}{else}\PYG{p}{:}  \PYG{c+c1}{\PYGZsh{} odd rows}
+                \PYG{n}{row}\PYG{p}{,} \PYG{n}{elem} \PYG{o}{=} \PYG{n}{agent}\PYG{o}{.}\PYG{n}{rule3}\PYG{p}{(}\PYG{n}{data}\PYG{p}{)}
+                \PYG{n}{ply} \PYG{o}{=} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{row}\PYG{p}{,} \PYG{n}{elem}\PYG{p}{)}
+
+        \PYG{k}{elif} \PYG{o+ow}{not} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}one\PYGZus{}multiple\PYGZus{}elem\PYGZus{}row\PYGZsq{}}\PYG{p}{]:}  \PYG{c+c1}{\PYGZsh{} multiple rows are with multiple elems (or also only ones)}
+
+            \PYG{c+c1}{\PYGZsh{} rule 4}
+            \PYG{k}{if} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}active\PYGZus{}rows\PYGZus{}number\PYGZsq{}}\PYG{p}{]} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{2} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                \PYG{n}{row}\PYG{p}{,} \PYG{n}{elem} \PYG{o}{=} \PYG{n}{agent}\PYG{o}{.}\PYG{n}{rule4}\PYG{p}{(}\PYG{n}{data}\PYG{p}{)}
+                \PYG{n}{ply} \PYG{o}{=} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{row}\PYG{p}{,} \PYG{n}{elem}\PYG{p}{)}
+
+            \PYG{c+c1}{\PYGZsh{} rule 5}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{n}{row}\PYG{p}{,} \PYG{n}{elem} \PYG{o}{=} \PYG{n}{agent}\PYG{o}{.}\PYG{n}{rule5}\PYG{p}{(}\PYG{n}{data}\PYG{p}{)}
+                \PYG{n}{ply} \PYG{o}{=} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{row}\PYG{p}{,} \PYG{n}{elem}\PYG{p}{)}
+
+
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{c+c1}{\PYGZsh{} rule 6 (will we ever get here?)}
+            \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}RULE 6!!! Board = }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{state}\PYG{o}{.}\PYG{n}{rows}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+            \PYG{n}{row}\PYG{p}{,} \PYG{n}{elem} \PYG{o}{=} \PYG{n}{agent}\PYG{o}{.}\PYG{n}{rule6}\PYG{p}{(}\PYG{n}{data}\PYG{p}{)}
+            \PYG{n}{ply} \PYG{o}{=} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{row}\PYG{p}{,} \PYG{n}{elem}\PYG{p}{)}
+
+        \PYG{k}{return} \PYG{n}{ply}
+
+    \PYG{k}{return} \PYG{n}{evolvable}
+
+
+\PYG{c+c1}{\PYGZsh{} human strategy, make moves through input}
+\PYG{k}{def} \PYG{n+nf}{my\PYGZus{}strategy}\PYG{p}{(}\PYG{n}{state}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{Nimply}\PYG{p}{:}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}Current state: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{state}\PYG{o}{.}\PYG{n}{rows}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+    \PYG{n}{data} \PYG{o}{=} \PYG{n}{cook\PYGZus{}status}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
+    \PYG{n}{pm} \PYG{o}{=} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}possible\PYGZus{}moves\PYGZsq{}}\PYG{p}{]}
+    \PYG{n}{index} \PYG{o}{=} \PYG{n+nb}{input}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}Choose a play: }\PYG{l+s+si}{\PYGZob{}}\PYG{p}{[(}\PYG{n}{i}\PYG{p}{,} \PYG{n}{m}\PYG{p}{)} \PYG{k}{for} \PYG{n}{i}\PYG{p}{,} \PYG{n}{m} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{pm}\PYG{p}{)]}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+    \PYG{k}{while} \PYG{k+kc}{True}\PYG{p}{:}
+        \PYG{k}{try}\PYG{p}{:}
+            \PYG{k}{assert} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{index}\PYG{p}{)} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{pm}\PYG{p}{))}
+        \PYG{k}{except} \PYG{n+ne}{Exception}\PYG{p}{:}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Invalid input, try again\PYGZsq{}}\PYG{p}{)}
+            \PYG{n}{index} \PYG{o}{=} \PYG{n+nb}{input}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}Choose a play: }\PYG{l+s+si}{\PYGZob{}}\PYG{p}{[(}\PYG{n}{i}\PYG{p}{,} \PYG{n}{m}\PYG{p}{)} \PYG{k}{for} \PYG{n}{i}\PYG{p}{,} \PYG{n}{m} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{pm}\PYG{p}{)]}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n}{row} \PYG{o}{=} \PYG{n}{pm}\PYG{p}{[}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{index}\PYG{p}{)][}\PYG{l+m+mi}{0}\PYG{p}{]}
+            \PYG{n}{elems} \PYG{o}{=} \PYG{n}{pm}\PYG{p}{[}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{index}\PYG{p}{)][}\PYG{l+m+mi}{1}\PYG{p}{]}
+            \PYG{k}{break}
+    \PYG{k}{return} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{row}\PYG{p}{,} \PYG{n}{elems}\PYG{p}{)}
+
+
+\PYG{c+c1}{\PYGZsh{} dumb strategy (to evaluate my agent)}
+\PYG{k}{def} \PYG{n+nf}{dumb\PYGZus{}agent}\PYG{p}{(}\PYG{n}{state}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{Nimply}\PYG{p}{:}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{    Make stupid move. Always remove 1 from shortest row}
+\PYG{l+s+sd}{    \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{data} \PYG{o}{=} \PYG{n}{cook\PYGZus{}status}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
+    \PYG{n}{row} \PYG{o}{=} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}shortest\PYGZus{}row\PYGZsq{}}\PYG{p}{]}
+    \PYG{k}{return} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{row}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{)}
+
+
+\PYG{c+c1}{\PYGZsh{} random strategy (to evaluate my agent)}
+\PYG{k}{def} \PYG{n+nf}{pure\PYGZus{}random}\PYG{p}{(}\PYG{n}{state}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{Nimply}\PYG{p}{:}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Agent playing completely random\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{row} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{([}\PYG{n}{r} \PYG{k}{for} \PYG{n}{r}\PYG{p}{,} \PYG{n}{c} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{state}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)} \PYG{k}{if} \PYG{n}{c} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{])}
+    \PYG{n}{num\PYGZus{}objects} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{state}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{[}\PYG{n}{row}\PYG{p}{])}
+    \PYG{k}{return} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{row}\PYG{p}{,} \PYG{n}{num\PYGZus{}objects}\PYG{p}{)}
+
+
+\PYG{k}{def} \PYG{n+nf}{semi\PYGZus{}smart}\PYG{p}{(}\PYG{n}{state}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{Nimply}\PYG{p}{:}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{} Make use of rule 1\PYGZhy{}3, else random\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{data} \PYG{o}{=} \PYG{n}{cook\PYGZus{}status}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
+
+    \PYG{k}{if} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}active\PYGZus{}rows\PYGZus{}number\PYGZsq{}}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{:}
+        \PYG{n}{row} \PYG{o}{=} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}active\PYGZus{}rows\PYGZus{}index\PYGZsq{}}\PYG{p}{][}\PYG{l+m+mi}{0}\PYG{p}{]}
+        \PYG{n}{elems} \PYG{o}{=} \PYG{n}{state}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{[}\PYG{n}{row}\PYG{p}{]}
+        \PYG{n}{ply} \PYG{o}{=} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{row}\PYG{p}{,} \PYG{n}{elems}\PYG{p}{)}
+
+    \PYG{k}{elif} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}one\PYGZus{}multiple\PYGZus{}elem\PYGZus{}row\PYGZsq{}}\PYG{p}{]:}  \PYG{c+c1}{\PYGZsh{} all rows but one have a single elem}
+        \PYG{k}{if} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}active\PYGZus{}rows\PYGZus{}number\PYGZsq{}}\PYG{p}{]} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{2} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+            \PYG{n}{move} \PYG{o}{=} \PYG{p}{[(}\PYG{n}{r}\PYG{p}{,} \PYG{n}{e}\PYG{p}{)} \PYG{k}{for} \PYG{p}{(}\PYG{n}{r}\PYG{p}{,} \PYG{n}{e}\PYG{p}{)} \PYG{o+ow}{in} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}possible\PYGZus{}moves\PYGZdq{}}\PYG{p}{]} \PYG{k}{if} \PYG{n}{state}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{[}\PYG{n}{r}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n}{e} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{][}\PYG{l+m+mi}{0}\PYG{p}{]}
+            \PYG{n}{ply} \PYG{o}{=} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{move}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{move}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n}{move} \PYG{o}{=} \PYG{p}{[(}\PYG{n}{r}\PYG{p}{,} \PYG{n}{e}\PYG{p}{)} \PYG{k}{for} \PYG{p}{(}\PYG{n}{r}\PYG{p}{,} \PYG{n}{e}\PYG{p}{)} \PYG{o+ow}{in} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}possible\PYGZus{}moves\PYGZdq{}}\PYG{p}{]} \PYG{k}{if}
+                    \PYG{n}{state}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{[}\PYG{n}{r}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n}{e} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o+ow}{and} \PYG{n}{r} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}single\PYGZus{}elem\PYGZus{}rows\PYGZus{}index\PYGZsq{}}\PYG{p}{]][}\PYG{l+m+mi}{0}\PYG{p}{]}
+            \PYG{n}{ply} \PYG{o}{=} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{move}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{move}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])}
+    \PYG{k}{else}\PYG{p}{:}
+        \PYG{n}{row} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{([}\PYG{n}{r} \PYG{k}{for} \PYG{n}{r}\PYG{p}{,} \PYG{n}{c} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{state}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)} \PYG{k}{if} \PYG{n}{c} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{])}
+        \PYG{n}{num\PYGZus{}objects} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{state}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{[}\PYG{n}{row}\PYG{p}{])}
+        \PYG{n}{ply} \PYG{o}{=} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{row}\PYG{p}{,} \PYG{n}{num\PYGZus{}objects}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{ply}
+\PYG{c+c1}{\PYGZsh{} \PYGZpc{}\PYGZpc{} EVOLUTION STRATEGY DESCRIBED}
+
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{(mu, lambda)\PYGZhy{}strategy}
+\PYG{l+s+sd}{    1. Create population with the same set of rules but different parameters for each rule}
+\PYG{l+s+sd}{    2. k individuals competes in a tournament where the winner becomes a parent}
+\PYG{l+s+sd}{    3. Perform cross\PYGZus{}over between two parents and mutate (aggregate random rule, e.g. mean(both parents\PYGZsq{} rule)) with certain prob}
+\PYG{l+s+sd}{    4. Generate offspring where OFFSPRING\PYGZus{}SIZE\PYGZgt{}\PYGZgt{}POPULATION\PYGZus{}SIZE}
+\PYG{l+s+sd}{    5. Fitness for offsprings corresponds to how many games are won against their \PYGZsq{}siblings\PYGZsq{}}
+\PYG{l+s+sd}{    6. Slice new population from fittest offpring}
+\PYG{l+s+sd}{    7. Repeat step 2\PYGZhy{}6 GENERATION times}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+
+\PYG{c+c1}{\PYGZsh{} \PYGZpc{}\PYGZpc{} Evolution strategy\PYGZhy{}functions}
+\PYG{k}{def} \PYG{n+nf}{init\PYGZus{}population}\PYG{p}{():}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Initialize population\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{pop} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{POPULATION\PYGZus{}SIZE}\PYG{p}{):}
+        \PYG{n}{pop}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{Evolvable\PYGZus{}agent}\PYG{p}{(}\PYG{n}{NIM\PYGZus{}SIZE}\PYG{p}{))}
+    \PYG{k}{return} \PYG{n}{pop}
+
+
+\PYG{k}{def} \PYG{n+nf}{calc\PYGZus{}fitness}\PYG{p}{(}\PYG{n}{individuals}\PYG{p}{:} \PYG{n+nb}{list}\PYG{p}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k+kc}{None}\PYG{p}{:}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Calculate fitness for each individual as a proportion of won games against different opponents\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{k}{for} \PYG{n}{ind} \PYG{o+ow}{in} \PYG{n}{individuals}\PYG{p}{:}
+        \PYG{n}{fitness} \PYG{o}{=} \PYG{p}{[]}
+        \PYG{k}{for} \PYG{n}{idx}\PYG{p}{,} \PYG{n}{strat} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{OPPONENTS}\PYG{p}{):}
+            \PYG{n}{wins} \PYG{o}{=} \PYG{l+m+mi}{0}
+            \PYG{k}{for} \PYG{n}{match} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{NUM\PYGZus{}MATCHES}\PYG{p}{):}
+                \PYG{n}{wins} \PYG{o}{+=} \PYG{n}{head2head}\PYG{p}{(}\PYG{n}{ind}\PYG{p}{,} \PYG{n}{strat}\PYG{p}{)}
+            \PYG{n}{fitness}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{wins} \PYG{o}{/} \PYG{n}{NUM\PYGZus{}MATCHES}\PYG{p}{)}
+        \PYG{n}{ind}\PYG{o}{.}\PYG{n}{fitness} \PYG{o}{=} \PYG{n+nb}{tuple}\PYG{p}{(}\PYG{n}{fitness}\PYG{p}{)}
+
+
+\PYG{c+c1}{\PYGZsh{} compute fitness by head2head\PYGZhy{}games}
+\PYG{k}{def} \PYG{n+nf}{head2head}\PYG{p}{(}\PYG{n}{agent}\PYG{p}{:} \PYG{n}{Evolvable\PYGZus{}agent}\PYG{p}{,} \PYG{n}{opponent}\PYG{p}{:} \PYG{n}{Callable}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}One game between evolvable agent and opponent\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{players} \PYG{o}{=} \PYG{p}{(}\PYG{n}{make\PYGZus{}strategy}\PYG{p}{(}\PYG{n}{agent}\PYG{p}{),} \PYG{n}{opponent}\PYG{p}{)}
+
+    \PYG{n}{nim} \PYG{o}{=} \PYG{n}{Nim}\PYG{p}{(}\PYG{n}{NIM\PYGZus{}SIZE}\PYG{p}{)}
+    \PYG{n}{player} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{k}{while} \PYG{n}{nim}\PYG{p}{:}
+        \PYG{n}{ply} \PYG{o}{=} \PYG{n}{players}\PYG{p}{[}\PYG{n}{player}\PYG{p}{](}\PYG{n}{nim}\PYG{p}{)}
+        \PYG{n}{nim}\PYG{o}{.}\PYG{n}{nimming}\PYG{p}{(}\PYG{n}{ply}\PYG{p}{)}
+        \PYG{n}{player} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{player}
+    \PYG{n}{winner} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{player}
+    \PYG{k}{if} \PYG{n}{winner} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+        \PYG{k}{return} \PYG{l+m+mi}{1}
+    \PYG{k}{else}\PYG{p}{:}
+        \PYG{k}{return} \PYG{l+m+mi}{0}
+
+\PYG{k}{def} \PYG{n+nf}{fittest\PYGZus{}individuals}\PYG{p}{(}\PYG{n}{pop}\PYG{p}{:} \PYG{n+nb}{list}\PYG{p}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n+nb}{list}\PYG{p}{:}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Return the most fit individuals to use in offspring generation\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{k}{return} \PYG{n+nb}{sorted}\PYG{p}{(}\PYG{n}{pop}\PYG{p}{,} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{l}\PYG{p}{:} \PYG{n}{l}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{,} \PYG{n}{reverse}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{)[:}\PYG{n}{POPULATION\PYGZus{}SIZE}\PYG{p}{]}
+
+
+\PYG{c+c1}{\PYGZsh{} tournament to decide parents}
+\PYG{k}{def} \PYG{n+nf}{tournament}\PYG{p}{(}\PYG{n}{population}\PYG{p}{:} \PYG{n+nb}{list}\PYG{p}{,} \PYG{n}{k}\PYG{p}{:} \PYG{n+nb}{int}\PYG{p}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n+nb}{dict}\PYG{p}{:}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Select best individual out of k competing in a tournament\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{contestors} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{(}\PYG{n}{population}\PYG{p}{,} \PYG{n}{k}\PYG{o}{=}\PYG{n}{k}\PYG{p}{)}
+    \PYG{n}{best\PYGZus{}contestor} \PYG{o}{=} \PYG{n+nb}{sorted}\PYG{p}{(}\PYG{n}{contestors}\PYG{p}{,} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{l}\PYG{p}{:} \PYG{n}{l}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{,} \PYG{n}{reverse}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{)[}\PYG{l+m+mi}{0}\PYG{p}{]}
+    \PYG{k}{return} \PYG{n}{best\PYGZus{}contestor}
+
+
+\PYG{k}{def} \PYG{n+nf}{cross\PYGZus{}over}\PYG{p}{(}\PYG{n}{parent1}\PYG{p}{:} \PYG{n}{Evolvable\PYGZus{}agent}\PYG{p}{,} \PYG{n}{parent2}\PYG{p}{:} \PYG{n}{Evolvable\PYGZus{}agent}\PYG{p}{,} \PYG{n}{mutation\PYGZus{}prob}\PYG{p}{:} \PYG{n+nb}{float}\PYG{p}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{Evolvable\PYGZus{}agent}\PYG{p}{:}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Generate new individual by cross\PYGZhy{}over of parents\PYGZsq{} rules\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{rules} \PYG{o}{=} \PYG{p}{[}\PYG{n}{rule} \PYG{k}{for} \PYG{n}{rule} \PYG{o+ow}{in} \PYG{n}{parent1}\PYG{o}{.}\PYG{n}{rules}\PYG{o}{.}\PYG{n}{keys}\PYG{p}{()]}
+    \PYG{n}{new\PYGZus{}rules} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{}}
+    \PYG{n}{child} \PYG{o}{=} \PYG{n}{Evolvable\PYGZus{}agent}\PYG{p}{(}\PYG{n}{NIM\PYGZus{}SIZE}\PYG{p}{)}
+    \PYG{k}{for} \PYG{n}{k} \PYG{o+ow}{in} \PYG{n}{rules}\PYG{p}{:}
+        \PYG{n}{which\PYGZus{}parent} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{)}
+        \PYG{n}{new\PYGZus{}rules}\PYG{p}{[}\PYG{n}{k}\PYG{p}{]} \PYG{o}{=} \PYG{n}{parent1}\PYG{o}{.}\PYG{n}{rules}\PYG{p}{[}\PYG{n}{k}\PYG{p}{]} \PYG{k}{if} \PYG{n}{which\PYGZus{}parent} \PYG{o}{==} \PYG{l+m+mi}{1} \PYG{k}{else} \PYG{n}{parent2}\PYG{o}{.}\PYG{n}{rules}\PYG{p}{[}\PYG{n}{k}\PYG{p}{]}
+    \PYG{k}{if} \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()} \PYG{o}{\PYGZlt{}} \PYG{n}{mutation\PYGZus{}prob}\PYG{p}{:}
+        \PYG{n}{rule} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{rules}\PYG{p}{)}
+        \PYG{k}{if} \PYG{n}{rule} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}rule\PYGZus{}1\PYGZsq{}}\PYG{p}{:}
+            \PYG{n}{new\PYGZus{}rules}\PYG{p}{[}\PYG{n}{rule}\PYG{p}{]} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{p}{(}\PYG{n}{NIM\PYGZus{}SIZE} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{l+m+mi}{2}\PYG{p}{)}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n}{new\PYGZus{}rules}\PYG{p}{[}\PYG{n}{rule}\PYG{p}{]} \PYG{o}{=} \PYG{p}{[}\PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{),} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{p}{(}\PYG{n}{NIM\PYGZus{}SIZE} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{*} \PYG{l+m+mi}{2}\PYG{p}{)]}
+    \PYG{n}{child}\PYG{o}{.}\PYG{n}{rules} \PYG{o}{=} \PYG{n}{new\PYGZus{}rules}
+    \PYG{k}{return} \PYG{n}{child}
+
+
+\PYG{k}{def} \PYG{n+nf}{create\PYGZus{}offspring}\PYG{p}{(}\PYG{n}{population}\PYG{p}{:} \PYG{n+nb}{list}\PYG{p}{,} \PYG{n}{k}\PYG{p}{:} \PYG{n+nb}{int}\PYG{p}{,} \PYG{n}{mutation\PYGZus{}prob}\PYG{p}{:} \PYG{n+nb}{float}\PYG{p}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n+nb}{list}\PYG{p}{:}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Create new offspring\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{offspring} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{OFFSPRING\PYGZus{}SIZE}\PYG{p}{):}
+        \PYG{n}{p1} \PYG{o}{=} \PYG{n}{tournament}\PYG{p}{(}\PYG{n}{population}\PYG{o}{=}\PYG{n}{population}\PYG{p}{,} \PYG{n}{k}\PYG{o}{=}\PYG{n}{k}\PYG{p}{)}
+        \PYG{n}{p2} \PYG{o}{=} \PYG{n}{tournament}\PYG{p}{(}\PYG{n}{population}\PYG{o}{=}\PYG{n}{population}\PYG{p}{,} \PYG{n}{k}\PYG{o}{=}\PYG{n}{k}\PYG{p}{)}
+        \PYG{n}{child} \PYG{o}{=} \PYG{n}{cross\PYGZus{}over}\PYG{p}{(}\PYG{n}{parent1}\PYG{o}{=}\PYG{n}{p1}\PYG{p}{,} \PYG{n}{parent2}\PYG{o}{=}\PYG{n}{p2}\PYG{p}{,} \PYG{n}{mutation\PYGZus{}prob}\PYG{o}{=}\PYG{n}{mutation\PYGZus{}prob}\PYG{p}{)}
+        \PYG{n}{offspring}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{child}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{offspring}
+
+
+\PYG{k}{def} \PYG{n+nf}{get\PYGZus{}next\PYGZus{}generation}\PYG{p}{(}\PYG{n}{offspring}\PYG{p}{:} \PYG{n+nb}{list}\PYG{p}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n+nb}{list}\PYG{p}{:}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Find the best individuals in the new generation\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{calc\PYGZus{}fitness}\PYG{p}{(}\PYG{n}{offspring}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{fittest\PYGZus{}individuals}\PYG{p}{(}\PYG{n}{offspring}\PYG{p}{)}
+
+
+\PYG{c+c1}{\PYGZsh{} \PYGZpc{}\PYGZpc{} PLAYING FUNCTIONS}
+\PYG{k}{def} \PYG{n+nf}{evaluate}\PYG{p}{(}\PYG{n}{strategy1}\PYG{p}{:} \PYG{n}{Callable}\PYG{p}{,} \PYG{n}{strategy2}\PYG{p}{:} \PYG{n}{Callable}\PYG{p}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n+nb}{float}\PYG{p}{:}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Play two strategies against each other and evaluate their performance \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{players} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strategy1}\PYG{p}{,} \PYG{n}{strategy2}\PYG{p}{)}
+    \PYG{n}{won} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+    \PYG{k}{for} \PYG{n}{m} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{EVAL\PYGZus{}MATCHES}\PYG{p}{):}
+        \PYG{n}{nim} \PYG{o}{=} \PYG{n}{Nim}\PYG{p}{(}\PYG{n}{NIM\PYGZus{}SIZE}\PYG{p}{)}
+        \PYG{n}{player} \PYG{o}{=} \PYG{l+m+mi}{0}
+        \PYG{k}{while} \PYG{n}{nim}\PYG{p}{:}
+            \PYG{n}{ply} \PYG{o}{=} \PYG{n}{players}\PYG{p}{[}\PYG{n}{player}\PYG{p}{](}\PYG{n}{nim}\PYG{p}{)}
+            \PYG{n}{nim}\PYG{o}{.}\PYG{n}{nimming}\PYG{p}{(}\PYG{n}{ply}\PYG{p}{)}
+            \PYG{n}{player} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{player}
+        \PYG{k}{if} \PYG{n}{player} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{:}
+            \PYG{n}{won} \PYG{o}{+=} \PYG{l+m+mi}{1}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{strategy1}\PYG{o}{.}\PYG{n+nv+vm}{\PYGZus{}\PYGZus{}name\PYGZus{}\PYGZus{}}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{ wins }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{won}\PYG{o}{*}\PYG{l+m+mi}{100}\PYG{o}{/}\PYG{n}{EVAL\PYGZus{}MATCHES}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{ \PYGZpc{} of the games against }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{strategy2}\PYG{o}{.}\PYG{n+nv+vm}{\PYGZus{}\PYGZus{}name\PYGZus{}\PYGZus{}}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+    \PYG{k}{return} \PYG{n}{won} \PYG{o}{/} \PYG{n}{EVAL\PYGZus{}MATCHES}
+
+
+\PYG{k}{def} \PYG{n+nf}{play\PYGZus{}nim}\PYG{p}{(}\PYG{n}{strategy1}\PYG{p}{,} \PYG{n}{strategy2}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}A visualized match between two strategies\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+    \PYG{n}{strategy} \PYG{o}{=} \PYG{p}{(}\PYG{n}{strategy1}\PYG{p}{,} \PYG{n}{strategy2}\PYG{p}{)}
+    \PYG{n}{nim} \PYG{o}{=} \PYG{n}{Nim}\PYG{p}{(}\PYG{n}{NIM\PYGZus{}SIZE}\PYG{p}{)}
+    \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}status: Initial board  \PYGZhy{}\PYGZgt{} }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{nim}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+    \PYG{n}{player} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{k}{while} \PYG{n}{nim}\PYG{p}{:}
+        \PYG{n}{ply} \PYG{o}{=} \PYG{n}{strategy}\PYG{p}{[}\PYG{n}{player}\PYG{p}{](}\PYG{n}{nim}\PYG{p}{)}
+        \PYG{n}{nim}\PYG{o}{.}\PYG{n}{nimming}\PYG{p}{(}\PYG{n}{ply}\PYG{p}{)}
+        \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}status: After player }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{player}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ \PYGZhy{}\PYGZgt{} }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{nim}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+        \PYG{n}{player} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{player}
+    \PYG{n}{winner} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{player}
+    \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}status: Player }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{winner}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ won!\PYGZdq{}}\PYG{p}{)}
+\PYG{c+c1}{\PYGZsh{} \PYGZpc{}\PYGZpc{} Q3 \PYGZhy{} MINMAX AGENT}
+
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{    Build a minmax agent that alwasy minimizes the opponents maximum win}
+\PYG{l+s+sd}{    Play against optimal strategy, should be able to win if start}
+\PYG{l+s+sd}{    Build as class or function?}
+\PYG{l+s+sd}{    Need:}
+\PYG{l+s+sd}{        keep value for each state (exhaustive)}
+\PYG{l+s+sd}{        condition: return 1 if win \PYGZhy{}1 else}
+\PYG{l+s+sd}{        condition: return 0 if not decided}
+\PYG{l+s+sd}{            play intil determined and traverse back to that state}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{c+c1}{\PYGZsh{} \PYGZpc{}\PYGZpc{} MINMAX fcn}
+\PYG{k}{def} \PYG{n+nf}{minmax}\PYG{p}{(}\PYG{n}{state}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{,} \PYG{n}{my\PYGZus{}turn}\PYG{p}{:} \PYG{n+nb}{bool}\PYG{p}{,} \PYG{n}{alpha}\PYG{o}{=\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{beta}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{):}
+    \PYG{k}{if} \PYG{o+ow}{not} \PYG{n}{state}\PYG{p}{:}  \PYG{c+c1}{\PYGZsh{} empty board then I lose}
+        \PYG{k}{return} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1} \PYG{k}{if} \PYG{n}{my\PYGZus{}turn} \PYG{k}{else} \PYG{l+m+mi}{1}
+
+    \PYG{n}{data} \PYG{o}{=} \PYG{n}{cook\PYGZus{}status}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
+    \PYG{n}{possible\PYGZus{}new\PYGZus{}states} \PYG{o}{=} \PYG{p}{[]}
+    \PYG{k}{for} \PYG{n}{ply} \PYG{o+ow}{in} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}possible\PYGZus{}moves\PYGZsq{}}\PYG{p}{]:}
+        \PYG{n}{tmp\PYGZus{}state} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
+        \PYG{n}{tmp\PYGZus{}state}\PYG{o}{.}\PYG{n}{nimming}\PYG{p}{(}\PYG{n}{ply}\PYG{p}{)}
+        \PYG{n}{possible\PYGZus{}new\PYGZus{}states}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{tmp\PYGZus{}state}\PYG{p}{)}
+    \PYG{k}{if} \PYG{n}{my\PYGZus{}turn}\PYG{p}{:}
+        \PYG{n}{bestVal} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{n}{np}\PYG{o}{.}\PYG{n}{inf}
+        \PYG{k}{for} \PYG{n}{new\PYGZus{}state} \PYG{o+ow}{in} \PYG{n}{possible\PYGZus{}new\PYGZus{}states}\PYG{p}{:}
+            \PYG{n}{value} \PYG{o}{=} \PYG{n}{minmax}\PYG{p}{(}\PYG{n}{new\PYGZus{}state}\PYG{p}{,} \PYG{k+kc}{False}\PYG{p}{,} \PYG{n}{alpha}\PYG{p}{,} \PYG{n}{beta}\PYG{p}{)}
+            \PYG{n}{bestVal} \PYG{o}{=} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{bestVal}\PYG{p}{,} \PYG{n}{value}\PYG{p}{)}
+            \PYG{n}{alpha} \PYG{o}{=} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{alpha}\PYG{p}{,} \PYG{n}{bestVal}\PYG{p}{)}
+            \PYG{k}{if} \PYG{n}{beta} \PYG{o}{\PYGZlt{}=} \PYG{n}{alpha}\PYG{p}{:}
+                \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}Pruned\PYGZsq{}}\PYG{p}{)}
+                \PYG{k}{break}
+        \PYG{k}{return} \PYG{n}{bestVal}
+    \PYG{k}{else}\PYG{p}{:}
+        \PYG{n}{bestVal} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{inf}
+        \PYG{n}{new\PYGZus{}state} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
+        \PYG{n}{ply} \PYG{o}{=} \PYG{n}{optimal\PYGZus{}strategy}\PYG{p}{(}\PYG{n}{new\PYGZus{}state}\PYG{p}{)}
+        \PYG{n}{new\PYGZus{}state}\PYG{o}{.}\PYG{n}{nimming}\PYG{p}{(}\PYG{n}{ply}\PYG{p}{)}
+        \PYG{n}{value} \PYG{o}{=} \PYG{n}{minmax}\PYG{p}{(}\PYG{n}{new\PYGZus{}state}\PYG{p}{,} \PYG{k+kc}{True}\PYG{p}{,} \PYG{n}{alpha}\PYG{p}{,} \PYG{n}{beta}\PYG{p}{)}
+        \PYG{n}{bestVal} \PYG{o}{=} \PYG{n+nb}{min}\PYG{p}{(}\PYG{n}{bestVal}\PYG{p}{,} \PYG{n}{value}\PYG{p}{)}
+        \PYG{k}{return} \PYG{n}{bestVal}
+
+\PYG{k}{def} \PYG{n+nf}{best\PYGZus{}move}\PYG{p}{(}\PYG{n}{state}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{):}
+    \PYG{n}{data} \PYG{o}{=} \PYG{n}{cook\PYGZus{}status}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
+    \PYG{k}{for} \PYG{n}{ply} \PYG{o+ow}{in} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}possible\PYGZus{}moves\PYGZsq{}}\PYG{p}{]:}
+        \PYG{n}{tmp\PYGZus{}state} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
+        \PYG{n}{tmp\PYGZus{}state}\PYG{o}{.}\PYG{n}{nimming}\PYG{p}{(}\PYG{n}{ply}\PYG{p}{)}
+        \PYG{n}{score} \PYG{o}{=} \PYG{n}{minmax}\PYG{p}{(}\PYG{n}{tmp\PYGZus{}state}\PYG{p}{,} \PYG{n}{my\PYGZus{}turn}\PYG{o}{=}\PYG{k+kc}{False}\PYG{p}{)}
+        \PYG{k}{if} \PYG{n}{score} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{:}
+            \PYG{k}{break}
+    \PYG{k}{return} \PYG{n}{ply}
+
+\PYG{c+c1}{\PYGZsh{} \PYGZpc{}\PYGZpc{} Q4 \PYGZhy{} RL}
+
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{Reinforcement learning agent to play Nim}
+
+\PYG{l+s+sd}{Idea:}
+\PYG{l+s+sd}{    Play using Upper Confidence Trees (UCT), a Monte Carlo Tree Search (MCTS) algorithm, popular when trade\PYGZhy{}off between}
+\PYG{l+s+sd}{    finding best\PYGZhy{}so\PYGZhy{}far and finding a better one}
+
+\PYG{l+s+sd}{Need:}
+\PYG{l+s+sd}{    * All possible states (TODO: sort state so that e.g. 1 1 0 == 1 0 1)}
+\PYG{l+s+sd}{        * Init with value 0 and visits 0}
+\PYG{l+s+sd}{    * Actions for each state (based on data)}
+\PYG{l+s+sd}{    * Simulate function}
+\PYG{l+s+sd}{    * Reward function}
+
+\PYG{l+s+sd}{Outline:}
+\PYG{l+s+sd}{    1. Selection (select an unvisited node) with highest UCT}
+\PYG{l+s+sd}{    2. Expand to that node}
+\PYG{l+s+sd}{    3. Simulate from that node until termination}
+\PYG{l+s+sd}{    4. Backpropagate and update node with statistics}
+\PYG{l+s+sd}{        * N(v) \PYGZhy{} number of visits for node v}
+\PYG{l+s+sd}{        * Q(v) \PYGZhy{} value/reward playing from that node}
+
+\PYG{l+s+sd}{UCT:}
+\PYG{l+s+sd}{    uct(v\PYGZus{}i, v) = Q(v\PYGZus{}i)/N(v\PYGZus{}i) + c*sqrt(log(N(v))/N(v\PYGZus{}i)), which prefers child nodes with small N(v\PYGZus{}i)}
+\PYG{l+s+sd}{    choose action according to highest uct value (init with np.inf to explore every move)}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+
+\PYG{c+c1}{\PYGZsh{} Imports}
+\PYG{k+kn}{import} \PYG{n+nn}{itertools}
+
+
+\PYG{c+c1}{\PYGZsh{} Class}
+
+\PYG{k}{class} \PYG{n+nc}{RLAgent}\PYG{p}{:}
+
+    \PYG{c+c1}{\PYGZsh{} INITIALIZATION \PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}}
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{nim\PYGZus{}size}\PYG{p}{:} \PYG{n+nb}{int}\PYG{p}{,} \PYG{n}{random\PYGZus{}factor}\PYG{o}{=}\PYG{l+m+mf}{0.2}\PYG{p}{,}
+                    \PYG{n}{exploration\PYGZus{}factor}\PYG{o}{=}\PYG{n}{np}\PYG{o}{.}\PYG{n}{sqrt}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{)):}  \PYG{c+c1}{\PYGZsh{} explore with 20\PYGZpc{}, exploit with 80\PYGZpc{}}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{nim\PYGZus{}size} \PYG{o}{=} \PYG{n}{nim\PYGZus{}size}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state} \PYG{o}{=} \PYG{k+kc}{None}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{previous\PYGZus{}state} \PYG{o}{=} \PYG{k+kc}{None}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}\PYGZus{}init\PYGZus{}states}\PYG{p}{(}\PYG{n}{nim\PYGZus{}size}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}factor} \PYG{o}{=} \PYG{n}{random\PYGZus{}factor}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{c} \PYG{o}{=} \PYG{n}{exploration\PYGZus{}factor}
+
+    \PYG{k}{def} \PYG{n+nf}{\PYGZus{}\PYGZus{}init\PYGZus{}states}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{nim\PYGZus{}size}\PYG{p}{:} \PYG{n+nb}{int}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}find all possible board positions\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{n}{states} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{}}
+        \PYG{n}{rows} \PYG{o}{=} \PYG{p}{[}\PYG{n}{i} \PYG{o}{*} \PYG{l+m+mi}{2} \PYG{o}{+} \PYG{l+m+mi}{1} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{nim\PYGZus{}size}\PYG{p}{)]}
+        \PYG{n}{elem\PYGZus{}ranges} \PYG{o}{=} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{itertools}\PYG{o}{.}\PYG{n}{combinations}\PYG{p}{([}\PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{n} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{k}{for} \PYG{n}{n} \PYG{o+ow}{in} \PYG{n}{rows}\PYG{p}{],} \PYG{n}{r}\PYG{o}{=}\PYG{n}{nim\PYGZus{}size}\PYG{p}{))}
+        \PYG{n}{all\PYGZus{}states} \PYG{o}{=} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{itertools}\PYG{o}{.}\PYG{n}{product}\PYG{p}{(}\PYG{o}{*}\PYG{n}{elem\PYGZus{}ranges}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]))}
+
+        \PYG{k}{for} \PYG{n}{state} \PYG{o+ow}{in} \PYG{n}{all\PYGZus{}states}\PYG{p}{:}
+            \PYG{n}{states}\PYG{p}{[}\PYG{n}{state}\PYG{p}{]} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{}}
+            \PYG{n}{states}\PYG{p}{[}\PYG{n}{state}\PYG{p}{][}\PYG{l+s+s1}{\PYGZsq{}visits\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}
+            \PYG{n}{states}\PYG{p}{[}\PYG{n}{state}\PYG{p}{][}\PYG{l+s+s1}{\PYGZsq{}value\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{0}
+            \PYG{n}{states}\PYG{p}{[}\PYG{n}{state}\PYG{p}{][}\PYG{l+s+s1}{\PYGZsq{}child\PYGZus{}states\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}\PYGZus{}init\PYGZus{}child\PYGZus{}states}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{states} \PYG{o}{=} \PYG{n}{states}
+        \PYG{c+c1}{\PYGZsh{} last state is the initial board}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state} \PYG{o}{=} \PYG{n}{all\PYGZus{}states}\PYG{p}{[}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{states}\PYG{p}{[}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{][}\PYG{l+s+s1}{\PYGZsq{}visits\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{l+m+mi}{1}
+
+    \PYG{k}{def} \PYG{n+nf}{\PYGZus{}\PYGZus{}init\PYGZus{}child\PYGZus{}states}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{state}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Find all states accessible from state\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{n}{nim} \PYG{o}{=} \PYG{n}{Nim}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{nim\PYGZus{}size}\PYG{p}{)}
+        \PYG{n}{nim}\PYG{o}{.}\PYG{n}{\PYGZus{}rows} \PYG{o}{=} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
+        \PYG{k}{if} \PYG{n}{nim}\PYG{p}{:}
+            \PYG{n}{data} \PYG{o}{=} \PYG{n}{cook\PYGZus{}status}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{)}
+            \PYG{n}{children} \PYG{o}{=} \PYG{p}{[]}
+            \PYG{k}{for} \PYG{n}{ply} \PYG{o+ow}{in} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}possible\PYGZus{}moves\PYGZsq{}}\PYG{p}{]:}
+                \PYG{n}{tmp\PYGZus{}nim} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{)}
+                \PYG{n}{tmp\PYGZus{}nim}\PYG{o}{.}\PYG{n}{nimming}\PYG{p}{(}\PYG{n}{ply}\PYG{p}{)}
+                \PYG{n}{children}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{tmp\PYGZus{}nim}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{)}
+            \PYG{k}{return} \PYG{n}{children}
+
+    \PYG{c+c1}{\PYGZsh{} MCTS \PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}}
+    \PYG{k}{def} \PYG{n+nf}{selection}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Select next move according to highest uct score\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{n}{next\PYGZus{}state} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}\PYGZus{}state\PYGZus{}with\PYGZus{}highest\PYGZus{}uct}\PYG{p}{()}
+        \PYG{k}{return} \PYG{n}{next\PYGZus{}state}
+
+    \PYG{k}{def} \PYG{n+nf}{\PYGZus{}\PYGZus{}state\PYGZus{}with\PYGZus{}highest\PYGZus{}uct}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Move to child node with highest UCT score (depending on parent and child nodes) \PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{n}{visits\PYGZus{}parent} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{states}\PYG{p}{[}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{][}\PYG{l+s+s1}{\PYGZsq{}visits\PYGZsq{}}\PYG{p}{]}
+        \PYG{n}{best\PYGZus{}state} \PYG{o}{=} \PYG{k+kc}{None}
+        \PYG{n}{best\PYGZus{}uct} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{n}{np}\PYG{o}{.}\PYG{n}{inf}
+        \PYG{k}{for} \PYG{n}{child\PYGZus{}state} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{states}\PYG{p}{[}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{][}\PYG{l+s+s1}{\PYGZsq{}child\PYGZus{}states\PYGZsq{}}\PYG{p}{]:}
+            \PYG{n}{visits\PYGZus{}child} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{states}\PYG{p}{[}\PYG{n}{child\PYGZus{}state}\PYG{p}{][}\PYG{l+s+s1}{\PYGZsq{}visits\PYGZsq{}}\PYG{p}{]}
+            \PYG{n}{wins\PYGZus{}child} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{states}\PYG{p}{[}\PYG{n}{child\PYGZus{}state}\PYG{p}{][}\PYG{l+s+s1}{\PYGZsq{}value\PYGZsq{}}\PYG{p}{]}
+            \PYG{n}{uct} \PYG{o}{=} \PYG{n}{wins\PYGZus{}child} \PYG{o}{/} \PYG{p}{(}\PYG{n}{visits\PYGZus{}child} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{+} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{c} \PYG{o}{*} \PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{log}\PYG{p}{(}\PYG{n}{visits\PYGZus{}parent}\PYG{p}{)} \PYG{o}{/} \PYG{p}{(}\PYG{n}{visits\PYGZus{}child} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{))} \PYG{o}{**} \PYG{p}{(}\PYG{l+m+mi}{1} \PYG{o}{/} \PYG{l+m+mi}{2}\PYG{p}{)}
+            \PYG{k}{if} \PYG{n}{uct} \PYG{o}{\PYGZgt{}} \PYG{n}{best\PYGZus{}uct}\PYG{p}{:}
+                \PYG{n}{best\PYGZus{}uct} \PYG{o}{=} \PYG{n}{uct}
+                \PYG{n}{best\PYGZus{}state} \PYG{o}{=} \PYG{n}{child\PYGZus{}state}
+        \PYG{k}{return} \PYG{n}{best\PYGZus{}state}
+
+    \PYG{k}{def} \PYG{n+nf}{random\PYGZus{}selection}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Explore and move to random state\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{n}{next\PYGZus{}state} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n+nb}{tuple}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{states}\PYG{p}{[}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{][}\PYG{l+s+s1}{\PYGZsq{}child\PYGZus{}states\PYGZsq{}}\PYG{p}{]))}
+        \PYG{k}{return} \PYG{n}{next\PYGZus{}state}
+
+    \PYG{k}{def} \PYG{n+nf}{expand}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{next\PYGZus{}state}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Expand to the found next state. Return the ply that takes agent there\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{previous\PYGZus{}state} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state} \PYG{o}{=} \PYG{n}{next\PYGZus{}state}
+        \PYG{n}{ply} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}\PYGZus{}next\PYGZus{}ply}\PYG{p}{()}
+        \PYG{k}{return} \PYG{n}{ply}
+
+    \PYG{k}{def} \PYG{n+nf}{\PYGZus{}\PYGZus{}next\PYGZus{}ply}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{} Find ply that takes agent from previous state to current state\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{c+c1}{\PYGZsh{} manipulate nim}
+        \PYG{n}{nim} \PYG{o}{=} \PYG{n}{Nim}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{nim\PYGZus{}size}\PYG{p}{)}
+        \PYG{n}{nim}\PYG{o}{.}\PYG{n}{\PYGZus{}rows} \PYG{o}{=} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{previous\PYGZus{}state}\PYG{p}{)}
+        \PYG{n}{data} \PYG{o}{=} \PYG{n}{cook\PYGZus{}status}\PYG{p}{(}\PYG{n}{nim}\PYG{p}{)}
+        \PYG{n}{ply} \PYG{o}{=} \PYG{p}{[}\PYG{n}{ply} \PYG{k}{for} \PYG{n}{ply} \PYG{o+ow}{in} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}possible\PYGZus{}moves\PYGZsq{}}\PYG{p}{]} \PYG{k}{if} \PYG{n}{data}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}rows\PYGZsq{}}\PYG{p}{][}\PYG{n}{ply}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]]} \PYG{o}{\PYGZhy{}} \PYG{n}{ply}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{==} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{[}\PYG{n}{ply}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]]][}\PYG{l+m+mi}{0}\PYG{p}{]}
+        \PYG{k}{return} \PYG{n}{ply}
+
+    \PYG{k}{def} \PYG{n+nf}{simulate}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{opponent}\PYG{p}{:} \PYG{n}{Callable}\PYG{p}{,} \PYG{n}{n\PYGZus{}matches}\PYG{p}{:} \PYG{n+nb}{int}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Simulate game of nim vs opponent by letting RL agent play randomly from current state\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{n}{players} \PYG{o}{=} \PYG{p}{(}\PYG{n}{opponent}\PYG{p}{,} \PYG{n}{pure\PYGZus{}random}\PYG{p}{)}  \PYG{c+c1}{\PYGZsh{} rl agent is second since played move to get here}
+        \PYG{n}{nim} \PYG{o}{=} \PYG{n}{Nim}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{nim\PYGZus{}size}\PYG{p}{)}
+        \PYG{n}{won} \PYG{o}{=} \PYG{l+m+mi}{0}
+        \PYG{k}{for} \PYG{n}{match} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{n\PYGZus{}matches}\PYG{p}{):}
+            \PYG{c+c1}{\PYGZsh{} forbidden stuff}
+            \PYG{n}{nim}\PYG{o}{.}\PYG{n}{\PYGZus{}rows} \PYG{o}{=} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}  \PYG{c+c1}{\PYGZsh{} play from current state}
+
+            \PYG{n}{player} \PYG{o}{=} \PYG{l+m+mi}{0}
+            \PYG{k}{while} \PYG{n}{nim}\PYG{p}{:}
+                \PYG{n}{ply} \PYG{o}{=} \PYG{n}{players}\PYG{p}{[}\PYG{n}{player}\PYG{p}{](}\PYG{n}{nim}\PYG{p}{)}
+                \PYG{n}{nim}\PYG{o}{.}\PYG{n}{nimming}\PYG{p}{(}\PYG{n}{ply}\PYG{p}{)}
+                \PYG{n}{player} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{player}
+            \PYG{k}{if} \PYG{n}{player} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                \PYG{n}{won} \PYG{o}{+=} \PYG{l+m+mi}{1}
+
+        \PYG{c+c1}{\PYGZsh{} update results}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{backpropagate}\PYG{p}{(}\PYG{n}{n\PYGZus{}matches}\PYG{p}{,} \PYG{n}{won}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{backpropagate}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{visits}\PYG{p}{:} \PYG{n+nb}{int}\PYG{p}{,} \PYG{n}{reward}\PYG{p}{:} \PYG{n+nb}{int}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Update results after simulating `visits` times game from current state\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{states}\PYG{p}{[}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{][}\PYG{l+s+s1}{\PYGZsq{}visits\PYGZsq{}}\PYG{p}{]} \PYG{o}{+=} \PYG{n}{visits}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{states}\PYG{p}{[}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{][}\PYG{l+s+s1}{\PYGZsq{}value\PYGZsq{}}\PYG{p}{]} \PYG{o}{+=} \PYG{n}{reward}
+
+    \PYG{c+c1}{\PYGZsh{} TRAINING \PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}}
+    \PYG{k}{def} \PYG{n+nf}{learn\PYGZus{}to\PYGZus{}play}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{opponents}\PYG{p}{:} \PYG{n+nb}{list}\PYG{p}{,} \PYG{n}{n\PYGZus{}sims}\PYG{p}{:} \PYG{n+nb}{int}\PYG{p}{,} \PYG{n}{n\PYGZus{}matches}\PYG{p}{:} \PYG{n+nb}{int}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Simulate the game from original state. For each move, simulate the outcome n\PYGZus{}matches times.}
+\PYG{l+s+sd}{        Keep moving until board is empty, then repeat n\PYGZus{}sims times.\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{k}{for} \PYG{n}{opponent} \PYG{o+ow}{in} \PYG{n}{opponents}\PYG{p}{:}
+            \PYG{k}{for} \PYG{n}{n} \PYG{o+ow}{in} \PYG{n}{tqdm}\PYG{p}{(}\PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{n\PYGZus{}sims}\PYG{p}{),} \PYG{n}{desc}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}Iterations, }\PYG{l+s+si}{\PYGZpc{}s}\PYG{l+s+s2}{\PYGZdq{}} \PYG{o}{\PYGZpc{}}\PYG{n}{opponent}\PYG{o}{.}\PYG{n+nv+vm}{\PYGZus{}\PYGZus{}name\PYGZus{}\PYGZus{}}\PYG{p}{):}
+                \PYG{c+c1}{\PYGZsh{} always start from initial state in a new simulation}
+                \PYG{n}{nim} \PYG{o}{=} \PYG{n}{Nim}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{nim\PYGZus{}size}\PYG{p}{)}
+                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state} \PYG{o}{=} \PYG{n}{nim}\PYG{o}{.}\PYG{n}{rows}
+
+                \PYG{k}{while} \PYG{n}{nim}\PYG{p}{:}
+                    \PYG{k}{if} \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()} \PYG{o}{\PYGZlt{}} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}factor}\PYG{p}{:}
+                        \PYG{c+c1}{\PYGZsh{} choose random state}
+                        \PYG{n}{ns} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}selection}\PYG{p}{()}
+                    \PYG{k}{else}\PYG{p}{:}
+                        \PYG{n}{ns} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{selection}\PYG{p}{()}
+                    \PYG{n}{ply} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{expand}\PYG{p}{(}\PYG{n}{next\PYGZus{}state}\PYG{o}{=}\PYG{n}{ns}\PYG{p}{)}
+                    \PYG{n}{nim}\PYG{o}{.}\PYG{n}{nimming}\PYG{p}{(}\PYG{n}{ply}\PYG{p}{)}
+
+                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{simulate}\PYG{p}{(}\PYG{n}{opponent}\PYG{p}{,} \PYG{n}{n\PYGZus{}matches}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{get\PYGZus{}statistics}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}Print overview of number of visits and wins for a visited state\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{n}{info} \PYG{o}{=} \PYG{p}{[(}\PYG{n}{k}\PYG{p}{,} \PYG{n}{v}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}value\PYGZsq{}}\PYG{p}{],} \PYG{n}{v}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}visits\PYGZsq{}}\PYG{p}{])} \PYG{k}{for} \PYG{n}{k}\PYG{p}{,} \PYG{n}{v} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{states}\PYG{o}{.}\PYG{n}{items}\PYG{p}{()]}
+        \PYG{k}{for} \PYG{n}{state} \PYG{o+ow}{in} \PYG{n}{info}\PYG{p}{:}
+            \PYG{k}{if} \PYG{n}{state}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{\PYGZgt{}} \PYG{l+m+mi}{0}\PYG{p}{:}  \PYG{c+c1}{\PYGZsh{} at least 1 visit}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}State }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{state}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{: }\PYG{l+s+se}{\PYGZbs{}t}\PYG{l+s+s1}{visits }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{state}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{ }\PYG{l+s+se}{\PYGZbs{}t}\PYG{l+s+s1}{wins }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{state}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{policy}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{state}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{Nimply}\PYG{p}{:}
+        \PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}The policy, i.e. the next move for the current state\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state} \PYG{o}{=} \PYG{n}{state}\PYG{o}{.}\PYG{n}{rows}
+        \PYG{n}{ns} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{selection}\PYG{p}{()}
+        \PYG{n}{ply} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{expand}\PYG{p}{(}\PYG{n}{next\PYGZus{}state}\PYG{o}{=}\PYG{n}{ns}\PYG{p}{)}
+        \PYG{k}{return} \PYG{n}{ply}
+
+\PYG{c+c1}{\PYGZsh{} \PYGZpc{}\PYGZpc{} MAIN}
+\PYG{k+kn}{import} \PYG{n+nn}{argparse}
+
+\PYG{k}{if} \PYG{n+nv+vm}{\PYGZus{}\PYGZus{}name\PYGZus{}\PYGZus{}} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}\PYGZus{}\PYGZus{}main\PYGZus{}\PYGZus{}\PYGZsq{}}\PYG{p}{:}
+
+    \PYG{c+c1}{\PYGZsh{} VARIABLES}
+    \PYG{n}{NIM\PYGZus{}SIZE} \PYG{o}{=} \PYG{l+m+mi}{3}
+    \PYG{n}{NUM\PYGZus{}MATCHES} \PYG{o}{=} \PYG{l+m+mi}{100}
+    \PYG{n}{EVAL\PYGZus{}MATCHES} \PYG{o}{=} \PYG{l+m+mi}{100}
+
+    \PYG{c+c1}{\PYGZsh{} INPUT}
+    \PYG{n}{parser} \PYG{o}{=} \PYG{n}{argparse}\PYG{o}{.}\PYG{n}{ArgumentParser}\PYG{p}{()}
+    \PYG{n}{parser}\PYG{o}{.}\PYG{n}{add\PYGZus{}argument}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}\PYGZhy{}t\PYGZdq{}}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}\PYGZhy{}\PYGZhy{}task\PYGZdq{}}\PYG{p}{,} \PYG{n}{dest}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}task\PYGZdq{}}\PYG{p}{,} \PYG{n}{default}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{,}
+                        \PYG{n}{help}\PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}Which task should run? Choose from 1, 2, 3 or 4.\PYGZdq{}}\PYG{p}{,} \PYG{n+nb}{type}\PYG{o}{=}\PYG{n+nb}{int}\PYG{p}{)}
+
+    \PYG{n}{args} \PYG{o}{=} \PYG{n}{parser}\PYG{o}{.}\PYG{n}{parse\PYGZus{}args}\PYG{p}{()}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Task: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{args}\PYG{o}{.}\PYG{n}{task}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{} \PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}TASK 1 \PYGZhy{} PLAYING THE OPTIMAL STRATEGY \PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}}
+    \PYG{k}{if} \PYG{n}{args}\PYG{o}{.}\PYG{n}{task} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{:}
+        \PYG{n}{play\PYGZus{}nim}\PYG{p}{(}\PYG{n}{optimal\PYGZus{}strategy}\PYG{p}{,} \PYG{n}{optimal\PYGZus{}strategy}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{} play the nim\PYGZhy{}sum strategy}
+        \PYG{n}{starting\PYGZus{}wins} \PYG{o}{=} \PYG{n}{evaluate}\PYG{p}{(}\PYG{n}{optimal\PYGZus{}strategy}\PYG{p}{,} \PYG{n}{optimal\PYGZus{}strategy}\PYG{p}{)}
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}Optimal strategy wins }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{starting\PYGZus{}wins} \PYG{o}{*} \PYG{l+m+mi}{100}\PYG{l+s+si}{:}\PYG{l+s+s1}{ .0f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZpc{} when starting and }\PYG{l+s+si}{\PYGZob{}}\PYG{p}{(}\PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{starting\PYGZus{}wins}\PYG{p}{)} \PYG{o}{*} \PYG{l+m+mi}{100}\PYG{l+s+si}{:}\PYG{l+s+s1}{ .0f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZpc{} when not starting.\PYGZsq{}}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{} \PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}TASK 2 \PYGZhy{} EVOLVE AN AGENT \PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}}
+    \PYG{k}{elif} \PYG{n}{args}\PYG{o}{.}\PYG{n}{task} \PYG{o}{==} \PYG{l+m+mi}{2}\PYG{p}{:}
+        \PYG{c+c1}{\PYGZsh{} set params}
+        \PYG{n}{POPULATION\PYGZus{}SIZE} \PYG{o}{=} \PYG{l+m+mi}{50}
+        \PYG{n}{OFFSPRING\PYGZus{}SIZE} \PYG{o}{=} \PYG{l+m+mi}{200}
+        \PYG{n}{GENERATIONS} \PYG{o}{=} \PYG{l+m+mi}{10}
+        \PYG{n}{OPPONENTS} \PYG{o}{=} \PYG{p}{[}\PYG{n}{dumb\PYGZus{}agent}\PYG{p}{,} \PYG{n}{pure\PYGZus{}random}\PYG{p}{,} \PYG{n}{semi\PYGZus{}smart}\PYG{p}{,} \PYG{n}{optimal\PYGZus{}strategy}\PYG{p}{]}
+
+        \PYG{n}{tournament\PYGZus{}size} \PYG{o}{=} \PYG{l+m+mi}{10}
+        \PYG{n}{mutation\PYGZus{}prob} \PYG{o}{=} \PYG{l+m+mf}{0.3}
+
+        \PYG{n}{pop} \PYG{o}{=} \PYG{n}{init\PYGZus{}population}\PYG{p}{()}
+
+        \PYG{k}{for} \PYG{n}{gen} \PYG{o+ow}{in} \PYG{n}{tqdm}\PYG{p}{(}\PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{GENERATIONS}\PYG{p}{),} \PYG{n}{desc}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}Generations\PYGZsq{}}\PYG{p}{):}
+            \PYG{n}{calc\PYGZus{}fitness}\PYG{p}{(}\PYG{n}{pop}\PYG{p}{)}
+            \PYG{n}{offspring} \PYG{o}{=} \PYG{n}{create\PYGZus{}offspring}\PYG{p}{(}\PYG{n}{pop}\PYG{p}{,} \PYG{n}{tournament\PYGZus{}size}\PYG{p}{,} \PYG{n}{mutation\PYGZus{}prob}\PYG{p}{)}
+            \PYG{n}{pop} \PYG{o}{=} \PYG{n}{get\PYGZus{}next\PYGZus{}generation}\PYG{p}{(}\PYG{n}{offspring}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{} \PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{} TASK 3 \PYGZhy{} MINMAX FUNCTION \PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}}
+    \PYG{k}{elif} \PYG{n}{args}\PYG{o}{.}\PYG{n}{task} \PYG{o}{==} \PYG{l+m+mi}{3}\PYG{p}{:}
+        \PYG{k+kn}{import} \PYG{n+nn}{time}
+        \PYG{n}{start} \PYG{o}{=} \PYG{n}{time}\PYG{o}{.}\PYG{n}{time}\PYG{p}{()}
+        \PYG{n}{play\PYGZus{}nim}\PYG{p}{(}\PYG{n}{best\PYGZus{}move}\PYG{p}{,} \PYG{n}{optimal\PYGZus{}strategy}\PYG{p}{)}
+        \PYG{n}{elapsed} \PYG{o}{=} \PYG{n}{time}\PYG{o}{.}\PYG{n}{time}\PYG{p}{()} \PYG{o}{\PYGZhy{}} \PYG{n}{start}
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}It take }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{elapsed} \PYG{l+s+si}{:}\PYG{l+s+s1}{.2f}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{ seconds to play a game of Nim with size }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{NIM\PYGZus{}SIZE}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{} \PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{} TASK 4 \PYGZhy{} REINFORCEMENT LEARNING \PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}}
+    \PYG{k}{elif} \PYG{n}{args}\PYG{o}{.}\PYG{n}{task} \PYG{o}{==} \PYG{l+m+mi}{4}\PYG{p}{:}
+        \PYG{n}{ITERS} \PYG{o}{=} \PYG{l+m+mi}{1000}
+
+        \PYG{c+c1}{\PYGZsh{} must have run with \PYGZhy{}t 2 to have a pop}
+        \PYG{k}{if} \PYG{l+s+s1}{\PYGZsq{}pop\PYGZsq{}} \PYG{o+ow}{in} \PYG{n+nb}{locals}\PYG{p}{():}
+            \PYG{n}{opponents} \PYG{o}{=} \PYG{p}{[}\PYG{n}{pure\PYGZus{}random}\PYG{p}{,} \PYG{n}{semi\PYGZus{}smart}\PYG{p}{,} \PYG{n}{make\PYGZus{}strategy}\PYG{p}{(}\PYG{n}{pop}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]),} \PYG{n}{optimal\PYGZus{}strategy}\PYG{p}{]}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n}{opponents} \PYG{o}{=} \PYG{p}{[}\PYG{n}{pure\PYGZus{}random}\PYG{p}{,} \PYG{n}{semi\PYGZus{}smart}\PYG{p}{,} \PYG{n}{optimal\PYGZus{}strategy}\PYG{p}{]}
+
+        \PYG{k}{for} \PYG{n}{opponent} \PYG{o+ow}{in} \PYG{n}{opponents}\PYG{p}{:}
+            \PYG{n}{rl\PYGZus{}agent} \PYG{o}{=} \PYG{n}{RLAgent}\PYG{p}{(}\PYG{n}{NIM\PYGZus{}SIZE}\PYG{p}{)}
+            \PYG{n}{rl\PYGZus{}agent}\PYG{o}{.}\PYG{n}{learn\PYGZus{}to\PYGZus{}play}\PYG{p}{([}\PYG{n}{opponent}\PYG{p}{],} \PYG{n}{n\PYGZus{}sims}\PYG{o}{=}\PYG{n}{ITERS}\PYG{p}{,} \PYG{n}{n\PYGZus{}matches}\PYG{o}{=}\PYG{n}{NUM\PYGZus{}MATCHES}\PYG{p}{)}
+            \PYG{n}{evaluate}\PYG{p}{(}\PYG{n}{rl\PYGZus{}agent}\PYG{o}{.}\PYG{n}{policy}\PYG{p}{,} \PYG{n}{opponent}\PYG{p}{)}
+
+
+    \PYG{k}{else}\PYG{p}{:}
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}Have not finished task }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{args}\PYG{o}{.}\PYG{n}{task}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+\end{Verbatim}

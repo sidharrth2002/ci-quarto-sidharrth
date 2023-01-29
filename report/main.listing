@@ -1,26 +1,311 @@
-def set_covering_problem_greedy(N, subsets, costs):
-  cost = 0
-  visited_nodes = 0
-  already_discovered = set()
-  final_solution = []
-  expected_solution = set(list(itertools.chain(*subsets)))
-  covered = set()
-  while covered != expected_solution:
-      subset = min(subsets, key=lambda s: costs[subsets.index(s)] / (len(set(s)-covered) + 1))
-      final_solution.append(subset)
-      cost += costs[subsets.index(subset)]
-      visited_nodes = visited_nodes+1
-      covered |= set(subset)
-  print("NUMBER OF VISITED NODES: ", visited_nodes)
-  print("w: ", sum(len(_) for _ in final_solution))
-  print(
-      f"Naive greedy solution for N={N}: w={sum(len(_) for _ in final_solution)} (bloat={(sum(len(_) for _ in final_solution)-N)/N*100:.0f}%)"
-  )
-  print(
-      f"My solution for N={N}: w={sum(len(_) for _ in final_solution)} (bloat={(sum(len(_) for _ in final_solution)-N)/N*100:.0f}%)"
-  )
-  return final_solution, cost
+"""
+In this file, I build a Deep Q-Network to play Quarto.
+"""
+import sys
 
-  for n in [5, 10, 50, 100, 500, 1000]:
-    subsets = problem(n, seed=SEED)
-    set_covering_problem_greedy(n, subsets, [1]*len(subsets))
+sys.path.insert(0, '..')
+
+from quarto.gym_environment import QuartoScape
+from collections import deque
+import logging
+import os
+import random
+from typing import Any
+import gym
+import numpy as np
+import tensorflow as tf
+from lib.players import RandomPlayer
+from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.initializers import HeUniform
+
+from quarto.objects import Quarto
+
+env = QuartoScape()
+
+
+def test(agent):
+    dq_wins = 0
+    for round in range(100):
+        game = Quarto()
+        agent.set_game(game)
+        game.set_players((RandomPlayer(game), agent))
+        winner = game.run()
+        if winner == 1:
+            dq_wins += 1
+        # logging.warning(f"main: Winner: player {winner}")
+    logging.warning(f"main: DQ wins: {dq_wins}")
+
+
+class DQNAgent:
+    '''Play Quarto using a Deep Q-Network'''
+
+    def __init__(self, env=env, game=None):
+        self.env = env
+        # main model updated every x steps
+        self.model = self._build_model()
+        # target model updated every y steps
+        self.target_model = self._build_model()
+        self.gamma = 0.618
+        self.min_replay_size = 500
+        self.lr = 0.7
+        self.epsilon = 0.8
+        if game is not None:
+            self.env.game = game
+
+        if os.path.exists('model.h5'):
+            # print('Loading model')
+            self.model = tf.keras.models.load_model('model.h5')
+
+    def set_game(self, game):
+        self.env.game = game
+
+    def get_all_actions(self):
+        '''
+        Return tuples from (0, 0, 0) to (3, 3, 15)
+        Element 1 is position x
+        Element 2 is position y
+        Element 3 is piece chosen for next player
+        '''
+        tuples = []
+        for i in range(0, 4):
+            for j in range(0, 4):
+                for k in range(0, 16):
+                    tuples.append((i, j, k))
+        return tuples
+
+    def _build_model(self):
+        '''
+        Architecture of network:
+        Input nodes are the state of the board
+        Output nodes are the Q-values for each potential action (each output node is an action)
+        An action is made up of (x, y, piece chosen for next player)
+        There are 16 * 16 * 16 possible actions and the mapping is found in get_all_actions()
+        '''
+        model = Sequential()
+        initializer = HeUniform()
+        model.add(Dense(
+            12, input_dim=self.env.observation_space.shape[0], activation='relu', kernel_initializer=initializer))
+        model.add(Dense(24, activation='relu', kernel_initializer=initializer))
+        model.add(Dense(48, activation='relu', kernel_initializer=initializer))
+        model.add(Dense(96, activation='relu', kernel_initializer=initializer))
+        model.add(Dense(192, activation='relu',
+                    kernel_initializer=initializer))
+        model.add(Dense(4 * 4 * 16, activation='linear',
+                    kernel_initializer=initializer))
+        model.compile(loss=tf.keras.losses.Huber(), metrics=[
+                        'mae', 'mse'], optimizer=Adam(learning_rate=0.001))
+        return model
+
+    def build_conv_model(self):
+        model = Sequential()
+        model.add(Conv2D(32, (3, 3), input_shape=(4, 4, 4), activation='relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Flatten())
+        model.add(Dense(16, activation='relu'))
+        model.add(Dense(4 * 4 * 16, activation='linear'))
+        model.compile(loss='mse', metrics=[
+                        'accuracy'], optimizer=Adam(learning_rate=0.001))
+        return model
+
+    def get_position(self, element, list):
+        if element in list:
+            return list.index(element)
+        else:
+            return -1
+
+    def make_prediction(self, state, chosen_piece=None):
+        '''Make a prediction using the network'''
+        # prediction X is the position of the single 1 in the state
+        pred_X = [self.get_position(i, list(state.flatten()))
+                    for i in range(0, 16)]
+        pred_X.append(chosen_piece)
+        return self.model.predict(np.array([pred_X]), verbose=0)[0]
+
+    def decay_lr(self, lr, decay_rate, decay_step):
+        return lr * (1 / (1 + decay_rate * decay_step))
+
+    def abbellire(self, state, chosen_piece):
+        '''
+        Beautify the state for network input
+        When in Italy, do as the Italians do
+        '''
+        X = [self.get_position(i, list(state.flatten())) for i in range(0, 16)]
+        X.append(chosen_piece)
+        return np.array([X])
+
+    def create_X(self, state, chosen_piece):
+        X = [self.get_position(i, list(state.flatten())) for i in range(0, 16)]
+        X.append(chosen_piece)
+        return np.array([X])
+
+    def train(self, replay_memory, batch_size):
+        '''Train the network'''
+        if len(replay_memory) < self.min_replay_size:
+            return
+
+        # print('TRAINING')
+        batch_size = 64 * 2
+        minibatch = random.sample(replay_memory, batch_size)
+        # state + chosen_piece for you -> action (contains chosen_piece for next player)
+        current_states = np.array([self.abbellire(state, chosen_piece)
+                                    for state, chosen_piece, action, reward, new_current_state, done in minibatch])
+        current_qs = self.model.predict(current_states.reshape(batch_size, 17))
+        # new current state + chosen_piece for next player -> action (contains chosen_piece for next player)
+        new_current_states = np.array([self.abbellire(new_current_state, action[2])
+                                        for state, chosen_piece, action, reward, new_current_state, done in minibatch])
+        future_qs = self.target_model.predict(
+            new_current_states.reshape(batch_size, 17), verbose=0)
+        # exclude invalid moves from calculation
+        X = []
+        Y = []
+        for index, (current_state, chosen_piece, action, reward, new_current_state, done) in enumerate(minibatch):
+            if not done:
+                # max_future_q = np.max(future_qs[index])
+                # new_q = reward + self.gamma * max_future_q
+                max_future_q = reward + self.gamma * np.max(future_qs[index])
+            else:
+                # max_future_q = reward
+                max_future_q = reward
+
+            # 0 2 5
+            # 0 + 2 * 4 + 5 * 16 = 85
+            current_qs[index][action[0] + action[1] * 4 + action[2] * 16] = (
+                1 - self.lr) * current_qs[index][action[0] + action[1] * 4 + action[2] * 16] + self.lr * max_future_q
+
+            X.append(self.abbellire(current_state, chosen_piece))
+            Y.append(current_qs[index])
+
+        X = np.array(X).reshape(batch_size, 17)
+        Y = np.array(Y).reshape(batch_size, 4 * 4 * 16)
+        logging.debug(X)
+        logging.debug(Y)
+        self.model.fit(X, Y, batch_size=batch_size,
+                        verbose=1, shuffle=True, epochs=1)
+
+    def choose_piece(self, state: Any, piece_chosen_for_you: int):
+        '''Choose piece for the next guy to play'''
+        self.env.game.set_board(state)
+        pred = self.make_prediction(state, piece_chosen_for_you)
+        pred = self.nan_out_invalid_actions(-100, pred)
+        best_action = np.nanargmax(pred)
+        best_action = self.get_all_actions()[best_action]
+        return best_action[2]
+
+    def place_piece(self, state: Any, piece_chosen_for_you: int):
+        '''Choose position to move piece to based on the current state'''
+        self.env.game.set_board(state)
+        pred = self.make_prediction(state, piece_chosen_for_you)
+        pred = self.nan_out_invalid_actions(piece_chosen_for_you, pred)
+        best_action = np.nanargmax(pred)
+        best_action = self.get_all_actions()[best_action]
+        # print(f'Best action for place piece: {best_action}')
+        return best_action[0], best_action[1]
+
+    def nan_out_invalid_actions(self, current_piece, prediction):
+        '''Zero out invalid moves'''
+        # zero out invalid moves
+        all_actions = self.get_all_actions()
+        for i in range(len(prediction)):
+            action = all_actions[i]
+            # print(action)
+            # print(current_piece)
+            if not self.env.game.check_if_move_valid(current_piece, action[0], action[1], action[2]):
+                prediction[i] = np.nan
+
+        return prediction
+
+    def run(self):
+        '''Run training of agent for x episodes'''
+        # ensure both model and target model have same set of weights at the start
+        self.target_model.set_weights(self.model.get_weights())
+
+        replay_memory = deque(maxlen=5000)
+        state = self.env.reset()
+        # number of episodes to train for
+        num_episodes = 2000
+
+        steps_to_update_target_model = 0
+
+        for episode in range(num_episodes):
+            if episode % 100 == 0:
+                self.model.save(f'/Volumes/USB/qn_weights.h5')
+
+            total_training_reward = 0
+            print(f'Episode: {episode}')
+            state = self.env.reset()
+            done = False
+            # initialise chosen piece with a random piece
+            # in reality, the opponent will choose a piece for you
+            chosen_piece = random.randint(0, 15)
+            while not done:
+                steps_to_update_target_model += 1
+
+                if random.random() < self.epsilon:
+                    action = self.env.action_space.sample()
+                    while not self.env.game.check_if_move_valid(chosen_piece, action[0], action[1], action[2]):
+                        action = self.env.action_space.sample()
+                else:
+                    prediction = self.make_prediction(state, chosen_piece)
+                    prediction = self.nan_out_invalid_actions(
+                        chosen_piece, prediction)
+                    if np.all(np.isnan(prediction)):
+                        action = self.env.action_space.sample()
+                        while not self.env.game.check_if_move_valid(chosen_piece, action[0], action[1], action[2]):
+                            action = self.env.action_space.sample()
+                    else:
+                        action = np.nanargmax(prediction)
+                        # get action at index of action
+                        action = self.get_all_actions()[action]
+
+                new_state, reward, done, _ = self.env.step(
+                    action, chosen_piece)
+
+                replay_memory.append(
+                    (state, chosen_piece, action, reward, new_state, done))
+
+                if done:
+                    logging.debug('GAME OVER')
+
+                if steps_to_update_target_model % 4 == 0 or done:
+                    self.train(replay_memory, 32)
+
+                state = new_state
+                total_training_reward += reward
+
+                if done:
+                    total_training_reward += 1
+
+                    if steps_to_update_target_model >= 100:
+                        self.target_model.set_weights(self.model.get_weights())
+                        steps_to_update_target_model = 0
+                    break
+
+                chosen_piece = action[2]
+
+            if episode % 10 == 0:
+                logging.info(f'Testing win rate after {episode} episodes')
+                test(self)
+
+            self.lr = self.decay_lr(self.lr, 0.0001, episode)
+
+        self.env.close()
+        self.model.save('/Volumes/USB/qn_weights.h5')
+
+def main():
+    dq_wins = 0
+    for round in range(100):
+        game = Quarto()
+        dqn_agent = DQNAgent(game=game)
+        dqn_agent.model = load_model('/Volumes/USB/qn_weights.h5')
+        game.set_players((RandomPlayer(game), DQNAgent(game=game)))
+        winner = game.run()
+        if winner == 1:
+            print('DQ wins')
+            dq_wins += 1
+        else:
+            print('Random wins')
+    print(f'DQ wins: {dq_wins/100}')
+
+main()
