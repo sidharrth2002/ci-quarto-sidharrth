@@ -16,13 +16,7 @@ from lib.scoring import score_board
 from QLMCTS import QLearningPlayer
 from Hardcoded.hardcoded import HardcodedPlayer
 
-
-# Q: How to import from parent directory?
-# A: https://stackoverflow.com/questions/714063/importing-modules-from-parent-folder
-
-
 logging.basicConfig(level=logging.DEBUG)
-
 
 class Genome:
     def __init__(self, thresholds, fitness):
@@ -370,8 +364,8 @@ class FinalPlayer(Player):
                 return action[0], action[1]
 
     def test_thresholds(self):
-        thresholds = {'random': 1.090773081612301,
-                      'hardcoded': 5.790328881747581, 'ql-mcts': 9.251997327518943}
+        thresholds = {'random': 2.090773081612301,
+                      'hardcoded': 3.790328881747581, 'ql-mcts': 7.251997327518943}
         win_rate = self.play_game(thresholds, num_games=10)
         print(win_rate)
 
