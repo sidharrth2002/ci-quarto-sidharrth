@@ -239,27 +239,27 @@ class Quarto(QuartoParent):
         logging.debug("Draw: ", self.check_if_draw())
         return self.check_winner() >= 0 or self.check_finished() or self.check_if_draw()
 
-    def run(self) -> int:
-        '''
-        Run the game (with output for every move)
-        '''
-        winner = -1
-        while winner < 0 and not self.check_finished():
-            self.print()
-            piece_ok = False
-            while not piece_ok:
-                piece_ok = self.select(
-                    self.__players[self._current_player].choose_piece())
-            piece_ok = False
-            self._current_player = (
-                self._current_player + 1) % self.MAX_PLAYERS
-            self.print()
-            while not piece_ok:
-                x, y = self.__players[self._current_player].place_piece()
-                piece_ok = self.place(x, y)
-            winner = self.check_winner()
-        self.print()
-        return winner
+    # def run(self) -> int:
+    #     '''
+    #     Run the game (with output for every move)
+    #     '''
+    #     winner = -1
+    #     while winner < 0 and not self.check_finished():
+    #         self.print()
+    #         piece_ok = False
+    #         while not piece_ok:
+    #             piece_ok = self.select(
+    #                 self.__players[self._current_player].choose_piece())
+    #         piece_ok = False
+    #         self._current_player = (
+    #             self._current_player + 1) % self.MAX_PLAYERS
+    #         self.print()
+    #         while not piece_ok:
+    #             x, y = self.__players[self._current_player].place_piece()
+    #             piece_ok = self.place(x, y)
+    #         winner = self.check_winner()
+    #     self.print()
+    #     return winner
 
     def state(self) -> str:
         '''

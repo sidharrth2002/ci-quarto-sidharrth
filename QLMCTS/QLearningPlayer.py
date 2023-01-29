@@ -9,6 +9,7 @@ import random
 import time
 
 from MCTS import MonteCarloTreeSearch
+from MCTS.mcts import decode_tree
 from quarto.objects import Quarto
 from lib.players import Player, RandomPlayer
 from lib.isomorphic import BoardTransforms
@@ -60,7 +61,8 @@ class QLearningPlayer(Player):
                 return val
 
         if self.hash_state_action(state, action) not in self.Q:
-            # return random.uniform(1.0, 0.01)
+            # used to determine if state exists in Q table
+            # if None, then go to MCTS
             return None
 
         return self.Q[self.hash_state_action(state, action)]
@@ -329,20 +331,6 @@ class QLearningPlayer(Player):
                     self.current_state.switch_player()
                     player = 1 - player
 
-                    # self.previous_state = deepcopy(self.current_state)
-                    # winning_piece, position = self.hardcoded_strategy_get_move(
-                    #     self.current_state)
-                    # self.current_state.select(selected_piece)
-                    # self.current_state.place(position[0], position[1])
-                    # next_piece = self.hardcoded_strategy_get_piece(
-                    #     self.current_state)
-                    # self.current_state.set_selected_piece(next_piece)
-                    # self.current_state.switch_player()
-
-                    # logging.debug("After QL-MCTS move")
-                    # logging.debug(self.current_state.state_as_array())
-
-                    # player = 1 - player
                 else:
                     # Random moves here
                     action = random_player.place_piece()
@@ -382,10 +370,10 @@ class QLearningPlayer(Player):
                 wins = 0
                 tries = 0
 
-            # clear the tree every time
+            # OPTION 1: clear the tree every time
             self.tree = MonteCarloTreeSearch(board=self.board)
 
-            # if average agent decision time is too long, clear the MCTS tree
+            # OPTION 2: if average agent decision time is too long, clear the MCTS tree
             # if sum(agent_decision_times) / len(agent_decision_times) > 5:
             #     self.tree = MonteCarloTreeSearch(board=self.board)
             #     agent_decision_times = []
@@ -395,7 +383,7 @@ class QLearningPlayer(Player):
 
 if __name__ == '__main__':
     # load tree with MonteCarloSearchDecoder
-    # with open('progress.json', 'r') as f:
-    #     tree = decode_tree(json.load(f))
+    with open('progress.json', 'r') as f:
+        tree = decode_tree(json.load(f))
     qplayer = QLearningPlayer()
     qplayer.train(10)

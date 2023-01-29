@@ -367,12 +367,15 @@ class FinalPlayer(Player):
         thresholds = {'random': 2.090773081612301,
                       'hardcoded': 3.790328881747581, 'ql-mcts': 7.251997327518943}
         win_rate = self.play_game(thresholds, num_games=10)
-        print(win_rate)
-
+        return win_rate
 
 if __name__ == "__main__":
     final_player = FinalPlayer()
     # best_thresholds = final_player.evolve()
     # print(best_thresholds)
 
-    final_player.test_thresholds()
+    average_win_rate = 0
+    for i in range(10):
+        win_rate = final_player.test_thresholds()
+        average_win_rate += win_rate
+    print(f"Average win rate: {average_win_rate/10}")

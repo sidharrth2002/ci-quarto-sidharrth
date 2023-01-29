@@ -1,5 +1,10 @@
 '''
+Hardcoded player for Quarto
+Follows risky strategy from paper:
 
+"Developing Strategic and Mathematical Thinking via Game Play:
+Programming to Investigate a Risky Strategy for Quarto"
+by Peter Rowlett
 '''
 from copy import deepcopy
 import itertools

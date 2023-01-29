@@ -1,0 +1,313 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{In this file, I build a Deep Q\PYGZhy{}Network to play Quarto.}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{k+kn}{import} \PYG{n+nn}{sys}
+
+\PYG{n}{sys}\PYG{o}{.}\PYG{n}{path}\PYG{o}{.}\PYG{n}{insert}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}..\PYGZsq{}}\PYG{p}{)}
+
+\PYG{k+kn}{from} \PYG{n+nn}{quarto.gym\PYGZus{}environment} \PYG{k+kn}{import} \PYG{n}{QuartoScape}
+\PYG{k+kn}{from} \PYG{n+nn}{collections} \PYG{k+kn}{import} \PYG{n}{deque}
+\PYG{k+kn}{import} \PYG{n+nn}{logging}
+\PYG{k+kn}{import} \PYG{n+nn}{os}
+\PYG{k+kn}{import} \PYG{n+nn}{random}
+\PYG{k+kn}{from} \PYG{n+nn}{typing} \PYG{k+kn}{import} \PYG{n}{Any}
+\PYG{k+kn}{import} \PYG{n+nn}{gym}
+\PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k}{as} \PYG{n+nn}{np}
+\PYG{k+kn}{import} \PYG{n+nn}{tensorflow} \PYG{k}{as} \PYG{n+nn}{tf}
+\PYG{k+kn}{from} \PYG{n+nn}{lib.players} \PYG{k+kn}{import} \PYG{n}{RandomPlayer}
+\PYG{k+kn}{from} \PYG{n+nn}{tensorflow.keras.models} \PYG{k+kn}{import} \PYG{n}{Sequential}\PYG{p}{,} \PYG{n}{load\PYGZus{}model}
+\PYG{k+kn}{from} \PYG{n+nn}{tensorflow.keras.layers} \PYG{k+kn}{import} \PYG{n}{Dense}\PYG{p}{,} \PYG{n}{Conv2D}\PYG{p}{,} \PYG{n}{MaxPooling2D}\PYG{p}{,} \PYG{n}{Flatten}
+\PYG{k+kn}{from} \PYG{n+nn}{tensorflow.keras.optimizers} \PYG{k+kn}{import} \PYG{n}{Adam}
+\PYG{k+kn}{from} \PYG{n+nn}{tensorflow.keras.initializers} \PYG{k+kn}{import} \PYG{n}{HeUniform}
+
+\PYG{k+kn}{from} \PYG{n+nn}{quarto.objects} \PYG{k+kn}{import} \PYG{n}{Quarto}
+
+\PYG{n}{env} \PYG{o}{=} \PYG{n}{QuartoScape}\PYG{p}{()}
+
+
+\PYG{k}{def} \PYG{n+nf}{test}\PYG{p}{(}\PYG{n}{agent}\PYG{p}{):}
+    \PYG{n}{dq\PYGZus{}wins} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{k}{for} \PYG{n+nb}{round} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{100}\PYG{p}{):}
+        \PYG{n}{game} \PYG{o}{=} \PYG{n}{Quarto}\PYG{p}{()}
+        \PYG{n}{agent}\PYG{o}{.}\PYG{n}{set\PYGZus{}game}\PYG{p}{(}\PYG{n}{game}\PYG{p}{)}
+        \PYG{n}{game}\PYG{o}{.}\PYG{n}{set\PYGZus{}players}\PYG{p}{((}\PYG{n}{RandomPlayer}\PYG{p}{(}\PYG{n}{game}\PYG{p}{),} \PYG{n}{agent}\PYG{p}{))}
+        \PYG{n}{winner} \PYG{o}{=} \PYG{n}{game}\PYG{o}{.}\PYG{n}{run}\PYG{p}{()}
+        \PYG{k}{if} \PYG{n}{winner} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{:}
+            \PYG{n}{dq\PYGZus{}wins} \PYG{o}{+=} \PYG{l+m+mi}{1}
+        \PYG{c+c1}{\PYGZsh{} logging.warning(f\PYGZdq{}main: Winner: player \PYGZob{}winner\PYGZcb{}\PYGZdq{})}
+    \PYG{n}{logging}\PYG{o}{.}\PYG{n}{warning}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}main: DQ wins: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{dq\PYGZus{}wins}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+
+
+\PYG{k}{class} \PYG{n+nc}{DQNAgent}\PYG{p}{:}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}Play Quarto using a Deep Q\PYGZhy{}Network\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{env}\PYG{o}{=}\PYG{n}{env}\PYG{p}{,} \PYG{n}{game}\PYG{o}{=}\PYG{k+kc}{None}\PYG{p}{):}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{env} \PYG{o}{=} \PYG{n}{env}
+        \PYG{c+c1}{\PYGZsh{} main model updated every x steps}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{model} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}build\PYGZus{}model}\PYG{p}{()}
+        \PYG{c+c1}{\PYGZsh{} target model updated every y steps}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{target\PYGZus{}model} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}build\PYGZus{}model}\PYG{p}{()}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{gamma} \PYG{o}{=} \PYG{l+m+mf}{0.618}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{min\PYGZus{}replay\PYGZus{}size} \PYG{o}{=} \PYG{l+m+mi}{500}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{lr} \PYG{o}{=} \PYG{l+m+mf}{0.7}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{epsilon} \PYG{o}{=} \PYG{l+m+mf}{0.8}
+        \PYG{k}{if} \PYG{n}{game} \PYG{o+ow}{is} \PYG{o+ow}{not} \PYG{k+kc}{None}\PYG{p}{:}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{env}\PYG{o}{.}\PYG{n}{game} \PYG{o}{=} \PYG{n}{game}
+
+        \PYG{k}{if} \PYG{n}{os}\PYG{o}{.}\PYG{n}{path}\PYG{o}{.}\PYG{n}{exists}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}model.h5\PYGZsq{}}\PYG{p}{):}
+            \PYG{c+c1}{\PYGZsh{} print(\PYGZsq{}Loading model\PYGZsq{})}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{model} \PYG{o}{=} \PYG{n}{tf}\PYG{o}{.}\PYG{n}{keras}\PYG{o}{.}\PYG{n}{models}\PYG{o}{.}\PYG{n}{load\PYGZus{}model}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}model.h5\PYGZsq{}}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{set\PYGZus{}game}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{game}\PYG{p}{):}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{env}\PYG{o}{.}\PYG{n}{game} \PYG{o}{=} \PYG{n}{game}
+
+    \PYG{k}{def} \PYG{n+nf}{get\PYGZus{}all\PYGZus{}actions}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Return tuples from (0, 0, 0) to (3, 3, 15)}
+\PYG{l+s+sd}{        Element 1 is position x}
+\PYG{l+s+sd}{        Element 2 is position y}
+\PYG{l+s+sd}{        Element 3 is piece chosen for next player}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{n}{tuples} \PYG{o}{=} \PYG{p}{[]}
+        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{4}\PYG{p}{):}
+            \PYG{k}{for} \PYG{n}{j} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{4}\PYG{p}{):}
+                \PYG{k}{for} \PYG{n}{k} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{16}\PYG{p}{):}
+                    \PYG{n}{tuples}\PYG{o}{.}\PYG{n}{append}\PYG{p}{((}\PYG{n}{i}\PYG{p}{,} \PYG{n}{j}\PYG{p}{,} \PYG{n}{k}\PYG{p}{))}
+        \PYG{k}{return} \PYG{n}{tuples}
+
+    \PYG{k}{def} \PYG{n+nf}{\PYGZus{}build\PYGZus{}model}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Architecture of network:}
+\PYG{l+s+sd}{        Input nodes are the state of the board}
+\PYG{l+s+sd}{        Output nodes are the Q\PYGZhy{}values for each potential action (each output node is an action)}
+\PYG{l+s+sd}{        An action is made up of (x, y, piece chosen for next player)}
+\PYG{l+s+sd}{        There are 16 * 16 * 16 possible actions and the mapping is found in get\PYGZus{}all\PYGZus{}actions()}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{n}{model} \PYG{o}{=} \PYG{n}{Sequential}\PYG{p}{()}
+        \PYG{n}{initializer} \PYG{o}{=} \PYG{n}{HeUniform}\PYG{p}{()}
+        \PYG{n}{model}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{Dense}\PYG{p}{(}
+            \PYG{l+m+mi}{12}\PYG{p}{,} \PYG{n}{input\PYGZus{}dim}\PYG{o}{=}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{env}\PYG{o}{.}\PYG{n}{observation\PYGZus{}space}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{activation}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}relu\PYGZsq{}}\PYG{p}{,} \PYG{n}{kernel\PYGZus{}initializer}\PYG{o}{=}\PYG{n}{initializer}\PYG{p}{))}
+        \PYG{n}{model}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{Dense}\PYG{p}{(}\PYG{l+m+mi}{24}\PYG{p}{,} \PYG{n}{activation}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}relu\PYGZsq{}}\PYG{p}{,} \PYG{n}{kernel\PYGZus{}initializer}\PYG{o}{=}\PYG{n}{initializer}\PYG{p}{))}
+        \PYG{n}{model}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{Dense}\PYG{p}{(}\PYG{l+m+mi}{48}\PYG{p}{,} \PYG{n}{activation}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}relu\PYGZsq{}}\PYG{p}{,} \PYG{n}{kernel\PYGZus{}initializer}\PYG{o}{=}\PYG{n}{initializer}\PYG{p}{))}
+        \PYG{n}{model}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{Dense}\PYG{p}{(}\PYG{l+m+mi}{96}\PYG{p}{,} \PYG{n}{activation}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}relu\PYGZsq{}}\PYG{p}{,} \PYG{n}{kernel\PYGZus{}initializer}\PYG{o}{=}\PYG{n}{initializer}\PYG{p}{))}
+        \PYG{n}{model}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{Dense}\PYG{p}{(}\PYG{l+m+mi}{192}\PYG{p}{,} \PYG{n}{activation}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}relu\PYGZsq{}}\PYG{p}{,}
+                    \PYG{n}{kernel\PYGZus{}initializer}\PYG{o}{=}\PYG{n}{initializer}\PYG{p}{))}
+        \PYG{n}{model}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{Dense}\PYG{p}{(}\PYG{l+m+mi}{4} \PYG{o}{*} \PYG{l+m+mi}{4} \PYG{o}{*} \PYG{l+m+mi}{16}\PYG{p}{,} \PYG{n}{activation}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}linear\PYGZsq{}}\PYG{p}{,}
+                    \PYG{n}{kernel\PYGZus{}initializer}\PYG{o}{=}\PYG{n}{initializer}\PYG{p}{))}
+        \PYG{n}{model}\PYG{o}{.}\PYG{n}{compile}\PYG{p}{(}\PYG{n}{loss}\PYG{o}{=}\PYG{n}{tf}\PYG{o}{.}\PYG{n}{keras}\PYG{o}{.}\PYG{n}{losses}\PYG{o}{.}\PYG{n}{Huber}\PYG{p}{(),} \PYG{n}{metrics}\PYG{o}{=}\PYG{p}{[}
+                        \PYG{l+s+s1}{\PYGZsq{}mae\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}mse\PYGZsq{}}\PYG{p}{],} \PYG{n}{optimizer}\PYG{o}{=}\PYG{n}{Adam}\PYG{p}{(}\PYG{n}{learning\PYGZus{}rate}\PYG{o}{=}\PYG{l+m+mf}{0.001}\PYG{p}{))}
+        \PYG{k}{return} \PYG{n}{model}
+
+    \PYG{k}{def} \PYG{n+nf}{build\PYGZus{}conv\PYGZus{}model}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{n}{model} \PYG{o}{=} \PYG{n}{Sequential}\PYG{p}{()}
+        \PYG{n}{model}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{Conv2D}\PYG{p}{(}\PYG{l+m+mi}{32}\PYG{p}{,} \PYG{p}{(}\PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{),} \PYG{n}{input\PYGZus{}shape}\PYG{o}{=}\PYG{p}{(}\PYG{l+m+mi}{4}\PYG{p}{,} \PYG{l+m+mi}{4}\PYG{p}{,} \PYG{l+m+mi}{4}\PYG{p}{),} \PYG{n}{activation}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}relu\PYGZsq{}}\PYG{p}{))}
+        \PYG{n}{model}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{MaxPooling2D}\PYG{p}{(}\PYG{n}{pool\PYGZus{}size}\PYG{o}{=}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{)))}
+        \PYG{n}{model}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{Flatten}\PYG{p}{())}
+        \PYG{n}{model}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{Dense}\PYG{p}{(}\PYG{l+m+mi}{16}\PYG{p}{,} \PYG{n}{activation}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}relu\PYGZsq{}}\PYG{p}{))}
+        \PYG{n}{model}\PYG{o}{.}\PYG{n}{add}\PYG{p}{(}\PYG{n}{Dense}\PYG{p}{(}\PYG{l+m+mi}{4} \PYG{o}{*} \PYG{l+m+mi}{4} \PYG{o}{*} \PYG{l+m+mi}{16}\PYG{p}{,} \PYG{n}{activation}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}linear\PYGZsq{}}\PYG{p}{))}
+        \PYG{n}{model}\PYG{o}{.}\PYG{n}{compile}\PYG{p}{(}\PYG{n}{loss}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}mse\PYGZsq{}}\PYG{p}{,} \PYG{n}{metrics}\PYG{o}{=}\PYG{p}{[}
+                        \PYG{l+s+s1}{\PYGZsq{}accuracy\PYGZsq{}}\PYG{p}{],} \PYG{n}{optimizer}\PYG{o}{=}\PYG{n}{Adam}\PYG{p}{(}\PYG{n}{learning\PYGZus{}rate}\PYG{o}{=}\PYG{l+m+mf}{0.001}\PYG{p}{))}
+        \PYG{k}{return} \PYG{n}{model}
+
+    \PYG{k}{def} \PYG{n+nf}{get\PYGZus{}position}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{element}\PYG{p}{,} \PYG{n+nb}{list}\PYG{p}{):}
+        \PYG{k}{if} \PYG{n}{element} \PYG{o+ow}{in} \PYG{n+nb}{list}\PYG{p}{:}
+            \PYG{k}{return} \PYG{n+nb}{list}\PYG{o}{.}\PYG{n}{index}\PYG{p}{(}\PYG{n}{element}\PYG{p}{)}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{k}{return} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}
+
+    \PYG{k}{def} \PYG{n+nf}{make\PYGZus{}prediction}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{state}\PYG{p}{,} \PYG{n}{chosen\PYGZus{}piece}\PYG{o}{=}\PYG{k+kc}{None}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}Make a prediction using the network\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{c+c1}{\PYGZsh{} prediction X is the position of the single 1 in the state}
+        \PYG{n}{pred\PYGZus{}X} \PYG{o}{=} \PYG{p}{[}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}position}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{state}\PYG{o}{.}\PYG{n}{flatten}\PYG{p}{()))}
+                    \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{16}\PYG{p}{)]}
+        \PYG{n}{pred\PYGZus{}X}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{chosen\PYGZus{}piece}\PYG{p}{)}
+        \PYG{k}{return} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{model}\PYG{o}{.}\PYG{n}{predict}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{([}\PYG{n}{pred\PYGZus{}X}\PYG{p}{]),} \PYG{n}{verbose}\PYG{o}{=}\PYG{l+m+mi}{0}\PYG{p}{)[}\PYG{l+m+mi}{0}\PYG{p}{]}
+
+    \PYG{k}{def} \PYG{n+nf}{decay\PYGZus{}lr}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{lr}\PYG{p}{,} \PYG{n}{decay\PYGZus{}rate}\PYG{p}{,} \PYG{n}{decay\PYGZus{}step}\PYG{p}{):}
+        \PYG{k}{return} \PYG{n}{lr} \PYG{o}{*} \PYG{p}{(}\PYG{l+m+mi}{1} \PYG{o}{/} \PYG{p}{(}\PYG{l+m+mi}{1} \PYG{o}{+} \PYG{n}{decay\PYGZus{}rate} \PYG{o}{*} \PYG{n}{decay\PYGZus{}step}\PYG{p}{))}
+
+    \PYG{k}{def} \PYG{n+nf}{abbellire}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{state}\PYG{p}{,} \PYG{n}{chosen\PYGZus{}piece}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Beautify the state for network input}
+\PYG{l+s+sd}{        When in Italy, do as the Italians do}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{n}{X} \PYG{o}{=} \PYG{p}{[}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}position}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{state}\PYG{o}{.}\PYG{n}{flatten}\PYG{p}{()))} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{16}\PYG{p}{)]}
+        \PYG{n}{X}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{chosen\PYGZus{}piece}\PYG{p}{)}
+        \PYG{k}{return} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{([}\PYG{n}{X}\PYG{p}{])}
+
+    \PYG{k}{def} \PYG{n+nf}{create\PYGZus{}X}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{state}\PYG{p}{,} \PYG{n}{chosen\PYGZus{}piece}\PYG{p}{):}
+        \PYG{n}{X} \PYG{o}{=} \PYG{p}{[}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}position}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{state}\PYG{o}{.}\PYG{n}{flatten}\PYG{p}{()))} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{16}\PYG{p}{)]}
+        \PYG{n}{X}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{chosen\PYGZus{}piece}\PYG{p}{)}
+        \PYG{k}{return} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{([}\PYG{n}{X}\PYG{p}{])}
+
+    \PYG{k}{def} \PYG{n+nf}{train}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{replay\PYGZus{}memory}\PYG{p}{,} \PYG{n}{batch\PYGZus{}size}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}Train the network\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{k}{if} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{replay\PYGZus{}memory}\PYG{p}{)} \PYG{o}{\PYGZlt{}} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{min\PYGZus{}replay\PYGZus{}size}\PYG{p}{:}
+            \PYG{k}{return}
+
+        \PYG{c+c1}{\PYGZsh{} print(\PYGZsq{}TRAINING\PYGZsq{})}
+        \PYG{n}{batch\PYGZus{}size} \PYG{o}{=} \PYG{l+m+mi}{64} \PYG{o}{*} \PYG{l+m+mi}{2}
+        \PYG{n}{minibatch} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{(}\PYG{n}{replay\PYGZus{}memory}\PYG{p}{,} \PYG{n}{batch\PYGZus{}size}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{} state + chosen\PYGZus{}piece for you \PYGZhy{}\PYGZgt{} action (contains chosen\PYGZus{}piece for next player)}
+        \PYG{n}{current\PYGZus{}states} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{([}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{abbellire}\PYG{p}{(}\PYG{n}{state}\PYG{p}{,} \PYG{n}{chosen\PYGZus{}piece}\PYG{p}{)}
+                                    \PYG{k}{for} \PYG{n}{state}\PYG{p}{,} \PYG{n}{chosen\PYGZus{}piece}\PYG{p}{,} \PYG{n}{action}\PYG{p}{,} \PYG{n}{reward}\PYG{p}{,} \PYG{n}{new\PYGZus{}current\PYGZus{}state}\PYG{p}{,} \PYG{n}{done} \PYG{o+ow}{in} \PYG{n}{minibatch}\PYG{p}{])}
+        \PYG{n}{current\PYGZus{}qs} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{model}\PYG{o}{.}\PYG{n}{predict}\PYG{p}{(}\PYG{n}{current\PYGZus{}states}\PYG{o}{.}\PYG{n}{reshape}\PYG{p}{(}\PYG{n}{batch\PYGZus{}size}\PYG{p}{,} \PYG{l+m+mi}{17}\PYG{p}{))}
+        \PYG{c+c1}{\PYGZsh{} new current state + chosen\PYGZus{}piece for next player \PYGZhy{}\PYGZgt{} action (contains chosen\PYGZus{}piece for next player)}
+        \PYG{n}{new\PYGZus{}current\PYGZus{}states} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{([}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{abbellire}\PYG{p}{(}\PYG{n}{new\PYGZus{}current\PYGZus{}state}\PYG{p}{,} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{])}
+                                        \PYG{k}{for} \PYG{n}{state}\PYG{p}{,} \PYG{n}{chosen\PYGZus{}piece}\PYG{p}{,} \PYG{n}{action}\PYG{p}{,} \PYG{n}{reward}\PYG{p}{,} \PYG{n}{new\PYGZus{}current\PYGZus{}state}\PYG{p}{,} \PYG{n}{done} \PYG{o+ow}{in} \PYG{n}{minibatch}\PYG{p}{])}
+        \PYG{n}{future\PYGZus{}qs} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{target\PYGZus{}model}\PYG{o}{.}\PYG{n}{predict}\PYG{p}{(}
+            \PYG{n}{new\PYGZus{}current\PYGZus{}states}\PYG{o}{.}\PYG{n}{reshape}\PYG{p}{(}\PYG{n}{batch\PYGZus{}size}\PYG{p}{,} \PYG{l+m+mi}{17}\PYG{p}{),} \PYG{n}{verbose}\PYG{o}{=}\PYG{l+m+mi}{0}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{} exclude invalid moves from calculation}
+        \PYG{n}{X} \PYG{o}{=} \PYG{p}{[]}
+        \PYG{n}{Y} \PYG{o}{=} \PYG{p}{[]}
+        \PYG{k}{for} \PYG{n}{index}\PYG{p}{,} \PYG{p}{(}\PYG{n}{current\PYGZus{}state}\PYG{p}{,} \PYG{n}{chosen\PYGZus{}piece}\PYG{p}{,} \PYG{n}{action}\PYG{p}{,} \PYG{n}{reward}\PYG{p}{,} \PYG{n}{new\PYGZus{}current\PYGZus{}state}\PYG{p}{,} \PYG{n}{done}\PYG{p}{)} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{minibatch}\PYG{p}{):}
+            \PYG{k}{if} \PYG{o+ow}{not} \PYG{n}{done}\PYG{p}{:}
+                \PYG{c+c1}{\PYGZsh{} max\PYGZus{}future\PYGZus{}q = np.max(future\PYGZus{}qs[index])}
+                \PYG{c+c1}{\PYGZsh{} new\PYGZus{}q = reward + self.gamma * max\PYGZus{}future\PYGZus{}q}
+                \PYG{n}{max\PYGZus{}future\PYGZus{}q} \PYG{o}{=} \PYG{n}{reward} \PYG{o}{+} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{gamma} \PYG{o}{*} \PYG{n}{np}\PYG{o}{.}\PYG{n}{max}\PYG{p}{(}\PYG{n}{future\PYGZus{}qs}\PYG{p}{[}\PYG{n}{index}\PYG{p}{])}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{c+c1}{\PYGZsh{} max\PYGZus{}future\PYGZus{}q = reward}
+                \PYG{n}{max\PYGZus{}future\PYGZus{}q} \PYG{o}{=} \PYG{n}{reward}
+
+            \PYG{c+c1}{\PYGZsh{} 0 2 5}
+            \PYG{c+c1}{\PYGZsh{} 0 + 2 * 4 + 5 * 16 = 85}
+            \PYG{n}{current\PYGZus{}qs}\PYG{p}{[}\PYG{n}{index}\PYG{p}{][}\PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{+} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{*} \PYG{l+m+mi}{4} \PYG{o}{+} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{*} \PYG{l+m+mi}{16}\PYG{p}{]} \PYG{o}{=} \PYG{p}{(}
+                \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{lr}\PYG{p}{)} \PYG{o}{*} \PYG{n}{current\PYGZus{}qs}\PYG{p}{[}\PYG{n}{index}\PYG{p}{][}\PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{+} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o}{*} \PYG{l+m+mi}{4} \PYG{o}{+} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]} \PYG{o}{*} \PYG{l+m+mi}{16}\PYG{p}{]} \PYG{o}{+} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{lr} \PYG{o}{*} \PYG{n}{max\PYGZus{}future\PYGZus{}q}
+
+            \PYG{n}{X}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{abbellire}\PYG{p}{(}\PYG{n}{current\PYGZus{}state}\PYG{p}{,} \PYG{n}{chosen\PYGZus{}piece}\PYG{p}{))}
+            \PYG{n}{Y}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{current\PYGZus{}qs}\PYG{p}{[}\PYG{n}{index}\PYG{p}{])}
+
+        \PYG{n}{X} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{X}\PYG{p}{)}\PYG{o}{.}\PYG{n}{reshape}\PYG{p}{(}\PYG{n}{batch\PYGZus{}size}\PYG{p}{,} \PYG{l+m+mi}{17}\PYG{p}{)}
+        \PYG{n}{Y} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array}\PYG{p}{(}\PYG{n}{Y}\PYG{p}{)}\PYG{o}{.}\PYG{n}{reshape}\PYG{p}{(}\PYG{n}{batch\PYGZus{}size}\PYG{p}{,} \PYG{l+m+mi}{4} \PYG{o}{*} \PYG{l+m+mi}{4} \PYG{o}{*} \PYG{l+m+mi}{16}\PYG{p}{)}
+        \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{n}{X}\PYG{p}{)}
+        \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{n}{Y}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{model}\PYG{o}{.}\PYG{n}{fit}\PYG{p}{(}\PYG{n}{X}\PYG{p}{,} \PYG{n}{Y}\PYG{p}{,} \PYG{n}{batch\PYGZus{}size}\PYG{o}{=}\PYG{n}{batch\PYGZus{}size}\PYG{p}{,}
+                        \PYG{n}{verbose}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{shuffle}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{,} \PYG{n}{epochs}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{choose\PYGZus{}piece}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{state}\PYG{p}{:} \PYG{n}{Any}\PYG{p}{,} \PYG{n}{piece\PYGZus{}chosen\PYGZus{}for\PYGZus{}you}\PYG{p}{:} \PYG{n+nb}{int}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}Choose piece for the next guy to play\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{env}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{set\PYGZus{}board}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
+        \PYG{n}{pred} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{make\PYGZus{}prediction}\PYG{p}{(}\PYG{n}{state}\PYG{p}{,} \PYG{n}{piece\PYGZus{}chosen\PYGZus{}for\PYGZus{}you}\PYG{p}{)}
+        \PYG{n}{pred} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{nan\PYGZus{}out\PYGZus{}invalid\PYGZus{}actions}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{100}\PYG{p}{,} \PYG{n}{pred}\PYG{p}{)}
+        \PYG{n}{best\PYGZus{}action} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{nanargmax}\PYG{p}{(}\PYG{n}{pred}\PYG{p}{)}
+        \PYG{n}{best\PYGZus{}action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}all\PYGZus{}actions}\PYG{p}{()[}\PYG{n}{best\PYGZus{}action}\PYG{p}{]}
+        \PYG{k}{return} \PYG{n}{best\PYGZus{}action}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]}
+
+    \PYG{k}{def} \PYG{n+nf}{place\PYGZus{}piece}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{state}\PYG{p}{:} \PYG{n}{Any}\PYG{p}{,} \PYG{n}{piece\PYGZus{}chosen\PYGZus{}for\PYGZus{}you}\PYG{p}{:} \PYG{n+nb}{int}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}Choose position to move piece to based on the current state\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{env}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{set\PYGZus{}board}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
+        \PYG{n}{pred} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{make\PYGZus{}prediction}\PYG{p}{(}\PYG{n}{state}\PYG{p}{,} \PYG{n}{piece\PYGZus{}chosen\PYGZus{}for\PYGZus{}you}\PYG{p}{)}
+        \PYG{n}{pred} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{nan\PYGZus{}out\PYGZus{}invalid\PYGZus{}actions}\PYG{p}{(}\PYG{n}{piece\PYGZus{}chosen\PYGZus{}for\PYGZus{}you}\PYG{p}{,} \PYG{n}{pred}\PYG{p}{)}
+        \PYG{n}{best\PYGZus{}action} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{nanargmax}\PYG{p}{(}\PYG{n}{pred}\PYG{p}{)}
+        \PYG{n}{best\PYGZus{}action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}all\PYGZus{}actions}\PYG{p}{()[}\PYG{n}{best\PYGZus{}action}\PYG{p}{]}
+        \PYG{c+c1}{\PYGZsh{} print(f\PYGZsq{}Best action for place piece: \PYGZob{}best\PYGZus{}action\PYGZcb{}\PYGZsq{})}
+        \PYG{k}{return} \PYG{n}{best\PYGZus{}action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{best\PYGZus{}action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]}
+
+    \PYG{k}{def} \PYG{n+nf}{nan\PYGZus{}out\PYGZus{}invalid\PYGZus{}actions}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{current\PYGZus{}piece}\PYG{p}{,} \PYG{n}{prediction}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}Zero out invalid moves\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{c+c1}{\PYGZsh{} zero out invalid moves}
+        \PYG{n}{all\PYGZus{}actions} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}all\PYGZus{}actions}\PYG{p}{()}
+        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n}{prediction}\PYG{p}{)):}
+            \PYG{n}{action} \PYG{o}{=} \PYG{n}{all\PYGZus{}actions}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]}
+            \PYG{c+c1}{\PYGZsh{} print(action)}
+            \PYG{c+c1}{\PYGZsh{} print(current\PYGZus{}piece)}
+            \PYG{k}{if} \PYG{o+ow}{not} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{env}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}move\PYGZus{}valid}\PYG{p}{(}\PYG{n}{current\PYGZus{}piece}\PYG{p}{,} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]):}
+                \PYG{n}{prediction}\PYG{p}{[}\PYG{n}{i}\PYG{p}{]} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{nan}
+
+        \PYG{k}{return} \PYG{n}{prediction}
+
+    \PYG{k}{def} \PYG{n+nf}{run}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}Run training of agent for x episodes\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{c+c1}{\PYGZsh{} ensure both model and target model have same set of weights at the start}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{target\PYGZus{}model}\PYG{o}{.}\PYG{n}{set\PYGZus{}weights}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{model}\PYG{o}{.}\PYG{n}{get\PYGZus{}weights}\PYG{p}{())}
+
+        \PYG{n}{replay\PYGZus{}memory} \PYG{o}{=} \PYG{n}{deque}\PYG{p}{(}\PYG{n}{maxlen}\PYG{o}{=}\PYG{l+m+mi}{5000}\PYG{p}{)}
+        \PYG{n}{state} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{env}\PYG{o}{.}\PYG{n}{reset}\PYG{p}{()}
+        \PYG{c+c1}{\PYGZsh{} number of episodes to train for}
+        \PYG{n}{num\PYGZus{}episodes} \PYG{o}{=} \PYG{l+m+mi}{2000}
+
+        \PYG{n}{steps\PYGZus{}to\PYGZus{}update\PYGZus{}target\PYGZus{}model} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+        \PYG{k}{for} \PYG{n}{episode} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{num\PYGZus{}episodes}\PYG{p}{):}
+            \PYG{k}{if} \PYG{n}{episode} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{100} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{model}\PYG{o}{.}\PYG{n}{save}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}/Volumes/USB/qn\PYGZus{}weights.h5\PYGZsq{}}\PYG{p}{)}
+
+            \PYG{n}{total\PYGZus{}training\PYGZus{}reward} \PYG{o}{=} \PYG{l+m+mi}{0}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}Episode: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{episode}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+            \PYG{n}{state} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{env}\PYG{o}{.}\PYG{n}{reset}\PYG{p}{()}
+            \PYG{n}{done} \PYG{o}{=} \PYG{k+kc}{False}
+            \PYG{c+c1}{\PYGZsh{} initialise chosen piece with a random piece}
+            \PYG{c+c1}{\PYGZsh{} in reality, the opponent will choose a piece for you}
+            \PYG{n}{chosen\PYGZus{}piece} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{15}\PYG{p}{)}
+            \PYG{k}{while} \PYG{o+ow}{not} \PYG{n}{done}\PYG{p}{:}
+                \PYG{n}{steps\PYGZus{}to\PYGZus{}update\PYGZus{}target\PYGZus{}model} \PYG{o}{+=} \PYG{l+m+mi}{1}
+
+                \PYG{k}{if} \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()} \PYG{o}{\PYGZlt{}} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{epsilon}\PYG{p}{:}
+                    \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{env}\PYG{o}{.}\PYG{n}{action\PYGZus{}space}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{()}
+                    \PYG{k}{while} \PYG{o+ow}{not} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{env}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}move\PYGZus{}valid}\PYG{p}{(}\PYG{n}{chosen\PYGZus{}piece}\PYG{p}{,} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]):}
+                        \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{env}\PYG{o}{.}\PYG{n}{action\PYGZus{}space}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{()}
+                \PYG{k}{else}\PYG{p}{:}
+                    \PYG{n}{prediction} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{make\PYGZus{}prediction}\PYG{p}{(}\PYG{n}{state}\PYG{p}{,} \PYG{n}{chosen\PYGZus{}piece}\PYG{p}{)}
+                    \PYG{n}{prediction} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{nan\PYGZus{}out\PYGZus{}invalid\PYGZus{}actions}\PYG{p}{(}
+                        \PYG{n}{chosen\PYGZus{}piece}\PYG{p}{,} \PYG{n}{prediction}\PYG{p}{)}
+                    \PYG{k}{if} \PYG{n}{np}\PYG{o}{.}\PYG{n}{all}\PYG{p}{(}\PYG{n}{np}\PYG{o}{.}\PYG{n}{isnan}\PYG{p}{(}\PYG{n}{prediction}\PYG{p}{)):}
+                        \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{env}\PYG{o}{.}\PYG{n}{action\PYGZus{}space}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{()}
+                        \PYG{k}{while} \PYG{o+ow}{not} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{env}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}move\PYGZus{}valid}\PYG{p}{(}\PYG{n}{chosen\PYGZus{}piece}\PYG{p}{,} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]):}
+                            \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{env}\PYG{o}{.}\PYG{n}{action\PYGZus{}space}\PYG{o}{.}\PYG{n}{sample}\PYG{p}{()}
+                    \PYG{k}{else}\PYG{p}{:}
+                        \PYG{n}{action} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{nanargmax}\PYG{p}{(}\PYG{n}{prediction}\PYG{p}{)}
+                        \PYG{c+c1}{\PYGZsh{} get action at index of action}
+                        \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}all\PYGZus{}actions}\PYG{p}{()[}\PYG{n}{action}\PYG{p}{]}
+
+                \PYG{n}{new\PYGZus{}state}\PYG{p}{,} \PYG{n}{reward}\PYG{p}{,} \PYG{n}{done}\PYG{p}{,} \PYG{n}{\PYGZus{}} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{env}\PYG{o}{.}\PYG{n}{step}\PYG{p}{(}
+                    \PYG{n}{action}\PYG{p}{,} \PYG{n}{chosen\PYGZus{}piece}\PYG{p}{)}
+
+                \PYG{n}{replay\PYGZus{}memory}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}
+                    \PYG{p}{(}\PYG{n}{state}\PYG{p}{,} \PYG{n}{chosen\PYGZus{}piece}\PYG{p}{,} \PYG{n}{action}\PYG{p}{,} \PYG{n}{reward}\PYG{p}{,} \PYG{n}{new\PYGZus{}state}\PYG{p}{,} \PYG{n}{done}\PYG{p}{))}
+
+                \PYG{k}{if} \PYG{n}{done}\PYG{p}{:}
+                    \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}GAME OVER\PYGZsq{}}\PYG{p}{)}
+
+                \PYG{k}{if} \PYG{n}{steps\PYGZus{}to\PYGZus{}update\PYGZus{}target\PYGZus{}model} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{4} \PYG{o}{==} \PYG{l+m+mi}{0} \PYG{o+ow}{or} \PYG{n}{done}\PYG{p}{:}
+                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{train}\PYG{p}{(}\PYG{n}{replay\PYGZus{}memory}\PYG{p}{,} \PYG{l+m+mi}{32}\PYG{p}{)}
+
+                \PYG{n}{state} \PYG{o}{=} \PYG{n}{new\PYGZus{}state}
+                \PYG{n}{total\PYGZus{}training\PYGZus{}reward} \PYG{o}{+=} \PYG{n}{reward}
+
+                \PYG{k}{if} \PYG{n}{done}\PYG{p}{:}
+                    \PYG{n}{total\PYGZus{}training\PYGZus{}reward} \PYG{o}{+=} \PYG{l+m+mi}{1}
+
+                    \PYG{k}{if} \PYG{n}{steps\PYGZus{}to\PYGZus{}update\PYGZus{}target\PYGZus{}model} \PYG{o}{\PYGZgt{}=} \PYG{l+m+mi}{100}\PYG{p}{:}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{target\PYGZus{}model}\PYG{o}{.}\PYG{n}{set\PYGZus{}weights}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{model}\PYG{o}{.}\PYG{n}{get\PYGZus{}weights}\PYG{p}{())}
+                        \PYG{n}{steps\PYGZus{}to\PYGZus{}update\PYGZus{}target\PYGZus{}model} \PYG{o}{=} \PYG{l+m+mi}{0}
+                    \PYG{k}{break}
+
+                \PYG{n}{chosen\PYGZus{}piece} \PYG{o}{=} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]}
+
+            \PYG{k}{if} \PYG{n}{episode} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{10} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}Testing win rate after }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{episode}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{ episodes\PYGZsq{}}\PYG{p}{)}
+                \PYG{n}{test}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{)}
+
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{lr} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{decay\PYGZus{}lr}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{lr}\PYG{p}{,} \PYG{l+m+mf}{0.0001}\PYG{p}{,} \PYG{n}{episode}\PYG{p}{)}
+
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{env}\PYG{o}{.}\PYG{n}{close}\PYG{p}{()}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{model}\PYG{o}{.}\PYG{n}{save}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}/Volumes/USB/qn\PYGZus{}weights.h5\PYGZsq{}}\PYG{p}{)}
+
+\PYG{k}{def} \PYG{n+nf}{main}\PYG{p}{():}
+    \PYG{n}{dq\PYGZus{}wins} \PYG{o}{=} \PYG{l+m+mi}{0}
+    \PYG{k}{for} \PYG{n+nb}{round} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{100}\PYG{p}{):}
+        \PYG{n}{game} \PYG{o}{=} \PYG{n}{Quarto}\PYG{p}{()}
+        \PYG{n}{dqn\PYGZus{}agent} \PYG{o}{=} \PYG{n}{DQNAgent}\PYG{p}{(}\PYG{n}{game}\PYG{o}{=}\PYG{n}{game}\PYG{p}{)}
+        \PYG{n}{dqn\PYGZus{}agent}\PYG{o}{.}\PYG{n}{model} \PYG{o}{=} \PYG{n}{load\PYGZus{}model}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}/Volumes/USB/qn\PYGZus{}weights.h5\PYGZsq{}}\PYG{p}{)}
+        \PYG{n}{game}\PYG{o}{.}\PYG{n}{set\PYGZus{}players}\PYG{p}{((}\PYG{n}{RandomPlayer}\PYG{p}{(}\PYG{n}{game}\PYG{p}{),} \PYG{n}{DQNAgent}\PYG{p}{(}\PYG{n}{game}\PYG{o}{=}\PYG{n}{game}\PYG{p}{)))}
+        \PYG{n}{winner} \PYG{o}{=} \PYG{n}{game}\PYG{o}{.}\PYG{n}{run}\PYG{p}{()}
+        \PYG{k}{if} \PYG{n}{winner} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{:}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}DQ wins\PYGZsq{}}\PYG{p}{)}
+            \PYG{n}{dq\PYGZus{}wins} \PYG{o}{+=} \PYG{l+m+mi}{1}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Random wins\PYGZsq{}}\PYG{p}{)}
+    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}DQ wins: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{dq\PYGZus{}wins}\PYG{o}{/}\PYG{l+m+mi}{100}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{p}{)}
+
+\PYG{n}{main}\PYG{p}{()}
+\end{Verbatim}

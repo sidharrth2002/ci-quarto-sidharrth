@@ -1,0 +1,380 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{Genetic Algorithm for Quarto}
+\PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{k+kn}{import} \PYG{n+nn}{sys}
+\PYG{n}{sys}\PYG{o}{.}\PYG{n}{path}\PYG{o}{.}\PYG{n}{insert}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}..\PYGZsq{}}\PYG{p}{)}
+
+\PYG{k+kn}{import} \PYG{n+nn}{tqdm}
+\PYG{k+kn}{import} \PYG{n+nn}{random}
+\PYG{k+kn}{import} \PYG{n+nn}{logging}
+\PYG{k+kn}{import} \PYG{n+nn}{json}
+\PYG{k+kn}{import} \PYG{n+nn}{itertools}
+\PYG{k+kn}{from} \PYG{n+nn}{copy} \PYG{k+kn}{import} \PYG{n}{deepcopy}
+\PYG{k+kn}{from} \PYG{n+nn}{lib.players} \PYG{k+kn}{import} \PYG{n}{Player}\PYG{p}{,} \PYG{n}{RandomPlayer}
+\PYG{k+kn}{from} \PYG{n+nn}{quarto.objects} \PYG{k+kn}{import} \PYG{n}{Quarto}
+\PYG{k+kn}{from} \PYG{n+nn}{lib.scoring} \PYG{k+kn}{import} \PYG{n}{score\PYGZus{}board}
+\PYG{k+kn}{from} \PYG{n+nn}{QLMCTS} \PYG{k+kn}{import} \PYG{n}{QLearningPlayer}
+\PYG{k+kn}{from} \PYG{n+nn}{Hardcoded.hardcoded} \PYG{k+kn}{import} \PYG{n}{HardcodedPlayer}
+
+\PYG{n}{logging}\PYG{o}{.}\PYG{n}{basicConfig}\PYG{p}{(}\PYG{n}{level}\PYG{o}{=}\PYG{n}{logging}\PYG{o}{.}\PYG{n}{DEBUG}\PYG{p}{)}
+
+\PYG{k}{class} \PYG{n+nc}{Genome}\PYG{p}{:}
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{thresholds}\PYG{p}{,} \PYG{n}{fitness}\PYG{p}{):}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{thresholds} \PYG{o}{=} \PYG{n}{thresholds}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{fitness} \PYG{o}{=} \PYG{n}{fitness}
+
+    \PYG{k}{def} \PYG{n+nf}{set\PYGZus{}fitness}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{fitness}\PYG{p}{):}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{fitness} \PYG{o}{=} \PYG{n}{fitness}
+
+    \PYG{k}{def} \PYG{n+nf}{set\PYGZus{}thresholds}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{thresholds}\PYG{p}{):}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{thresholds} \PYG{o}{=} \PYG{n}{thresholds}
+
+    \PYG{k}{def} \PYG{n+nf}{toJSON}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{k}{return} \PYG{p}{\PYGZob{}}
+            \PYG{l+s+s1}{\PYGZsq{}thresholds\PYGZsq{}}\PYG{p}{:} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{thresholds}\PYG{p}{,}
+            \PYG{l+s+s1}{\PYGZsq{}fitness\PYGZsq{}}\PYG{p}{:} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{fitness}
+        \PYG{p}{\PYGZcb{}}
+
+
+\PYG{k}{class} \PYG{n+nc}{FinalPlayer}\PYG{p}{(}\PYG{n}{Player}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Final player uses genetic algorithm to decide between:}
+\PYG{l+s+sd}{    1. Hardcoded Strategy}
+\PYG{l+s+sd}{    2. Random Strategy}
+\PYG{l+s+sd}{    3. QL\PYGZhy{}MCTS}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{quarto}\PYG{p}{:} \PYG{n}{Quarto} \PYG{o}{=} \PYG{k+kc}{None}\PYG{p}{):}
+        \PYG{k}{if} \PYG{n}{quarto} \PYG{o+ow}{is} \PYG{k+kc}{None}\PYG{p}{:}
+            \PYG{n}{quarto} \PYG{o}{=} \PYG{n}{Quarto}\PYG{p}{()}
+        \PYG{n+nb}{super}\PYG{p}{()}\PYG{o}{.}\PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n}{quarto}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts} \PYG{o}{=} \PYG{n}{QLearningPlayer}\PYG{p}{(}\PYG{n}{quarto}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded} \PYG{o}{=} \PYG{n}{HardcodedPlayer}\PYG{p}{(}\PYG{n}{quarto}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player} \PYG{o}{=} \PYG{n}{RandomPlayer}\PYG{p}{(}\PYG{n}{quarto}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{BOARD\PYGZus{}SIDE} \PYG{o}{=} \PYG{l+m+mi}{4}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{GENOME\PYGZus{}VAL\PYGZus{}UPPER\PYGZus{}BOUND} \PYG{o}{=} \PYG{l+m+mi}{16}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{GENOME\PYGZus{}VAL\PYGZus{}LOWER\PYGZus{}BOUND} \PYG{o}{=} \PYG{l+m+mi}{0}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{thresholds} \PYG{o}{=} \PYG{p}{\PYGZob{}}
+            \PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{:} \PYG{l+m+mf}{1.090773081612301}\PYG{p}{,}
+            \PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{:} \PYG{l+m+mf}{2.790328881747581}\PYG{p}{,}
+            \PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{:} \PYG{l+m+mf}{8.251997327518943}
+        \PYG{p}{\PYGZcb{}}
+
+    \PYG{k}{def} \PYG{n+nf}{generate\PYGZus{}population}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{population\PYGZus{}size}\PYG{p}{):}
+        \PYG{n}{population} \PYG{o}{=} \PYG{p}{[]}
+        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{population\PYGZus{}size}\PYG{p}{):}
+            \PYG{n}{threshold} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{}}
+
+            \PYG{c+c1}{\PYGZsh{} make sure that value for random \PYGZlt{} hardcoded \PYGZlt{} ql\PYGZhy{}mcts}
+            \PYG{n}{threshold}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()} \PYG{o}{*} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{GENOME\PYGZus{}VAL\PYGZus{}UPPER\PYGZus{}BOUND}
+            \PYG{c+c1}{\PYGZsh{} find random number between random and 15}
+            \PYG{n}{threshold}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{n}{threshold}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{]} \PYG{o}{+} \PYGZbs{}
+                \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()} \PYG{o}{*} \PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{GENOME\PYGZus{}VAL\PYGZus{}UPPER\PYGZus{}BOUND} \PYG{o}{\PYGZhy{}}
+                                    \PYG{n}{threshold}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{])}
+
+            \PYG{c+c1}{\PYGZsh{} find random number between hardcoded and 15}
+            \PYG{n}{threshold}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{n}{threshold}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{]} \PYG{o}{+} \PYGZbs{}
+                \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()} \PYG{o}{*} \PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{GENOME\PYGZus{}VAL\PYGZus{}UPPER\PYGZus{}BOUND} \PYG{o}{\PYGZhy{}}
+                                    \PYG{n}{threshold}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{])}
+
+            \PYG{k}{assert} \PYG{n}{threshold}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{]} \PYG{o}{\PYGZlt{}} \PYG{n}{threshold}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{]} \PYG{o}{\PYGZlt{}} \PYG{n}{threshold}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{]}
+
+            \PYG{n}{population}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{Genome}\PYG{p}{(}\PYG{n}{threshold}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{))}
+        \PYG{k}{return} \PYG{n}{population}
+
+    \PYG{k}{def} \PYG{n+nf}{ensure\PYGZus{}correct\PYGZus{}ordering}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{):}
+        \PYG{k}{if} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{]} \PYG{o}{\PYGZgt{}} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{]:}
+            \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{],} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{],} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{]}
+        \PYG{k}{if} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{]} \PYG{o}{\PYGZgt{}} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{]:}
+            \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{],} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{],} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{]}
+        \PYG{k}{if} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{]} \PYG{o}{\PYGZgt{}} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{]:}
+            \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{],} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{],} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{]}
+        \PYG{k}{return} \PYG{n}{new\PYGZus{}thresholds}
+
+    \PYG{k}{def} \PYG{n+nf}{crossover}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{genome1}\PYG{p}{,} \PYG{n}{genome2}\PYG{p}{):}
+        \PYG{n}{new\PYGZus{}thresholds} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{}}
+        \PYG{k}{for} \PYG{n}{key} \PYG{o+ow}{in} \PYG{n}{genome1}\PYG{o}{.}\PYG{n}{thresholds}\PYG{p}{:}
+            \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{n}{key}\PYG{p}{]} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}
+                \PYG{p}{[}\PYG{n}{genome1}\PYG{o}{.}\PYG{n}{thresholds}\PYG{p}{[}\PYG{n}{key}\PYG{p}{],} \PYG{n}{genome2}\PYG{o}{.}\PYG{n}{thresholds}\PYG{p}{[}\PYG{n}{key}\PYG{p}{]])}
+
+        \PYG{c+c1}{\PYGZsh{} make sure that value for random \PYGZlt{} hardcoded \PYGZlt{} ql\PYGZhy{}mcts}
+        \PYG{n}{new\PYGZus{}thresholds} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ensure\PYGZus{}correct\PYGZus{}ordering}\PYG{p}{(}\PYG{n}{new\PYGZus{}thresholds}\PYG{p}{)}
+        \PYG{k}{return} \PYG{n}{Genome}\PYG{p}{(}\PYG{n}{new\PYGZus{}thresholds}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{mutate}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{genome}\PYG{p}{):}
+        \PYG{n}{new\PYGZus{}thresholds} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{}}
+        \PYG{n}{genome\PYGZus{}thresholds} \PYG{o}{=} \PYG{n}{genome}\PYG{o}{.}\PYG{n}{thresholds}
+        \PYG{k}{if} \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()} \PYG{o}{\PYGZlt{}} \PYG{l+m+mf}{0.4}\PYG{p}{:}
+            \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()} \PYG{o}{*} \PYGZbs{}
+                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{GENOME\PYGZus{}VAL\PYGZus{}UPPER\PYGZus{}BOUND}
+            \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}
+                \PYG{p}{[}\PYG{n}{genome\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{],} \PYG{n}{genome\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{]} \PYG{o}{+}
+                    \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()} \PYG{o}{*} \PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{GENOME\PYGZus{}VAL\PYGZus{}UPPER\PYGZus{}BOUND} \PYG{o}{\PYGZhy{}} \PYG{n}{genome\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{])])}
+            \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{]} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}
+                \PYG{p}{[}\PYG{n}{genome\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{],} \PYG{n}{genome\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{]} \PYG{o}{+}
+                    \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()} \PYG{o}{*} \PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{GENOME\PYGZus{}VAL\PYGZus{}UPPER\PYGZus{}BOUND} \PYG{o}{\PYGZhy{}} \PYG{n}{genome\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{])])}
+
+            \PYG{n}{new\PYGZus{}thresholds} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ensure\PYGZus{}correct\PYGZus{}ordering}\PYG{p}{(}\PYG{n}{new\PYGZus{}thresholds}\PYG{p}{)}
+
+            \PYG{k}{assert} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{]} \PYG{o}{\PYGZlt{}} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{]} \PYG{o}{\PYGZlt{}} \PYG{n}{new\PYGZus{}thresholds}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{]}
+
+            \PYG{k}{return} \PYG{n}{Genome}\PYG{p}{(}\PYG{n}{new\PYGZus{}thresholds}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{)}
+        \PYG{k}{return} \PYG{n}{genome}
+
+    \PYG{k}{def} \PYG{n+nf}{evolve}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{num\PYGZus{}generations}\PYG{o}{=}\PYG{l+m+mi}{50}\PYG{p}{):}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{population\PYGZus{}size} \PYG{o}{=} \PYG{l+m+mi}{50}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{offspring\PYGZus{}size} \PYG{o}{=} \PYG{l+m+mi}{10}
+        \PYG{n}{population} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{generate\PYGZus{}population}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{population\PYGZus{}size}\PYG{p}{)}
+
+        \PYG{n}{pbar} \PYG{o}{=} \PYG{n}{tqdm}\PYG{o}{.}\PYG{n}{tqdm}\PYG{p}{(}\PYG{n}{total}\PYG{o}{=}\PYG{n}{num\PYGZus{}generations}\PYG{p}{)}
+        \PYG{k}{for} \PYG{n}{gen} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{num\PYGZus{}generations}\PYG{p}{):}
+            \PYG{n}{pbar}\PYG{o}{.}\PYG{n}{update}\PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{)}
+            \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Generation: }\PYG{l+s+si}{\PYGZob{}\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{o}{.}\PYG{n}{format}\PYG{p}{(}\PYG{n}{gen}\PYG{p}{))}
+            \PYG{n}{offpsring} \PYG{o}{=} \PYG{p}{[]}
+            \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{offspring\PYGZus{}size}\PYG{p}{):}
+                \PYG{n}{parent1} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{population}\PYG{p}{)}
+                \PYG{n}{parent2} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{population}\PYG{p}{)}
+                \PYG{n}{child} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{crossover}\PYG{p}{(}\PYG{n}{parent1}\PYG{p}{,} \PYG{n}{parent2}\PYG{p}{)}
+                \PYG{n}{child} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{mutate}\PYG{p}{(}\PYG{n}{child}\PYG{p}{)}
+                \PYG{n}{child}\PYG{o}{.}\PYG{n}{fitness} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{play\PYGZus{}game}\PYG{p}{(}\PYG{n}{child}\PYG{o}{.}\PYG{n}{thresholds}\PYG{p}{,} \PYG{n}{num\PYGZus{}games}\PYG{o}{=}\PYG{l+m+mi}{5}\PYG{p}{)}
+                \PYG{n}{offpsring}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{child}\PYG{p}{)}
+            \PYG{n}{population} \PYG{o}{+=} \PYG{n}{offpsring}
+            \PYG{n}{population} \PYG{o}{=} \PYG{n+nb}{sorted}\PYG{p}{(}
+                \PYG{n}{population}\PYG{p}{,} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{x}\PYG{p}{:} \PYG{n}{x}\PYG{o}{.}\PYG{n}{fitness}\PYG{p}{,} \PYG{n}{reverse}\PYG{o}{=}\PYG{k+kc}{True}\PYG{p}{)[:}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{population\PYGZus{}size}\PYG{p}{]}
+
+            \PYG{k}{if} \PYG{n}{gen} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{5} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Saving population\PYGZsq{}}\PYG{p}{)}
+                \PYG{k}{with} \PYG{n+nb}{open}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}/Volumes/USB/population3.json\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}w\PYGZsq{}}\PYG{p}{)} \PYG{k}{as} \PYG{n}{f}\PYG{p}{:}
+                    \PYG{n}{json}\PYG{o}{.}\PYG{n}{dump}\PYG{p}{([}\PYG{n}{genome}\PYG{o}{.}\PYG{n}{toJSON}\PYG{p}{()} \PYG{k}{for} \PYG{n}{genome} \PYG{o+ow}{in} \PYG{n}{population}\PYG{p}{],} \PYG{n}{f}\PYG{p}{)}
+
+        \PYG{c+c1}{\PYGZsh{} return the best genome\PYGZsq{}s thresholds}
+        \PYG{k}{return} \PYG{n}{population}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}\PYG{o}{.}\PYG{n}{thresholds}
+
+    \PYG{k}{def} \PYG{n+nf}{play\PYGZus{}game}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{thresholds}\PYG{p}{,} \PYG{n}{num\PYGZus{}games}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{):}
+        \PYG{n}{wins} \PYG{o}{=} \PYG{l+m+mi}{0}
+        \PYG{k}{for} \PYG{n}{game} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{num\PYGZus{}games}\PYG{p}{):}
+            \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Game: }\PYG{l+s+si}{\PYGZob{}\PYGZcb{}}\PYG{l+s+s1}{\PYGZsq{}}\PYG{o}{.}\PYG{n}{format}\PYG{p}{(}\PYG{n}{game}\PYG{p}{))}
+            \PYG{n}{state} \PYG{o}{=} \PYG{n}{Quarto}\PYG{p}{()}
+            \PYG{n}{player} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+            \PYG{c+c1}{\PYGZsh{} initialise with some random piece just to kickstart game}
+            \PYG{n}{state}\PYG{o}{.}\PYG{n}{set\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{(}\PYG{n}{state}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{))}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state} \PYG{o}{=} \PYG{n}{state}
+
+            \PYG{c+c1}{\PYGZsh{} python passes by reference}
+            \PYG{c+c1}{\PYGZsh{} agent will use the state, etc. to update the Q\PYGZhy{}table}
+            \PYG{c+c1}{\PYGZsh{} this function also wipes the MCTS tree}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{clear\PYGZus{}and\PYGZus{}set\PYGZus{}current\PYGZus{}state}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded} \PYG{o}{=} \PYG{n}{HardcodedPlayer}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
+
+            \PYG{k}{while} \PYG{k+kc}{True}\PYG{p}{:}
+                \PYG{c+c1}{\PYGZsh{} board score is the number of couples and triplets on the board}
+                \PYG{c+c1}{\PYGZsh{} it is indicative of the change of the board state}
+                \PYG{n}{board\PYGZus{}score} \PYG{o}{=} \PYG{n}{score\PYGZus{}board}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+
+                \PYG{n}{differences} \PYG{o}{=} \PYG{p}{[}\PYG{n+nb}{abs}\PYG{p}{(}\PYG{n}{board\PYGZus{}score} \PYG{o}{\PYGZhy{}} \PYG{n}{thresholds}\PYG{p}{[}\PYG{n}{key}\PYG{p}{])}
+                                \PYG{k}{for} \PYG{n}{key} \PYG{o+ow}{in} \PYG{n}{thresholds}\PYG{p}{]}
+                \PYG{n}{min\PYGZus{}diff} \PYG{o}{=} \PYG{n+nb}{min}\PYG{p}{(}\PYG{n}{differences}\PYG{p}{)}
+                \PYG{n}{index} \PYG{o}{=} \PYG{n}{differences}\PYG{o}{.}\PYG{n}{index}\PYG{p}{(}\PYG{n}{min\PYGZus{}diff}\PYG{p}{)}
+                \PYG{n}{key} \PYG{o}{=} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{thresholds}\PYG{o}{.}\PYG{n}{keys}\PYG{p}{())[}\PYG{n}{index}\PYG{p}{]}
+
+                \PYG{k}{if} \PYG{n}{player} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                    \PYG{k}{if} \PYG{n}{key} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{:}
+                        \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{)}
+                        \PYG{c+c1}{\PYGZsh{} play randomly}
+                        \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{place\PYGZus{}piece}\PYG{p}{()}
+                        \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{()}
+                        \PYG{k}{while} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}move\PYGZus{}valid}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(),} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{next\PYGZus{}piece}\PYG{p}{)} \PYG{o+ow}{is} \PYG{k+kc}{False}\PYG{p}{:}
+                            \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{place\PYGZus{}piece}\PYG{p}{()}
+                            \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{()}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{select}\PYG{p}{(}
+                            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{place}\PYG{p}{(}\PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{set\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(}\PYG{n}{next\PYGZus{}piece}\PYG{p}{)}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{switch\PYGZus{}player}\PYG{p}{()}
+                        \PYG{n}{player} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{player}
+
+                    \PYG{k}{elif} \PYG{n}{key} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{:}
+                        \PYG{c+c1}{\PYGZsh{} play using hardcoded strategy}
+                        \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{)}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{previous\PYGZus{}state} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+                        \PYG{n}{winning\PYGZus{}piece}\PYG{p}{,} \PYG{n}{position} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}move}\PYG{p}{(}
+                            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+                        \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}piece}\PYG{p}{(}
+                            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+                        \PYG{k}{while} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}move\PYGZus{}valid}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(),} \PYG{n}{position}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{position}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{next\PYGZus{}piece}\PYG{p}{)} \PYG{o+ow}{is} \PYG{k+kc}{False}\PYG{p}{:}
+                            \PYG{n}{winning\PYGZus{}piece}\PYG{p}{,} \PYG{n}{position} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}move}\PYG{p}{(}
+                                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+                            \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}piece}\PYG{p}{(}
+                                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{select}\PYG{p}{(}\PYG{n}{state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{place}\PYG{p}{(}\PYG{n}{position}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{position}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{set\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(}\PYG{n}{next\PYGZus{}piece}\PYG{p}{)}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{switch\PYGZus{}player}\PYG{p}{()}
+                        \PYG{n}{player} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{player}
+
+                    \PYG{k}{else}\PYG{p}{:}
+                        \PYG{c+c1}{\PYGZsh{} play using QL\PYGZhy{}MCTS}
+                        \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{)}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{previous\PYGZus{}state} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}
+                            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+                        \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{get\PYGZus{}action}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{previous\PYGZus{}action} \PYG{o}{=} \PYG{n}{action}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{select}\PYG{p}{(}
+                            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{place}\PYG{p}{(}\PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{set\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(}
+                            \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{])}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{switch\PYGZus{}player}\PYG{p}{()}
+                        \PYG{n}{player} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{player}
+
+                \PYG{k}{else}\PYG{p}{:}
+                    \PYG{c+c1}{\PYGZsh{} opponent is random}
+                    \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{place\PYGZus{}piece}\PYG{p}{()}
+                    \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{()}
+                    \PYG{k}{while} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}move\PYGZus{}valid}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(),} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{next\PYGZus{}piece}\PYG{p}{)} \PYG{o+ow}{is} \PYG{k+kc}{False}\PYG{p}{:}
+                        \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{place\PYGZus{}piece}\PYG{p}{()}
+                        \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{()}
+                        \PYG{c+c1}{\PYGZsh{} WARNING: very often stuck in this loop}
+                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{select}\PYG{p}{(}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())}
+                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{place}\PYG{p}{(}\PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])}
+                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{set\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(}\PYG{n}{next\PYGZus{}piece}\PYG{p}{)}
+                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{switch\PYGZus{}player}\PYG{p}{()}
+                    \PYG{n}{player} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{player}
+
+                \PYG{k}{if} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{check\PYGZus{}is\PYGZus{}game\PYGZus{}over}\PYG{p}{():}
+                    \PYG{k}{if} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{check\PYGZus{}winner}\PYG{p}{()} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Agent wins\PYGZdq{}}\PYG{p}{)}
+                        \PYG{n}{wins} \PYG{o}{+=} \PYG{l+m+mi}{1}
+                        \PYG{c+c1}{\PYGZsh{} TODO: QL reward update}
+                    \PYG{k}{else}\PYG{p}{:}
+                        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Player 2 wins\PYGZdq{}}\PYG{p}{)}
+                    \PYG{k}{break}
+
+        \PYG{c+c1}{\PYGZsh{} fitness is the percentage of games won}
+        \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Win rate: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{wins}\PYG{o}{/}\PYG{n}{num\PYGZus{}games}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+        \PYG{k}{return} \PYG{n}{wins}\PYG{o}{/}\PYG{n}{num\PYGZus{}games}
+
+    \PYG{k}{def} \PYG{n+nf}{choose\PYGZus{}piece}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Choose piece for next player to place}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{n}{thresholds} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{thresholds}
+
+        \PYG{c+c1}{\PYGZsh{} game is stored in parent}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}game}\PYG{p}{()}
+
+        \PYG{n}{board\PYGZus{}score} \PYG{o}{=} \PYG{n}{score\PYGZus{}board}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+
+        \PYG{n}{differences} \PYG{o}{=} \PYG{p}{[}\PYG{n+nb}{abs}\PYG{p}{(}\PYG{n}{board\PYGZus{}score} \PYG{o}{\PYGZhy{}} \PYG{n}{thresholds}\PYG{p}{[}\PYG{n}{key}\PYG{p}{])}
+                        \PYG{k}{for} \PYG{n}{key} \PYG{o+ow}{in} \PYG{n}{thresholds}\PYG{p}{]}
+        \PYG{n}{min\PYGZus{}diff} \PYG{o}{=} \PYG{n+nb}{min}\PYG{p}{(}\PYG{n}{differences}\PYG{p}{)}
+        \PYG{n}{index} \PYG{o}{=} \PYG{n}{differences}\PYG{o}{.}\PYG{n}{index}\PYG{p}{(}\PYG{n}{min\PYGZus{}diff}\PYG{p}{)}
+        \PYG{n}{key} \PYG{o}{=} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{thresholds}\PYG{o}{.}\PYG{n}{keys}\PYG{p}{())[}\PYG{n}{index}\PYG{p}{]}
+
+        \PYG{k}{if} \PYG{n}{key} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{:}
+            \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{)}
+            \PYG{c+c1}{\PYGZsh{} play randomly}
+            \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{place\PYGZus{}piece}\PYG{p}{()}
+            \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{()}
+            \PYG{k}{while} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}move\PYGZus{}valid}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(),} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{next\PYGZus{}piece}\PYG{p}{)} \PYG{o+ow}{is} \PYG{k+kc}{False}\PYG{p}{:}
+                \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{place\PYGZus{}piece}\PYG{p}{()}
+                \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{()}
+            \PYG{k}{return} \PYG{n}{next\PYGZus{}piece}
+
+        \PYG{k}{elif} \PYG{n}{key} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{:}
+            \PYG{c+c1}{\PYGZsh{} play using hardcoded strategy}
+            \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{)}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{previous\PYGZus{}state} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+            \PYG{n}{winning\PYGZus{}piece}\PYG{p}{,} \PYG{n}{position} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}move}\PYG{p}{(}
+                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+            \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}piece}\PYG{p}{(}
+                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+            \PYG{k}{while} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}move\PYGZus{}valid}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(),} \PYG{n}{position}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{position}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{next\PYGZus{}piece}\PYG{p}{)} \PYG{o+ow}{is} \PYG{k+kc}{False}\PYG{p}{:}
+                \PYG{n}{winning\PYGZus{}piece}\PYG{p}{,} \PYG{n}{position} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}move}\PYG{p}{(}
+                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+                \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}piece}\PYG{p}{(}
+                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+            \PYG{k}{return} \PYG{n}{next\PYGZus{}piece}
+
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{c+c1}{\PYGZsh{} play using QL\PYGZhy{}MCTS}
+            \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{)}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{previous\PYGZus{}state} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}
+                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+            \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{get\PYGZus{}action}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{previous\PYGZus{}action} \PYG{o}{=} \PYG{n}{action}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{select}\PYG{p}{(}
+                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())}
+            \PYG{k}{return} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]}
+
+    \PYG{k}{def} \PYG{n+nf}{place\PYGZus{}piece}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{c+c1}{\PYGZsh{} python passes by reference}
+        \PYG{c+c1}{\PYGZsh{} agent will use the state, etc. to update the Q\PYGZhy{}table}
+        \PYG{c+c1}{\PYGZsh{} this function also wipes the MCTS tree}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}game}\PYG{p}{()}
+        \PYG{n}{thresholds} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{thresholds}
+
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{clear\PYGZus{}and\PYGZus{}set\PYGZus{}current\PYGZus{}state}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+
+        \PYG{k}{while} \PYG{k+kc}{True}\PYG{p}{:}
+            \PYG{c+c1}{\PYGZsh{} board score is the number of couples and triplets on the board}
+            \PYG{c+c1}{\PYGZsh{} it is indicative of the change of the board state}
+            \PYG{n}{board\PYGZus{}score} \PYG{o}{=} \PYG{n}{score\PYGZus{}board}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+
+            \PYG{n}{differences} \PYG{o}{=} \PYG{p}{[}\PYG{n+nb}{abs}\PYG{p}{(}\PYG{n}{board\PYGZus{}score} \PYG{o}{\PYGZhy{}} \PYG{n}{thresholds}\PYG{p}{[}\PYG{n}{key}\PYG{p}{])}
+                            \PYG{k}{for} \PYG{n}{key} \PYG{o+ow}{in} \PYG{n}{thresholds}\PYG{p}{]}
+            \PYG{n}{min\PYGZus{}diff} \PYG{o}{=} \PYG{n+nb}{min}\PYG{p}{(}\PYG{n}{differences}\PYG{p}{)}
+            \PYG{n}{index} \PYG{o}{=} \PYG{n}{differences}\PYG{o}{.}\PYG{n}{index}\PYG{p}{(}\PYG{n}{min\PYGZus{}diff}\PYG{p}{)}
+            \PYG{n}{key} \PYG{o}{=} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{thresholds}\PYG{o}{.}\PYG{n}{keys}\PYG{p}{())[}\PYG{n}{index}\PYG{p}{]}
+
+            \PYG{k}{if} \PYG{n}{key} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{:}
+                \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{)}
+                \PYG{c+c1}{\PYGZsh{} play randomly}
+                \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{place\PYGZus{}piece}\PYG{p}{()}
+                \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{()}
+                \PYG{k}{while} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}move\PYGZus{}valid}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(),} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{next\PYGZus{}piece}\PYG{p}{)} \PYG{o+ow}{is} \PYG{k+kc}{False}\PYG{p}{:}
+                    \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{place\PYGZus{}piece}\PYG{p}{()}
+                    \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{()}
+                \PYG{k}{return} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]}
+
+            \PYG{k}{elif} \PYG{n}{key} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{:}
+                \PYG{c+c1}{\PYGZsh{} play using hardcoded strategy}
+                \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{)}
+                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{previous\PYGZus{}state} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+                \PYG{n}{winning\PYGZus{}piece}\PYG{p}{,} \PYG{n}{position} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}move}\PYG{p}{(}
+                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+                \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}piece}\PYG{p}{(}
+                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+                \PYG{k}{while} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}move\PYGZus{}valid}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(),} \PYG{n}{position}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{position}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{next\PYGZus{}piece}\PYG{p}{)} \PYG{o+ow}{is} \PYG{k+kc}{False}\PYG{p}{:}
+                    \PYG{n}{winning\PYGZus{}piece}\PYG{p}{,} \PYG{n}{position} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}move}\PYG{p}{(}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+                    \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}piece}\PYG{p}{(}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+                \PYG{k}{return} \PYG{n}{position}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{position}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]}
+
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{c+c1}{\PYGZsh{} play using QL\PYGZhy{}MCTS}
+                \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{)}
+                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{previous\PYGZus{}state} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}
+                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+                \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{get\PYGZus{}action}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{previous\PYGZus{}action} \PYG{o}{=} \PYG{n}{action}
+                \PYG{k}{return} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]}
+
+    \PYG{k}{def} \PYG{n+nf}{test\PYGZus{}thresholds}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{n}{thresholds} \PYG{o}{=} \PYG{p}{\PYGZob{}}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{:} \PYG{l+m+mf}{1.090773081612301}\PYG{p}{,}
+                        \PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{:} \PYG{l+m+mf}{5.790328881747581}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{:} \PYG{l+m+mf}{9.251997327518943}\PYG{p}{\PYGZcb{}}
+        \PYG{n}{win\PYGZus{}rate} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{play\PYGZus{}game}\PYG{p}{(}\PYG{n}{thresholds}\PYG{p}{,} \PYG{n}{num\PYGZus{}games}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{win\PYGZus{}rate}\PYG{p}{)}
+
+
+\PYG{k}{if} \PYG{n+nv+vm}{\PYGZus{}\PYGZus{}name\PYGZus{}\PYGZus{}} \PYG{o}{==} \PYG{l+s+s2}{\PYGZdq{}\PYGZus{}\PYGZus{}main\PYGZus{}\PYGZus{}\PYGZdq{}}\PYG{p}{:}
+    \PYG{n}{final\PYGZus{}player} \PYG{o}{=} \PYG{n}{FinalPlayer}\PYG{p}{()}
+    \PYG{c+c1}{\PYGZsh{} best\PYGZus{}thresholds = final\PYGZus{}player.evolve()}
+    \PYG{c+c1}{\PYGZsh{} print(best\PYGZus{}thresholds)}
+
+    \PYG{n}{final\PYGZus{}player}\PYG{o}{.}\PYG{n}{test\PYGZus{}thresholds}\PYG{p}{()}
+\end{Verbatim}

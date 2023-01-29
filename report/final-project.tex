@@ -4,6 +4,21 @@
 
 The purpose of the final project is to implement an efficient agent that can play and win Quarto. Quarto is a multi-player game where 2 players take turns placing pieces on a 4x4 board. The first player to place a piece that satisfies a winning condition wins the game. In my version of Quarto, I consider it to be a two-player game where my agent plays against a random opponent.
 
+\subsection{Acknowledgements}
+
+Throughout this project, I have discussed with Diego Gasco. We started the project by discussing ideas for strategies.
+
+\begin{itemize}
+    \item After I tried to get a working Deep Q-Network and realised that it wasn't converging in reasonable time, we discussed the possibility of using some tree search algorithm. It was Diego who suggested MCTS.
+    \item When realising that MCTS can be quite slow towards the end of the game, I suggested building a hybrid QL-MCTS player that would use a base Q-table to remember the best moves so the quadratically complex tree wouldn't need to store so many nodes.
+    \item We later built a hardcoded agent using different rules and realised that it performed very well, and was quick to make a move.
+    \item We then decided to combine everything we did into a hybrid agent that would switch between strategies depending on the board score.
+    \item Diego suggested a good scoring function. He also suggested that a genetic algorithm could be used for this.
+    \item I suggested finding score thresholds to switch between strategies using a genetic algorithm.
+\end{itemize}
+
+While we follow the same hybrid strategy, our code is quite different, apart from a few shared utility functions.
+
 \subsection{My Strategy For Solving the Problem}
 
 \subsubsection{Step 1: Implement and Tune Multiple Search Algorithms}
@@ -93,21 +108,1815 @@ Once the final thresholds are found, we find the strategy whose threshold has th
     \text{strategy} = \min_{i=1}^{3} \left| \text{threshold}_i - \text{board score} \right|
 \end{equation*}
 
-\subsection{Code}
+\subsection{Code of Hybrid Agent and Sub Players}
+
+This subsection covers the code of the final hybrid agent and the sub players it calls periodically.
+
+\subsubsection{Final Hybrid Player}
+
+The final hybrid player's driver code is below. It uses a genetic algorithm to find the best thresholds for switching between the 3 strategies. It uses crossover and conditional mutations to find the best genome from a limited population size.
+
+Furthermore, to reduce the search space, we enforce the constraint that the threshold for random < hardcoded < MCTS, with the the intuition that the slowest but most powerful algorithm should be used last.
+
+\begin{mintedbox}{python}
+'''
+Genetic Algorithm for Quarto
+'''
+import sys
+sys.path.insert(0, '..')
+
+import tqdm
+import random
+import logging
+import json
+import itertools
+from copy import deepcopy
+from lib.players import Player, RandomPlayer
+from quarto.objects import Quarto
+from lib.scoring import score_board
+from QLMCTS import QLearningPlayer
+from Hardcoded.hardcoded import HardcodedPlayer
+
+logging.basicConfig(level=logging.DEBUG)
+
+class Genome:
+    def __init__(self, thresholds, fitness):
+        self.thresholds = thresholds
+        self.fitness = fitness
+
+    def set_fitness(self, fitness):
+        self.fitness = fitness
+
+    def set_thresholds(self, thresholds):
+        self.thresholds = thresholds
+
+    def toJSON(self):
+        return {
+            'thresholds': self.thresholds,
+            'fitness': self.fitness
+        }
+
+
+class FinalPlayer(Player):
+    '''
+    Final player uses genetic algorithm to decide between:
+    1. Hardcoded Strategy
+    2. Random Strategy
+    3. QL-MCTS
+    '''
+
+    def __init__(self, quarto: Quarto = None):
+        if quarto is None:
+            quarto = Quarto()
+        super().__init__(quarto)
+        self.ql_mcts = QLearningPlayer(quarto)
+        self.hardcoded = HardcodedPlayer(quarto)
+        self.random_player = RandomPlayer(quarto)
+        self.BOARD_SIDE = 4
+        self.GENOME_VAL_UPPER_BOUND = 16
+        self.GENOME_VAL_LOWER_BOUND = 0
+        self.thresholds = {
+            'random': 1.090773081612301,
+            'hardcoded': 2.790328881747581,
+            'ql-mcts': 8.251997327518943
+        }
+
+    def generate_population(self, population_size):
+        population = []
+        for i in range(population_size):
+            threshold = {}
+
+            # make sure that value for random < hardcoded < ql-mcts
+            threshold['random'] = random.random() * self.GENOME_VAL_UPPER_BOUND
+            # find random number between random and 15
+            threshold['hardcoded'] = threshold['random'] + \
+                random.random() * (self.GENOME_VAL_UPPER_BOUND -
+                                    threshold['random'])
+
+            # find random number between hardcoded and 15
+            threshold['ql-mcts'] = threshold['hardcoded'] + \
+                random.random() * (self.GENOME_VAL_UPPER_BOUND -
+                                    threshold['hardcoded'])
+
+            assert threshold['random'] < threshold['hardcoded'] < threshold['ql-mcts']
+
+            population.append(Genome(threshold, 0))
+        return population
+
+    def ensure_correct_ordering(self, new_thresholds):
+        if new_thresholds['random'] > new_thresholds['hardcoded']:
+            new_thresholds['random'], new_thresholds['hardcoded'] = new_thresholds['hardcoded'], new_thresholds['random']
+        if new_thresholds['hardcoded'] > new_thresholds['ql-mcts']:
+            new_thresholds['hardcoded'], new_thresholds['ql-mcts'] = new_thresholds['ql-mcts'], new_thresholds['hardcoded']
+        if new_thresholds['random'] > new_thresholds['hardcoded']:
+            new_thresholds['random'], new_thresholds['hardcoded'] = new_thresholds['hardcoded'], new_thresholds['random']
+        return new_thresholds
+
+    def crossover(self, genome1, genome2):
+        new_thresholds = {}
+        for key in genome1.thresholds:
+            new_thresholds[key] = random.choice(
+                [genome1.thresholds[key], genome2.thresholds[key]])
+
+        # make sure that value for random < hardcoded < ql-mcts
+        new_thresholds = self.ensure_correct_ordering(new_thresholds)
+        return Genome(new_thresholds, 0)
+
+    def mutate(self, genome):
+        new_thresholds = {}
+        genome_thresholds = genome.thresholds
+        if random.random() < 0.4:
+            new_thresholds['random'] = random.random() * \
+                self.GENOME_VAL_UPPER_BOUND
+            new_thresholds['hardcoded'] = random.choice(
+                [genome_thresholds['random'], genome_thresholds['random'] +
+                    random.random() * (self.GENOME_VAL_UPPER_BOUND - genome_thresholds['random'])])
+            new_thresholds['ql-mcts'] = random.choice(
+                [genome_thresholds['hardcoded'], genome_thresholds['hardcoded'] +
+                    random.random() * (self.GENOME_VAL_UPPER_BOUND - genome_thresholds['hardcoded'])])
+
+            new_thresholds = self.ensure_correct_ordering(new_thresholds)
+
+            assert new_thresholds['random'] < new_thresholds['hardcoded'] < new_thresholds['ql-mcts']
+
+            return Genome(new_thresholds, 0)
+        return genome
+
+    def evolve(self, num_generations=50):
+        self.population_size = 50
+        self.offspring_size = 10
+        population = self.generate_population(self.population_size)
+
+        pbar = tqdm.tqdm(total=num_generations)
+        for gen in range(num_generations):
+            pbar.update(1)
+            logging.debug('Generation: {}'.format(gen))
+            offpsring = []
+            for i in range(self.offspring_size):
+                parent1 = random.choice(population)
+                parent2 = random.choice(population)
+                child = self.crossover(parent1, parent2)
+                child = self.mutate(child)
+                child.fitness = self.play_game(child.thresholds, num_games=5)
+                offpsring.append(child)
+            population += offpsring
+            population = sorted(
+                population, key=lambda x: x.fitness, reverse=True)[:self.population_size]
+
+            if gen % 5 == 0:
+                logging.info('Saving population')
+                with open('/Volumes/USB/population3.json', 'w') as f:
+                    json.dump([genome.toJSON() for genome in population], f)
+
+        # return the best genome's thresholds
+        return population[0].thresholds
+
+    def play_game(self, thresholds, num_games=10):
+        wins = 0
+        for game in range(num_games):
+            logging.debug('Game: {}'.format(game))
+            state = Quarto()
+            player = 0
+
+            # initialise with some random piece just to kickstart game
+            state.set_selected_piece(self.random_player.choose_piece(state, 0))
+            self.current_state = state
+
+            # python passes by reference
+            # agent will use the state, etc. to update the Q-table
+            # this function also wipes the MCTS tree
+            self.ql_mcts.clear_and_set_current_state(state)
+            self.hardcoded = HardcodedPlayer(state)
+
+            while True:
+                # board score is the number of couples and triplets on the board
+                # it is indicative of the change of the board state
+                board_score = score_board(self.current_state)
+
+                differences = [abs(board_score - thresholds[key])
+                                for key in thresholds]
+                min_diff = min(differences)
+                index = differences.index(min_diff)
+                key = list(thresholds.keys())[index]
+
+                if player == 0:
+                    if key == 'random':
+                        logging.debug('random')
+                        # play randomly
+                        action = self.random_player.place_piece()
+                        next_piece = self.random_player.choose_piece()
+                        while self.current_state.check_if_move_valid(self.current_state.get_selected_piece(), action[0], action[1], next_piece) is False:
+                            action = self.random_player.place_piece()
+                            next_piece = self.random_player.choose_piece()
+                        self.current_state.select(
+                            self.current_state.get_selected_piece())
+                        self.current_state.place(action[0], action[1])
+                        self.current_state.set_selected_piece(next_piece)
+                        self.current_state.switch_player()
+                        player = 1 - player
+
+                    elif key == 'hardcoded':
+                        # play using hardcoded strategy
+                        logging.debug('hardcoded')
+                        self.previous_state = deepcopy(self.current_state)
+                        winning_piece, position = self.hardcoded.hardcoded_strategy_get_move(
+                            self.current_state)
+                        next_piece = self.hardcoded.hardcoded_strategy_get_piece(
+                            self.current_state)
+                        while self.current_state.check_if_move_valid(self.current_state.get_selected_piece(), position[0], position[1], next_piece) is False:
+                            winning_piece, position = self.hardcoded.hardcoded_strategy_get_move(
+                                self.current_state)
+                            next_piece = self.hardcoded.hardcoded_strategy_get_piece(
+                                self.current_state)
+                        self.current_state.select(state.get_selected_piece())
+                        self.current_state.place(position[0], position[1])
+                        self.current_state.set_selected_piece(next_piece)
+                        self.current_state.switch_player()
+                        player = 1 - player
+
+                    else:
+                        # play using QL-MCTS
+                        logging.debug('ql-mcts')
+                        self.ql_mcts.previous_state = deepcopy(
+                            self.current_state)
+                        action = self.ql_mcts.get_action(self.current_state)
+                        self.ql_mcts.previous_action = action
+                        self.ql_mcts.current_state.select(
+                            self.current_state.get_selected_piece())
+                        self.ql_mcts.current_state.place(action[0], action[1])
+                        self.ql_mcts.current_state.set_selected_piece(
+                            action[2])
+                        self.ql_mcts.current_state.switch_player()
+                        player = 1 - player
+
+                else:
+                    # opponent is random
+                    action = self.random_player.place_piece()
+                    next_piece = self.random_player.choose_piece()
+                    while self.current_state.check_if_move_valid(self.current_state.get_selected_piece(), action[0], action[1], next_piece) is False:
+                        action = self.random_player.place_piece()
+                        next_piece = self.random_player.choose_piece()
+                        # WARNING: very often stuck in this loop
+                    self.current_state.select(
+                        self.current_state.get_selected_piece())
+                    self.current_state.place(action[0], action[1])
+                    self.current_state.set_selected_piece(next_piece)
+                    self.current_state.switch_player()
+                    player = 1 - player
+
+                if self.current_state.check_is_game_over():
+                    if 1 - self.current_state.check_winner() == 0:
+                        print("Agent wins")
+                        wins += 1
+                        # TODO: QL reward update
+                    else:
+                        print("Player 2 wins")
+                    break
+
+        # fitness is the percentage of games won
+        logging.debug(f"Win rate: {wins/num_games}")
+        return wins/num_games
+
+    def choose_piece(self):
+        '''
+        Choose piece for next player to place
+        '''
+        thresholds = self.thresholds
+
+        # game is stored in parent
+        self.current_state = self.get_game()
+
+        board_score = score_board(self.current_state)
+
+        differences = [abs(board_score - thresholds[key])
+                        for key in thresholds]
+        min_diff = min(differences)
+        index = differences.index(min_diff)
+        key = list(thresholds.keys())[index]
+
+        if key == 'random':
+            logging.debug('random')
+            # play randomly
+            action = self.random_player.place_piece()
+            next_piece = self.random_player.choose_piece()
+            while self.current_state.check_if_move_valid(self.current_state.get_selected_piece(), action[0], action[1], next_piece) is False:
+                action = self.random_player.place_piece()
+                next_piece = self.random_player.choose_piece()
+            return next_piece
+
+        elif key == 'hardcoded':
+            # play using hardcoded strategy
+            logging.debug('hardcoded')
+            self.previous_state = deepcopy(self.current_state)
+            winning_piece, position = self.hardcoded_strategy_get_move(
+                self.current_state)
+            next_piece = self.hardcoded_strategy_get_piece(
+                self.current_state)
+            while self.current_state.check_if_move_valid(self.current_state.get_selected_piece(), position[0], position[1], next_piece) is False:
+                winning_piece, position = self.hardcoded_strategy_get_move(
+                    self.current_state)
+                next_piece = self.hardcoded_strategy_get_piece(
+                    self.current_state)
+            return next_piece
+
+        else:
+            # play using QL-MCTS
+            logging.debug('ql-mcts')
+            self.ql_mcts.previous_state = deepcopy(
+                self.current_state)
+            action = self.ql_mcts.get_action(self.current_state)
+            self.ql_mcts.previous_action = action
+            self.ql_mcts.current_state.select(
+                self.current_state.get_selected_piece())
+            return action[2]
+
+    def place_piece(self):
+        # python passes by reference
+        # agent will use the state, etc. to update the Q-table
+        # this function also wipes the MCTS tree
+        self.current_state = self.get_game()
+        thresholds = self.thresholds
+
+        self.ql_mcts.clear_and_set_current_state(self.current_state)
+
+        while True:
+            # board score is the number of couples and triplets on the board
+            # it is indicative of the change of the board state
+            board_score = score_board(self.current_state)
+
+            differences = [abs(board_score - thresholds[key])
+                            for key in thresholds]
+            min_diff = min(differences)
+            index = differences.index(min_diff)
+            key = list(thresholds.keys())[index]
+
+            if key == 'random':
+                logging.debug('random')
+                # play randomly
+                action = self.random_player.place_piece()
+                next_piece = self.random_player.choose_piece()
+                while self.current_state.check_if_move_valid(self.current_state.get_selected_piece(), action[0], action[1], next_piece) is False:
+                    action = self.random_player.place_piece()
+                    next_piece = self.random_player.choose_piece()
+                return action[0], action[1]
+
+            elif key == 'hardcoded':
+                # play using hardcoded strategy
+                logging.debug('hardcoded')
+                self.previous_state = deepcopy(self.current_state)
+                winning_piece, position = self.hardcoded_strategy_get_move(
+                    self.current_state)
+                next_piece = self.hardcoded_strategy_get_piece(
+                    self.current_state)
+                while self.current_state.check_if_move_valid(self.current_state.get_selected_piece(), position[0], position[1], next_piece) is False:
+                    winning_piece, position = self.hardcoded_strategy_get_move(
+                        self.current_state)
+                    next_piece = self.hardcoded_strategy_get_piece(
+                        self.current_state)
+                return position[0], position[1]
+
+            else:
+                # play using QL-MCTS
+                logging.debug('ql-mcts')
+                self.ql_mcts.previous_state = deepcopy(
+                    self.current_state)
+                action = self.ql_mcts.get_action(self.current_state)
+                self.ql_mcts.previous_action = action
+                return action[0], action[1]
+
+    def test_thresholds(self):
+        thresholds = {'random': 1.090773081612301,
+                        'hardcoded': 5.790328881747581, 'ql-mcts': 9.251997327518943}
+        win_rate = self.play_game(thresholds, num_games=10)
+        print(win_rate)
+
+
+if __name__ == "__main__":
+    final_player = FinalPlayer()
+    # best_thresholds = final_player.evolve()
+    # print(best_thresholds)
+
+    final_player.test_thresholds()
+\end{mintedbox}
+
+\subsubsection{Code for Hardcoded Strategy}
+
+The strategy is outlined in this \href{https://scholarworks.umt.edu/cgi/viewcontent.cgi?article=1334&context=tme}{paper}. I implement it in Python below.
+
+\begin{mintedbox}{python}
+'''
+Hardcoded player for Quarto
+Follows risky strategy from paper:
+
+"Developing Strategic and Mathematical Thinking via Game Play:
+Programming to Investigate a Risky Strategy for Quarto"
+by Peter Rowlett
+'''
+from copy import deepcopy
+import itertools
+import logging
+import random
+
+from lib.players import Player
+from quarto.objects import Quarto
+
+import sys
+sys.path.insert(0, '..')
+
+class HardcodedPlayer(Player):
+    def __init__(self, quarto: Quarto = None):
+        if quarto is None:
+            quarto = Quarto()
+        super().__init__(quarto)
+        self.BOARD_SIDE = 4
+
+    def check_if_winning_piece(self, state, piece):
+        '''
+        Simulate placing the piece on the board and check if the game is over
+        '''
+
+        for i in range(self.BOARD_SIDE):
+            for j in range(self.BOARD_SIDE):
+                if state.check_if_move_valid(piece, i, j, -100):
+                    cloned_state = deepcopy(state)
+                    cloned_state.select(piece)
+                    cloned_state.place(i, j)
+
+                    if cloned_state.check_is_game_over():
+                        return True, [i, j]
+        return False, None
+
+    def hardcoded_strategy_get_piece(self, state):
+        '''
+        Returns a piece to be placed on the board
+        '''
+        possible_pieces = []
+        for i in range(16):
+            # check if the piece is a winning piece
+            winning_piece, _ = self.check_if_winning_piece(state, i)
+            if (not winning_piece) and (i not in list(itertools.chain.from_iterable(state.state_as_array()))) and (i != state.get_selected_piece()):
+                possible_pieces.append(i)
+
+        # if no pieces can be placed on board anymore (board full/game over), return -1
+        if len(possible_pieces) == 0:
+            # check if number of non-empty cells is 16
+            if len([i for i in list(itertools.chain.from_iterable(state.state_as_array())) if i != -1]) == 16:
+                return -1
+            else:
+                # there are possible pieces to be placed, but they are winning pieces/already in board
+                on_board = list(itertools.chain.from_iterable(
+                    state.state_as_array()))
+                not_on_board = list(set(range(16)) - set(on_board))
+                return random.choice(not_on_board)
+        else:
+            return random.choice(possible_pieces)
+
+    def choose_piece(self):
+        '''
+        Returns a piece to be placed on the board
+        '''
+        return self.hardcoded_strategy_get_piece()
+
+    def hardcoded_strategy_get_move(self, return_winning_piece_boolean=True):
+        #  1. Play the piece handed over by the opponent:
+        # (a) play a winning position if handed a winning piece;
+        # (b) otherwise, play to build a line of like pieces if possible;
+        # (c) otherwise, play randomly.
+        # 2. Hand a piece to the opponent:
+        # (a) avoid handing over a winning piece for your opponent to play;
+        # (b) otherwise, choose randomly.
+
+        state = self.get_game()
+
+        board = state.state_as_array()
+        selected_piece = state.get_selected_piece()
+        # check if the selected piece is a winning piece
+        winning_piece, position = self.check_if_winning_piece(
+            state, selected_piece)
+        if winning_piece:
+            return selected_piece, position
+
+        # check if the selected piece can be used to build a line of like pieces
+
+        row_1 = [[0, 0], [0, 1], [0, 2], [0, 3]]
+        # pieces in row 2
+        row_2 = [[1, 0], [1, 1], [1, 2], [1, 3]]
+        # pieces in row 3
+        row_3 = [[2, 0], [2, 1], [2, 2], [2, 3]]
+        # pieces in row 4
+        row_4 = [[3, 0], [3, 1], [3, 2], [3, 3]]
+
+        # pieces in column 1
+        col_1 = [[0, 0], [1, 0], [2, 0], [3, 0]]
+        # pieces in column 2
+        col_2 = [[0, 1], [1, 1], [2, 1], [3, 1]]
+        # pieces in column 3
+        col_3 = [[0, 2], [1, 2], [2, 2], [3, 2]]
+        # pieces in column 4
+        col_4 = [[0, 3], [1, 3], [2, 3], [3, 3]]
+
+        # pieces in diagonal 1
+        diag_1 = [[0, 0], [1, 1], [2, 2], [3, 3]]
+        # pieces in diagonal 2
+        diag_2 = [[0, 3], [1, 2], [2, 1], [3, 0]]
+
+        for line in [row_1, row_2, row_3, row_4, col_1, col_2, col_3, col_4, diag_1, diag_2]:
+            # check if the selected piece can be used to build a line of like pieces
+            characteristics = []
+            empty_rows = []
+            for el in line:
+                x, y = el
+                if board[x, y] != -1:
+                    piece = board[x][y]
+                    piece_char = state.get_piece_charachteristics(piece)
+                    characteristics.append(
+                        [piece_char.HIGH, piece_char.COLOURED, piece_char.SOLID, piece_char.SQUARE])
+                else:
+                    empty_rows.append(el)
+                    characteristics.append([-1, -1, -1, -1])
+
+            selected_piece_char = state.get_piece_charachteristics(
+                selected_piece)
+            selected_piece_char = [selected_piece_char.HIGH, selected_piece_char.COLOURED,
+                                    selected_piece_char.SOLID, selected_piece_char.SQUARE]
+
+            # check if characteristics has an empty row
+            if [-1, -1, -1, -1] in characteristics:
+                # insert the selected piece in the empty row
+                empty_piece_index = characteristics.index(
+                    [-1, -1, -1, -1])
+                characteristics[empty_piece_index] = selected_piece_char
+
+                # check if any column has the same characteristics
+                col1 = [characteristics[0][0], characteristics[1][0],
+                        characteristics[2][0], characteristics[3][0]]
+                col2 = [characteristics[0][1], characteristics[1][1],
+                        characteristics[2][1], characteristics[3][1]]
+                col3 = [characteristics[0][2], characteristics[1][2],
+                        characteristics[2][2], characteristics[3][2]]
+                col4 = [characteristics[0][3], characteristics[1][3],
+                        characteristics[2][3], characteristics[3][3]]
+
+                col1 = [int(i) for i in col1]
+                col2 = [int(i) for i in col2]
+                col3 = [int(i) for i in col3]
+                col4 = [int(i) for i in col4]
+
+                if len(set(col1)) == 1 or len(set(col2)) == 1 or len(set(col3)) == 1 or len(set(col4)) == 1:
+                    # this piece can be used to build a line of like pieces
+                    logging.debug('playing to build a line of like pieces')
+                    if return_winning_piece_boolean:
+                        return True, list(reversed(empty_rows[-1]))
+                    else:
+                        move = list(reversed(empty_rows[-1]))
+                        return move[0], move[1]
+
+        # play randomly
+        for i in range(self.BOARD_SIDE):
+            for j in range(self.BOARD_SIDE):
+                for next_piece in range(16):
+                    if state.check_if_move_valid(selected_piece, i, j, next_piece):
+                        if return_winning_piece_boolean:
+                            return False, [i, j]
+                        else:
+                            return i, j
+
+        logging.debug(f"Selected piece: {selected_piece}")
+        logging.debug(f"Board: {board}")
+        logging.debug('no move found')
+
+    def place_piece(self):
+        '''
+        Above function sometimes necessary to return additional information
+        In game, first return value is not necessary
+        '''
+        return self.hardcoded_strategy_get_move(return_winning_piece_boolean=False)
+\end{mintedbox}
+
+\subsubsection{Monte Carlo Tree Search}
+
+The implementation of MCTS and the rollout strategy is based on the minimal implementation \href{https://gist.github.com/qpwo/c538c6f73727e254fdc7fab81024f6e1}{here}.
+
+\begin{mintedbox}{python}
+
+
+from collections import defaultdict
+import copy
+import json
+import logging
+import math
+import pickle
+import random
+from threading import Thread
+
+import numpy as np
+from lib.isomorphic import BoardTransforms
+from lib.players import Player, RandomPlayer
+from lib.utilities import Node, NodeDecoder, NodeEncoder
+
+from quarto.objects import Quarto
+
+logging.basicConfig(level=logging.INFO)
+
+
+class MonteCarloTreeSearchEncoder(json.JSONEncoder):
+    def default(self, obj):
+        l = {
+            'Q': {k.hash_state(): v for k, v in obj.Q.items()},
+            'N': {k.hash_state(): v for k, v in obj.N.items()},
+
+            # children is a dictionary of nodes
+            'children': {k.hash_state(): [NodeEncoder().default(i) for i in v] for k, v in obj.children.items()},
+
+            # 'children': [NodeEncoder().default(child) for child in obj.children],
+            'epsilon': obj.epsilon,
+        }
+        return l
+
+    def encode(self, obj):
+        return super().encode(obj)
+
+    def load_json(self, filename):
+        with open(filename, 'r') as f:
+            return json.load(f, cls=MonteCarloTreeSearchDecoder)
+
+
+class MonteCarloTreeSearchDecoder(json.JSONDecoder):
+    '''
+    Recreate MonteCarloTreeSearch object from JSON
+    '''
+
+    def __init__(self, *args, **kwargs):
+        json.JSONDecoder.__init__(
+            self, object_hook=self.object_hook, *args, **kwargs)
+
+    def object_hook(self, obj):
+        children = {}
+
+        for k, v in obj['children'].items():
+            children[Node(hashed_state=k)] = [
+                NodeDecoder().object_hook(node) for node in v]
+
+        if 'Q' in obj:
+            return MonteCarloTreeSearch(
+                Q={Node(hashed_state=k): v for k, v in obj['Q'].items()},
+                N={Node(hashed_state=k): v for k, v in obj['N'].items()},
+                children=children,
+                epsilon=obj['epsilon'],
+            )
+        return obj
+
+
+def decode_tree(tree):
+    return MonteCarloTreeSearchDecoder().object_hook(tree)
+
+
+class MonteCarloTreeSearch(Player):
+    '''
+    Solve using Monte Carlo Tree Search
+    '''
+
+    def __init__(self, board=Quarto(), epsilon=0.1, max_depth=1000, Q=None, N=None, children=None):
+        self.epsilon = epsilon
+        self.max_depth = max_depth
+        if Q is None:
+            self.Q = defaultdict(int)
+        else:
+            self.Q = defaultdict(int, Q)
+        if N is None:
+            self.N = defaultdict(int)
+        else:
+            self.N = defaultdict(int, N)
+        if children is None:
+            self.children = dict()
+        else:
+            self.children = children
+        self.MAX_PIECES = 16
+        self.BOARD_SIDE = 4
+        self.board = board
+        self.random_factor = 0
+        self.decisions = 0
+        super().__init__(board)
+
+    def set_board(self, board):
+        self.board = board
+
+    def choose(self, node):
+        '''
+        Choose best successor of node (move)
+        Returns the board itself
+        '''
+        def score(n):
+            logging.debug(f"Before reading in choose {n}")
+            if self.N[n] == 0:
+                return float('-inf')
+            return self.Q[n] / self.N[n]
+
+        # node is board Quarto
+        node = Node(node)
+        if node.is_terminal():
+            logging.debug(node.board.state_as_array())
+            raise RuntimeError("choose called on terminal node")
+
+        # number of moves made in game
+        self.decisions += 1
+
+        for key in self.children:
+            if key == node:
+                return max(self.children[key], key=score).board
+
+        self.random_factor += 1
+        if node not in self.children:
+            for key, value in self.children.items():
+                if BoardTransforms().compare_boards(node.board.state_as_array(), key.board.state_as_array()):
+                    if key in self.children:
+                        print("found in symmetry")
+                        return max(self.children[key], key=score).board
+
+            # number of times have to resort to random
+            rand_child = node.find_random_child()
+            # add to children
+            self.children[node] = [rand_child]
+            return rand_child.board
+
+        print("found in board")
+        return max(self.children[node], key=score).board
+
+    def choose_piece(self):
+        '''
+        Choose a piece to make the opponent place
+        '''
+        node = Node(board=self.board,
+                    selected_piece_index=self.board.get_selected_piece())
+
+        if node.is_terminal():
+            logging.debug(node.board.state_as_array())
+            raise RuntimeError("choose called on terminal node")
+
+        if node not in self.children:
+            # index -1 of tuple is next piece from a board
+            print("Random child")
+            return node.find_random_child()[-1]
+
+        def score(n):
+            logging.debug(f"Before reading in choose {n}")
+            if self.N[n] == 0:
+                return float('-inf')
+            return self.Q[n] / self.N[n]
+
+        return max(self.children[node], key=score)[-1]
+
+    def place_piece(self):
+        '''
+        Return position to place piece on board
+        '''
+        node = Node(board=self.board,
+                    selected_piece_index=self.board.get_selected_piece())
+
+        if node.is_terminal():
+            logging.debug(node.board.state_as_array())
+            raise RuntimeError("choose called on terminal node")
+
+        # if node not in self.children:
+        #     piece, x, y, next_piece = node.find_random_child().move
+        #     # print("Random child")
+        #     # print(piece, x, y, next_piece)
+        #     return x, y, next_piece
+
+        if node not in self.children:
+            for key, value in self.children.items():
+                if BoardTransforms().compare_boards(node.board.state_as_array(), key.board.state_as_array()):
+                    if key in self.children:
+                        print("found in symmetry")
+                        return max(self.children[key], key=score).board
+
+            # number of times have to resort to random
+            rand_child = node.find_random_child()
+            print("Random child")
+            # add to children
+            return rand_child.board.move
+
+        def score(n):
+            logging.debug(f"Before reading in choose {n}")
+            if self.N[n] == 0:
+                return float('-inf')
+            return self.Q[n] / self.N[n]
+
+        # print("In place piece")
+        # print(max(self.children[node], key=score).move)
+        return max(self.children[node], key=score).move[1:]
+
+    def do_rollout(self, board):
+        '''
+        Rollout from the node for one iteration
+        '''
+        logging.debug("Rollout")
+        # if root node, there is no move
+        node = Node(board, move=())
+        path = self.select(node)
+        leaf = path[-1]
+
+        # expand a leaf only when necessary, i.e., only if I arrive at it during selection and if it has already been visited (self.N) but not yet expanded (self.children)
+        if leaf in self.N and leaf not in self.children:
+            self.expand(leaf)
+
+        reward = self.simulate(leaf)
+        self.backpropagate(path, reward)
+
+    def select(self, node):
+        '''
+        Select path to leaf node
+        '''
+        path = []
+        while True:
+            path.append(node)
+            if node not in self.children or not self.children[node]:
+                return path
+            unexplored = self.children[node] - self.children.keys()
+            if unexplored:
+                n = unexplored.pop()
+                path.append(n)
+                return path
+            node = self.uct_select(node)
+
+    def expand(self, node):
+        # logging.debug('Expanding')
+        if node in self.children:
+            return
+        self.children[node] = node.find_children()
+        # logging.debug('Children: ', self.children[node])
+
+    def simulate(self, node):
+        '''
+        Returns reward for random simulation
+        '''
+        invert_reward = False
+        while True:
+            if node.is_terminal():
+                reward = node.reward()
+
+                return 1 - reward if invert_reward else reward
+            node = node.find_random_child()
+            # invert_reward = not invert_reward
+
+    def backpropagate(self, path, reward):
+        '''
+        Backpropagate reward
+        '''
+        logging.debug('Backpropagating')
+        for node in reversed(path):
+            self.N[node] += 1
+            self.Q[node] += reward
+            # TODO: check if this is correct
+            reward = 1 - reward
+
+    def uct_select(self, node):
+        '''
+        Select a child of node, balancing exploration & exploitation
+        '''
+        assert all(n in self.children for n in self.children[node])
+
+        log_N_vertex = math.log(self.N[node])
+
+        def uct(n):
+            return self.Q[n] / self.N[n] + self.epsilon * math.sqrt(log_N_vertex / self.N[n])
+
+        return max(self.children[node], key=uct)
+
+    def test_win_rate(self, num_trials=10, rollouts=20):
+        print("Testing win rate")
+        agent_wins = 0
+        opponent_wins = 0
+        draws = 0
+        for i in range(num_trials):
+            board = Quarto()
+            random_player = RandomPlayer(board)
+            self.board = board
+            board.set_selected_piece(random_player.choose_piece(board))
+            while True:
+                # random player moves
+                chosen_location = random_player.place_piece(
+                    board, board.get_selected_piece())
+                chosen_piece = random_player.choose_piece(board)
+                while not board.check_if_move_valid(board.get_selected_piece(), chosen_location[0], chosen_location[1], chosen_piece):
+                    chosen_location = random_player.place_piece(
+                        board, board.get_selected_piece())
+                    chosen_piece = random_player.choose_piece(board)
+                board.select(board.get_selected_piece())
+                board.place(chosen_location[0], chosen_location[1])
+                # setting the piece for the next player
+                board.set_selected_piece(chosen_piece)
+                board.switch_player()
+
+                if board.check_is_game_over():
+                    if 1 - board.check_winner() == 0:
+                        opponent_wins += 1
+                    else:
+                        draws += 1
+                    break
+                # monte carlo tree search moves
+
+                # make move with monte carlo tree search
+                for _ in range(rollouts):
+                    self.do_rollout(board)
+                board = self.choose(board)
+
+                if board.check_is_game_over():
+                    # TODO: check if it's a draw
+                    if 1 - board.check_winner() == 1:
+                        agent_wins += 1
+                    else:
+                        draws += 1
+                    break
+                # don't need to switch player because it's done in choose
+                # random_player needs to do it because it is not done automatically
+
+        print(f"Agent wins: {agent_wins}/{i+1}")
+        print(f"Random factor ", self.random_factor / self.decisions)
+        self.random_factor = 0
+        self.decisions = 0
+
+    def train_engine(self, board, num_sims=200, save_format='json'):
+        '''
+        Train the model
+        '''
+        for i in range(num_sims):
+            board = Quarto()
+            random_player = RandomPlayer(board)
+            self.board = board
+            board.set_selected_piece(random_player.choose_piece(board))
+            logging.info(f"Iteration: {i} with tree size {len(self.children)}")
+            while True:
+                # random player moves
+                chosen_location = random_player.place_piece(
+                    board, board.get_selected_piece())
+                chosen_piece = random_player.choose_piece(board)
+                while not board.check_if_move_valid(board.get_selected_piece(), chosen_location[0], chosen_location[1], chosen_piece):
+                    chosen_location = random_player.place_piece(
+                        board, board.get_selected_piece())
+                    chosen_piece = random_player.choose_piece(board)
+                board.select(board.get_selected_piece())
+                board.place(chosen_location[0], chosen_location[1])
+                # setting the piece for the next player
+                board.set_selected_piece(chosen_piece)
+                board.switch_player()
+
+                if board.check_is_game_over():
+                    if 1 - board.check_winner() == 0:
+                        logging.info("Random player won")
+                    else:
+                        logging.info("Draw")
+                    break
+                # monte carlo tree search moves
+
+                # make move with monte carlo tree search
+                for _ in range(20):
+                    self.do_rollout(board)
+                board = self.choose(board)
+
+                if board.check_is_game_over():
+                    # TODO: check if it's a draw
+                    if 1 - board.check_winner() == 1:
+                        logging.info("Agent won")
+                    else:
+                        logging.info("Draw")
+                    break
+                # don't need to switch player because it's done in choose
+                # random_player needs to do it because it is not done automatically
+
+            if i % 2 == 0:
+                # run a test to see if the agent is improving
+                self.test_win_rate()
+
+            # save progress every 10 iterations
+            if i % 100 == 0:
+                logging.debug("Saving progress")
+                if save_format == 'json':
+                    self.save_progress_json('/Volumes/USB/progress3.json')
+                else:
+                    self.save_progress_pickle('progress.pkl')
+
+    def train(self):
+        '''
+        Train without multithreading
+        '''
+        self.train_engine(Quarto(), 100, 'json')
+
+    def threaded_training(self, num_threads=1, save_format='json'):
+        '''
+        Train the model
+        '''
+        thread_pool = []
+
+        for i in range(num_threads):
+            t = Thread(target=self.train_engine, args=(Quarto(), 100, 'json'))
+            t.start()
+            thread_pool.append(t)
+
+        for t in thread_pool:
+            t.join()
+
+        # final save after training
+        if save_format == 'json':
+            self.save_progress_json('progress.json')
+        else:
+            self.save_progress_pickle('progress.pkl')
+
+    def generate_future_probabilities(self, root: Node, node: Node):
+        '''
+        play an action a from the root state st with probability proportional to the number of times that action was chosen during Phase One. To do this, AlphaGo Zero creates a probability distribution πt over the actions from the state st such that πt(a) ∝ N(st,a)^-1/τ for some hyperparameter τ; when τ = 1 the distribution exactly matches the ratios of the visit counts, while when τ → 0 the probability mass focuses on the action that was chosen most often. Using this distribution to selects actions improves the performance of AlphaGo Zero because πt is a refinement of the prediction pt for the start state st; as MCTS is allowed to run, it starts selecting actions with high value estimates more frequently rather than relying on the prior probability bonus exploration term.
+        '''
+        # 1 is the default value, but it can be changed to 0.5 or 0.1
+
+        self.tau = 0.5
+        if node not in self.children:
+            self.do_rollout(root.board)
+
+        probs = [self.N[child] / self.N[root]
+                    for child in self.children[node]]
+
+        probs = [p ** (1 / self.tau) for p in probs]
+
+        probs = [p / sum(probs) for p in probs]
+
+        return probs
+
+    def save_progress_pickle(self, filename):
+        with open(filename, 'wb') as f:
+            pickle.dump(self, f)
+
+    def save_progress_json(self, filename):
+        with open(filename, 'w') as f:
+            json.dump(self, f, cls=MonteCarloTreeSearchEncoder)
+
+    def load_progress_json(self, filename):
+        with open(filename, 'r') as f:
+            return json.load(f, cls=MonteCarloTreeSearchDecoder)
+
+    def load_progress(self, filename):
+        with open(filename, 'rb') as f:
+            return pickle.load(f)
+
+
+if __name__ == "__main__":
+    mcts = MonteCarloTreeSearch()
+    # with open('/Volumes/USB/progress3.json', 'r') as f:
+    #     mcts = decode_tree(json.load(f))
+    #     logging.info("Loaded progress")
+    logging.info("Starting training")
+    mcts.train()
+
+\end{mintedbox}
+
+\subsubsection{Q-Learning + MCTS}
+
+Here, I combine plain Q-Learning with an MCTS fallback, calling MCTS in the exploration hase and resorting to it in testing when a "state + action" pair cannot be found in the table.
+
+\subsubsection{Utlity Functions}
+
+\begin{mintedbox}{python}
+def score_board(state: Quarto):
+    positions = {
+        'couples': 0,
+        'triplets': 0,
+    }
+
+    board = state.state_as_array()
+
+    # Array for checking if a certain row already contains a triplet
+    row_done = [False, False, False, False]
+
+    # Check all the rows
+
+    for i in range(state.BOARD_SIDE):
+        if board[i, 0] != -1 and board[i, 1] != -1 and board[i, 2] != -1 and board[i, 3] == -1:
+            piece_1 = state.get_piece_charachteristics(board[i, 0])
+            piece_2 = state.get_piece_charachteristics(board[i, 1])
+            piece_3 = state.get_piece_charachteristics(board[i, 2])
+            if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+                positions['triplets'] += 1
+                row_done[i] = True
+            if piece_1.HIGH == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+                positions['triplets'] += 1
+                row_done[i] = True
+            if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+                positions['triplets'] += 1
+                row_done[i] = True
+            if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+                positions['triplets'] += 1
+                row_done[i] = True
+        if board[i, 0] == -1 and board[i, 1] != -1 and board[i, 2] != -1 and board[i, 3] != -1:
+            piece_1 = state.get_piece_charachteristics(board[i, 1])
+            piece_2 = state.get_piece_charachteristics(board[i, 2])
+            piece_3 = state.get_piece_charachteristics(board[i, 3])
+            if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+                positions['triplets'] += 1
+                row_done[i] = True
+            if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+                positions['triplets'] += 1
+                row_done[i] = True
+            if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+                positions['triplets'] += 1
+                row_done[i] = True
+            if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+                positions['triplets'] += 1
+                row_done[i] = True
+        if board[i, 0] != -1 and board[i, 1] != -1 and board[i, 2] == -1 and board[i, 3] != -1:
+            piece_1 = state.get_piece_charachteristics(board[i, 0])
+            piece_2 = state.get_piece_charachteristics(board[i, 1])
+            piece_3 = state.get_piece_charachteristics(board[i, 3])
+            if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+                positions['triplets'] += 1
+                row_done[i] = True
+            if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+                positions['triplets'] += 1
+                row_done[i] = True
+            if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+                positions['triplets'] += 1
+                row_done[i] = True
+            if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+                positions['triplets'] += 1
+                row_done[i] = True
+        if board[i, 0] != -1 and board[i, 1] == -1 and board[i, 2] != -1 and board[i, 3] != -1:
+            piece_1 = state.get_piece_charachteristics(board[i, 0])
+            piece_2 = state.get_piece_charachteristics(board[i, 2])
+            piece_3 = state.get_piece_charachteristics(board[i, 3])
+            if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+                positions['triplets'] += 1
+                row_done[i] = True
+            if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+                positions['triplets'] += 1
+                row_done[i] = True
+            if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+                positions['triplets'] += 1
+                row_done[i] = True
+            if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+                positions['triplets'] += 1
+                row_done[i] = True
+        # Before checking a row for couples, control the boolean flag
+        if not row_done[i] and board[i, 0] != -1 and board[i, 1] != -1 and board[i, 2] == -1 and board[i, 3] == -1:
+            piece_1 = state.get_piece_charachteristics(board[i, 0])
+            piece_2 = state.get_piece_charachteristics(board[i, 1])
+            if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+                positions['couples'] += 1
+            if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+                positions['couples'] += 1
+            if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+                positions['couples'] += 1
+            if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+                positions['couples'] += 1
+        if not row_done[i] and board[i, 0] == -1 and board[i, 1] != -1 and board[i, 2] != -1 and board[i, 3] == -1:
+            piece_1 = state.get_piece_charachteristics(board[i, 1])
+            piece_2 = state.get_piece_charachteristics(board[i, 2])
+            if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+                positions['couples'] += 1
+            if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+                positions['couples'] += 1
+            if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+                positions['couples'] += 1
+            if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+                positions['couples'] += 1
+        if not row_done[i] and board[i, 0] == -1 and board[i, 1] == -1 and board[i, 2] != -1 and board[i, 3] != -1:
+            piece_1 = state.get_piece_charachteristics(board[i, 2])
+            piece_2 = state.get_piece_charachteristics(board[i, 3])
+            if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+                positions['couples'] += 1
+            if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+                positions['couples'] += 1
+            if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+                positions['couples'] += 1
+            if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+                positions['couples'] += 1
+
+    # Array for checking if a certain column already contains a triplet
+    column_done = [False, False, False, False]
+
+    # Check all the columns
+
+    for i in range(state.BOARD_SIDE):
+        if board[0, i] != -1 and board[1, i] != -1 and board[2, i] != -1 and board[3, i] == -1:
+            piece_1 = state.get_piece_charachteristics(board[0, i])
+            piece_2 = state.get_piece_charachteristics(board[1, i])
+            piece_3 = state.get_piece_charachteristics(board[2, i])
+            if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+                positions['triplets'] += 1
+                column_done[i] = True
+            if piece_1.HIGH == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+                positions['triplets'] += 1
+                column_done[i] = True
+            if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+                positions['triplets'] += 1
+                column_done[i] = True
+            if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+                positions['triplets'] += 1
+                column_done[i] = True
+        if board[0, i] == -1 and board[1, i] != -1 and board[2, i] != -1 and board[3, i] != -1:
+            piece_1 = state.get_piece_charachteristics(board[1, i])
+            piece_2 = state.get_piece_charachteristics(board[2, i])
+            piece_3 = state.get_piece_charachteristics(board[3, i])
+            if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+                positions['triplets'] += 1
+                column_done[i] = True
+            if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+                positions['triplets'] += 1
+                column_done[i] = True
+            if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+                positions['triplets'] += 1
+                column_done[i] = True
+            if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+                positions['triplets'] += 1
+                column_done[i] = True
+        if board[0, i] != -1 and board[1, i] == -1 and board[2, i] != -1 and board[3, i] != -1:
+            piece_1 = state.get_piece_charachteristics(board[0, i])
+            piece_2 = state.get_piece_charachteristics(board[2, i])
+            piece_3 = state.get_piece_charachteristics(board[3, i])
+            if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+                positions['triplets'] += 1
+                column_done[i] = True
+            if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+                positions['triplets'] += 1
+                column_done[i] = True
+            if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+                positions['triplets'] += 1
+                column_done[i] = True
+            if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+                positions['triplets'] += 1
+                column_done[i] = True
+        if board[0, i] != -1 and board[1, i] != -1 and board[2, i] == -1 and board[3, i] != -1:
+            piece_1 = state.get_piece_charachteristics(board[0, i])
+            piece_2 = state.get_piece_charachteristics(board[1, i])
+            piece_3 = state.get_piece_charachteristics(board[3, i])
+            if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+                positions['triplets'] += 1
+                column_done[i] = True
+            if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+                positions['triplets'] += 1
+                column_done[i] = True
+            if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+                positions['triplets'] += 1
+                column_done[i] = True
+            if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+                positions['triplets'] += 1
+                column_done[i] = True
+        # Before checking a column for couples, control the boolean flag
+        if not column_done[i] and board[0, i] != -1 and board[1, i] != -1 and board[2, i] == -1 and board[3, i] == -1:
+            piece_1 = state.get_piece_charachteristics(board[0, i])
+            piece_2 = state.get_piece_charachteristics(board[1, i])
+            if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+                positions['couples'] += 1
+            if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+                positions['couples'] += 1
+            if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+                positions['couples'] += 1
+            if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+                positions['couples'] += 1
+        if not column_done[i] and board[0, i] == -1 and board[1, i] != -1 and board[2, i] != -1 and board[3, i] == -1:
+            piece_1 = state.get_piece_charachteristics(board[1, i])
+            piece_2 = state.get_piece_charachteristics(board[2, i])
+            if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+                positions['couples'] += 1
+            if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+                positions['couples'] += 1
+            if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+                positions['couples'] += 1
+            if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+                positions['couples'] += 1
+        if not column_done[i] and board[0, i] == -1 and board[1, i] == -1 and board[2, i] != -1 and board[3, i] != -1:
+            piece_1 = state.get_piece_charachteristics(board[2, i])
+            piece_2 = state.get_piece_charachteristics(board[3, i])
+            if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+                positions['couples'] += 1
+            if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+                positions['couples'] += 1
+            if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+                positions['couples'] += 1
+            if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+                positions['couples'] += 1
+
+    # Array for checking if a certain diagonal already contains a triplet
+    diagonal_done = [False, False]
+
+    # Check first diagonal
+
+    if board[0, 0] != -1 and board[1, 1] != -1 and board[2, 2] != -1 and board[3, 3] == -1:
+        piece_1 = state.get_piece_charachteristics(board[0, 0])
+        piece_2 = state.get_piece_charachteristics(board[1, 1])
+        piece_3 = state.get_piece_charachteristics(board[2, 2])
+        if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+            positions['triplets'] += 1
+            diagonal_done[0] = True
+        if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+            positions['triplets'] += 1
+            diagonal_done[0] = True
+        if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+            positions['triplets'] += 1
+            diagonal_done[0] = True
+        if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+            positions['triplets'] += 1
+            diagonal_done[0] = True
+    if board[0, 0] == -1 and board[1, 1] != -1 and board[2, 2] != -1 and board[3, 3] != -1:
+        piece_1 = state.get_piece_charachteristics(board[1, 1])
+        piece_2 = state.get_piece_charachteristics(board[2, 2])
+        piece_3 = state.get_piece_charachteristics(board[3, 3])
+        if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+            positions['triplets'] += 1
+            diagonal_done[0] = True
+        if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+            positions['triplets'] += 1
+            diagonal_done[0] = True
+        if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+            positions['triplets'] += 1
+            diagonal_done[0] = True
+        if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+            positions['triplets'] += 1
+            diagonal_done[0] = True
+    if board[0, 0] != -1 and board[1, 1] == -1 and board[2, 2] != -1 and board[3, 3] != -1:
+        piece_1 = state.get_piece_charachteristics(board[0, 0])
+        piece_2 = state.get_piece_charachteristics(board[2, 2])
+        piece_3 = state.get_piece_charachteristics(board[3, 3])
+        if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+            positions['triplets'] += 1
+            diagonal_done[0] = True
+        if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+            positions['triplets'] += 1
+            diagonal_done[0] = True
+        if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+            positions['triplets'] += 1
+            diagonal_done[0] = True
+        if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+            positions['triplets'] += 1
+            diagonal_done[0] = True
+    if board[0, 0] != -1 and board[1, 1] != -1 and board[2, 2] == -1 and board[3, 3] != -1:
+        piece_1 = state.get_piece_charachteristics(board[0, 0])
+        piece_2 = state.get_piece_charachteristics(board[1, 1])
+        piece_3 = state.get_piece_charachteristics(board[3, 3])
+        if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+            positions['triplets'] += 1
+            diagonal_done[0] = True
+        if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+            positions['triplets'] += 1
+            diagonal_done[0] = True
+        if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+            positions['triplets'] += 1
+            diagonal_done[0] = True
+        if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+            positions['triplets'] += 1
+            diagonal_done[0] = True
+    # Before checking a diagonal for couples, control the boolean flag
+    if not diagonal_done[0] and board[0, 0] != -1 and board[1, 1] != -1 and board[2, 2] == -1 and board[3, 3] == -1:
+        piece_1 = state.get_piece_charachteristics(board[0, 0])
+        piece_2 = state.get_piece_charachteristics(board[1, 1])
+        if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+            positions['couples'] += 1
+        if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+            positions['couples'] += 1
+        if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+            positions['couples'] += 1
+        if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+            positions['couples'] += 1
+    if not diagonal_done[0] and board[0, 0] == -1 and board[1, 1] != -1 and board[2, 2] != -1 and board[3, 3] == -1:
+        piece_1 = state.get_piece_charachteristics(board[1, 1])
+        piece_2 = state.get_piece_charachteristics(board[2, 2])
+        if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+            positions['couples'] += 1
+        if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+            positions['couples'] += 1
+        if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+            positions['couples'] += 1
+        if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+            positions['couples'] += 1
+    if not diagonal_done[0] and board[0, 0] == -1 and board[1, 1] == -1 and board[2, 2] != -1 and board[3, 3] != -1:
+        piece_1 = state.get_piece_charachteristics(board[2, 2])
+        piece_2 = state.get_piece_charachteristics(board[3, 3])
+        if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+            positions['couples'] += 1
+        if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+            positions['couples'] += 1
+        if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+            positions['couples'] += 1
+        if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+            positions['couples'] += 1
+
+    # Check second diagonal
+
+    if board[0, 3] != -1 and board[1, 2] != -1 and board[2, 1] != -1 and board[3, 0] == -1:
+        piece_1 = state.get_piece_charachteristics(board[0, 3])
+        piece_2 = state.get_piece_charachteristics(board[1, 2])
+        piece_3 = state.get_piece_charachteristics(board[2, 1])
+        if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+            positions['triplets'] += 1
+            diagonal_done[1] = True
+        if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+            positions['triplets'] += 1
+            diagonal_done[1] = True
+        if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+            positions['triplets'] += 1
+            diagonal_done[1] = True
+        if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+            positions['triplets'] += 1
+            diagonal_done[1] = True
+    if board[0, 3] == -1 and board[1, 2] != -1 and board[2, 1] != -1 and board[3, 0] != -1:
+        piece_1 = state.get_piece_charachteristics(board[1, 2])
+        piece_2 = state.get_piece_charachteristics(board[2, 1])
+        piece_3 = state.get_piece_charachteristics(board[3, 0])
+        if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+            positions['triplets'] += 1
+            diagonal_done[1] = True
+        if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+            positions['triplets'] += 1
+            diagonal_done[1] = True
+        if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+            positions['triplets'] += 1
+            diagonal_done[1] = True
+        if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+            positions['triplets'] += 1
+            diagonal_done[1] = True
+    if board[0, 3] != -1 and board[1, 2] != -1 and board[2, 1] == -1 and board[3, 0] != -1:
+        piece_1 = state.get_piece_charachteristics(board[0, 3])
+        piece_2 = state.get_piece_charachteristics(board[1, 2])
+        piece_3 = state.get_piece_charachteristics(board[3, 0])
+        if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+            positions['triplets'] += 1
+            diagonal_done[1] = True
+        if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+            positions['triplets'] += 1
+            diagonal_done[1] = True
+        if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+            positions['triplets'] += 1
+            diagonal_done[1] = True
+        if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+            positions['triplets'] += 1
+            diagonal_done[1] = True
+    if board[0, 3] != -1 and board[1, 2] == -1 and board[2, 1] != -1 and board[3, 0] != -1:
+        piece_1 = state.get_piece_charachteristics(board[0, 3])
+        piece_2 = state.get_piece_charachteristics(board[2, 1])
+        piece_3 = state.get_piece_charachteristics(board[3, 0])
+        if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+            positions['triplets'] += 1
+            diagonal_done[1] = True
+        if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+            positions['triplets'] += 1
+            diagonal_done[1] = True
+        if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+            positions['triplets'] += 1
+            diagonal_done[1] = True
+        if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+            positions['triplets'] += 1
+            diagonal_done[1] = True
+    # Before checking a diagonal for couples, control the boolean flag
+    if not diagonal_done[1] and board[0, 3] != -1 and board[1, 2] != -1 and board[2, 1] == -1 and board[3, 0] == -1:
+        piece_1 = state.get_piece_charachteristics(board[0, 3])
+        piece_2 = state.get_piece_charachteristics(board[1, 2])
+        if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+            positions['couples'] += 1
+        if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+            positions['couples'] += 1
+        if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+            positions['couples'] += 1
+        if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+            positions['couples'] += 1
+    if not diagonal_done[1] and board[0, 3] == -1 and board[1, 2] != -1 and board[2, 1] != -1 and board[3, 0] == -1:
+        piece_1 = state.get_piece_charachteristics(board[1, 2])
+        piece_2 = state.get_piece_charachteristics(board[2, 1])
+        if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+            positions['couples'] += 1
+        if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+            positions['couples'] += 1
+        if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+            positions['couples'] += 1
+        if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+            positions['couples'] += 1
+    if not diagonal_done[1] and board[0, 0] == -1 and board[1, 2] == -1 and board[2, 1] != -1 and board[3, 0] != -1:
+        piece_1 = state.get_piece_charachteristics(board[2, 1])
+        piece_2 = state.get_piece_charachteristics(board[3, 0])
+        if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
+            positions['couples'] += 1
+        if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
+            positions['couples'] += 1
+        if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
+            positions['couples'] += 1
+        if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
+            positions['couples'] += 1
+
+    return positions['couples']+2*positions['triplets']
+
+\end{mintedbox}
+
+\subsection{Code for Deep Q Network}
+
+\begin{mintedbox}{python}
+"""
+In this file, I build a Deep Q-Network to play Quarto.
+"""
+import sys
+
+sys.path.insert(0, '..')
+
+from quarto.gym_environment import QuartoScape
+from collections import deque
+import logging
+import os
+import random
+from typing import Any
+import gym
+import numpy as np
+import tensorflow as tf
+from lib.players import RandomPlayer
+from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras.layers import Dense, Conv2D, MaxPooling2D, Flatten
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.initializers import HeUniform
+
+from quarto.objects import Quarto
+
+env = QuartoScape()
+
+
+def test(agent):
+    dq_wins = 0
+    for round in range(100):
+        game = Quarto()
+        agent.set_game(game)
+        game.set_players((RandomPlayer(game), agent))
+        winner = game.run()
+        if winner == 1:
+            dq_wins += 1
+        # logging.warning(f"main: Winner: player {winner}")
+    logging.warning(f"main: DQ wins: {dq_wins}")
+
+
+class DQNAgent:
+    '''Play Quarto using a Deep Q-Network'''
+
+    def __init__(self, env=env, game=None):
+        self.env = env
+        # main model updated every x steps
+        self.model = self._build_model()
+        # target model updated every y steps
+        self.target_model = self._build_model()
+        self.gamma = 0.618
+        self.min_replay_size = 500
+        self.lr = 0.7
+        self.epsilon = 0.8
+        if game is not None:
+            self.env.game = game
+
+        if os.path.exists('model.h5'):
+            # print('Loading model')
+            self.model = tf.keras.models.load_model('model.h5')
+
+    def set_game(self, game):
+        self.env.game = game
+
+    def get_all_actions(self):
+        '''
+        Return tuples from (0, 0, 0) to (3, 3, 15)
+        Element 1 is position x
+        Element 2 is position y
+        Element 3 is piece chosen for next player
+        '''
+        tuples = []
+        for i in range(0, 4):
+            for j in range(0, 4):
+                for k in range(0, 16):
+                    tuples.append((i, j, k))
+        return tuples
+
+    def _build_model(self):
+        '''
+        Architecture of network:
+        Input nodes are the state of the board
+        Output nodes are the Q-values for each potential action (each output node is an action)
+        An action is made up of (x, y, piece chosen for next player)
+        There are 16 * 16 * 16 possible actions and the mapping is found in get_all_actions()
+        '''
+        model = Sequential()
+        initializer = HeUniform()
+        model.add(Dense(
+            12, input_dim=self.env.observation_space.shape[0], activation='relu', kernel_initializer=initializer))
+        model.add(Dense(24, activation='relu', kernel_initializer=initializer))
+        model.add(Dense(48, activation='relu', kernel_initializer=initializer))
+        model.add(Dense(96, activation='relu', kernel_initializer=initializer))
+        model.add(Dense(192, activation='relu',
+                    kernel_initializer=initializer))
+        model.add(Dense(4 * 4 * 16, activation='linear',
+                    kernel_initializer=initializer))
+        model.compile(loss=tf.keras.losses.Huber(), metrics=[
+                        'mae', 'mse'], optimizer=Adam(learning_rate=0.001))
+        return model
+
+    def build_conv_model(self):
+        model = Sequential()
+        model.add(Conv2D(32, (3, 3), input_shape=(4, 4, 4), activation='relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+        model.add(Flatten())
+        model.add(Dense(16, activation='relu'))
+        model.add(Dense(4 * 4 * 16, activation='linear'))
+        model.compile(loss='mse', metrics=[
+                        'accuracy'], optimizer=Adam(learning_rate=0.001))
+        return model
+
+    def get_position(self, element, list):
+        if element in list:
+            return list.index(element)
+        else:
+            return -1
+
+    def make_prediction(self, state, chosen_piece=None):
+        '''Make a prediction using the network'''
+        # prediction X is the position of the single 1 in the state
+        pred_X = [self.get_position(i, list(state.flatten()))
+                    for i in range(0, 16)]
+        pred_X.append(chosen_piece)
+        return self.model.predict(np.array([pred_X]), verbose=0)[0]
+
+    def decay_lr(self, lr, decay_rate, decay_step):
+        return lr * (1 / (1 + decay_rate * decay_step))
+
+    def abbellire(self, state, chosen_piece):
+        '''
+        Beautify the state for network input
+        When in Italy, do as the Italians do
+        '''
+        X = [self.get_position(i, list(state.flatten())) for i in range(0, 16)]
+        X.append(chosen_piece)
+        return np.array([X])
+
+    def create_X(self, state, chosen_piece):
+        X = [self.get_position(i, list(state.flatten())) for i in range(0, 16)]
+        X.append(chosen_piece)
+        return np.array([X])
+
+    def train(self, replay_memory, batch_size):
+        '''Train the network'''
+        if len(replay_memory) < self.min_replay_size:
+            return
+
+        # print('TRAINING')
+        batch_size = 64 * 2
+        minibatch = random.sample(replay_memory, batch_size)
+        # state + chosen_piece for you -> action (contains chosen_piece for next player)
+        current_states = np.array([self.abbellire(state, chosen_piece)
+                                    for state, chosen_piece, action, reward, new_current_state, done in minibatch])
+        current_qs = self.model.predict(current_states.reshape(batch_size, 17))
+        # new current state + chosen_piece for next player -> action (contains chosen_piece for next player)
+        new_current_states = np.array([self.abbellire(new_current_state, action[2])
+                                        for state, chosen_piece, action, reward, new_current_state, done in minibatch])
+        future_qs = self.target_model.predict(
+            new_current_states.reshape(batch_size, 17), verbose=0)
+        # exclude invalid moves from calculation
+        X = []
+        Y = []
+        for index, (current_state, chosen_piece, action, reward, new_current_state, done) in enumerate(minibatch):
+            if not done:
+                # max_future_q = np.max(future_qs[index])
+                # new_q = reward + self.gamma * max_future_q
+                max_future_q = reward + self.gamma * np.max(future_qs[index])
+            else:
+                # max_future_q = reward
+                max_future_q = reward
+
+            # 0 2 5
+            # 0 + 2 * 4 + 5 * 16 = 85
+            current_qs[index][action[0] + action[1] * 4 + action[2] * 16] = (
+                1 - self.lr) * current_qs[index][action[0] + action[1] * 4 + action[2] * 16] + self.lr * max_future_q
+
+            X.append(self.abbellire(current_state, chosen_piece))
+            Y.append(current_qs[index])
+
+        X = np.array(X).reshape(batch_size, 17)
+        Y = np.array(Y).reshape(batch_size, 4 * 4 * 16)
+        logging.debug(X)
+        logging.debug(Y)
+        self.model.fit(X, Y, batch_size=batch_size,
+                        verbose=1, shuffle=True, epochs=1)
+
+    def choose_piece(self, state: Any, piece_chosen_for_you: int):
+        '''Choose piece for the next guy to play'''
+        self.env.game.set_board(state)
+        pred = self.make_prediction(state, piece_chosen_for_you)
+        pred = self.nan_out_invalid_actions(-100, pred)
+        best_action = np.nanargmax(pred)
+        best_action = self.get_all_actions()[best_action]
+        return best_action[2]
+
+    def place_piece(self, state: Any, piece_chosen_for_you: int):
+        '''Choose position to move piece to based on the current state'''
+        self.env.game.set_board(state)
+        pred = self.make_prediction(state, piece_chosen_for_you)
+        pred = self.nan_out_invalid_actions(piece_chosen_for_you, pred)
+        best_action = np.nanargmax(pred)
+        best_action = self.get_all_actions()[best_action]
+        # print(f'Best action for place piece: {best_action}')
+        return best_action[0], best_action[1]
+
+    def nan_out_invalid_actions(self, current_piece, prediction):
+        '''Zero out invalid moves'''
+        # zero out invalid moves
+        all_actions = self.get_all_actions()
+        for i in range(len(prediction)):
+            action = all_actions[i]
+            # print(action)
+            # print(current_piece)
+            if not self.env.game.check_if_move_valid(current_piece, action[0], action[1], action[2]):
+                prediction[i] = np.nan
+
+        return prediction
+
+    def run(self):
+        '''Run training of agent for x episodes'''
+        # ensure both model and target model have same set of weights at the start
+        self.target_model.set_weights(self.model.get_weights())
+
+        replay_memory = deque(maxlen=5000)
+        state = self.env.reset()
+        # number of episodes to train for
+        num_episodes = 2000
+
+        steps_to_update_target_model = 0
+
+        for episode in range(num_episodes):
+            if episode % 100 == 0:
+                self.model.save(f'/Volumes/USB/qn_weights.h5')
+
+            total_training_reward = 0
+            print(f'Episode: {episode}')
+            state = self.env.reset()
+            done = False
+            # initialise chosen piece with a random piece
+            # in reality, the opponent will choose a piece for you
+            chosen_piece = random.randint(0, 15)
+            while not done:
+                steps_to_update_target_model += 1
+
+                if random.random() < self.epsilon:
+                    action = self.env.action_space.sample()
+                    while not self.env.game.check_if_move_valid(chosen_piece, action[0], action[1], action[2]):
+                        action = self.env.action_space.sample()
+                else:
+                    prediction = self.make_prediction(state, chosen_piece)
+                    prediction = self.nan_out_invalid_actions(
+                        chosen_piece, prediction)
+                    if np.all(np.isnan(prediction)):
+                        action = self.env.action_space.sample()
+                        while not self.env.game.check_if_move_valid(chosen_piece, action[0], action[1], action[2]):
+                            action = self.env.action_space.sample()
+                    else:
+                        action = np.nanargmax(prediction)
+                        # get action at index of action
+                        action = self.get_all_actions()[action]
+
+                new_state, reward, done, _ = self.env.step(
+                    action, chosen_piece)
+
+                replay_memory.append(
+                    (state, chosen_piece, action, reward, new_state, done))
+
+                if done:
+                    logging.debug('GAME OVER')
+
+                if steps_to_update_target_model % 4 == 0 or done:
+                    self.train(replay_memory, 32)
+
+                state = new_state
+                total_training_reward += reward
+
+                if done:
+                    total_training_reward += 1
+
+                    if steps_to_update_target_model >= 100:
+                        self.target_model.set_weights(self.model.get_weights())
+                        steps_to_update_target_model = 0
+                    break
+
+                chosen_piece = action[2]
+
+            if episode % 10 == 0:
+                logging.info(f'Testing win rate after {episode} episodes')
+                test(self)
+
+            self.lr = self.decay_lr(self.lr, 0.0001, episode)
+
+        self.env.close()
+        self.model.save('/Volumes/USB/qn_weights.h5')
+
+def main():
+    dq_wins = 0
+    for round in range(100):
+        game = Quarto()
+        dqn_agent = DQNAgent(game=game)
+        dqn_agent.model = load_model('/Volumes/USB/qn_weights.h5')
+        game.set_players((RandomPlayer(game), DQNAgent(game=game)))
+        winner = game.run()
+        if winner == 1:
+            print('DQ wins')
+            dq_wins += 1
+        else:
+            print('Random wins')
+    print(f'DQ wins: {dq_wins/100}')
+
+main()
+\end{mintedbox}
 
 The code for this project is available on GitHub at \url{https://github.com/sidharrth2002/ci-quarto-sidharrth}.
 
-\subsection{Acknowledgements}
-
-Throughout this project, I have discussed with Diego Gasco. We started the project by discussing ideas for strategies.
-
-\begin{itemize}
-    \item After I tried to get a working Deep Q-Network and realised that it wasn't converging in reasonable time, we discussed the possibility of using some tree search algorithm. It was Diego who suggested MCTS.
-    \item When realising that MCTS can be quite slow towards the end of the game, I suggested building a hybrid QL-MCTS player that would use a base Q-table to remember the best moves so the quadratically complex tree wouldn't need to store so many nodes.
-    \item We later built a hardcoded agent using different rules and realised that it performed very well, and was quick to make a move.
-    \item We then decided to combine everything we did into a hybrid agent that would switch between strategies depending on the board score.
-    \item Diego suggested a good scoring function. He also suggested that a genetic algorithm could be used for this.
-    \item I suggested finding score thresholds to switch between strategies using a genetic algorithm.
-\end{itemize}
-
-While we follow the same hybrid strategy, our code is quite different, apart from a few shared utility functions.

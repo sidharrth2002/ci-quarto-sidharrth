@@ -1,5 +1,5 @@
 """
-In this file, I create a custom OpenAI Gym environment for Quarto.
+In this file, I create 2 custom OpenAI Gym environments for Quarto.
 """
 
 import itertools
@@ -11,7 +11,7 @@ from lib.players import RandomPlayer
 
 from quarto.objects import Quarto
 
-class QuartoScape:
+class QuartoScapeNew(gym.Env):
     '''Custom gym environment for Quarto'''
 
     def __init__(self):
@@ -46,15 +46,6 @@ class QuartoScape:
                 reward = 0
                 return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
 
-            # if self.game.check_winner() == 0:
-            #     reward = 1
-            #     return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
-            # elif self.game.check_if_draw():
-            #     reward = 0.5
-            #     return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
-            # else:
-            #     reward = 0
-            return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
         else:
             reward = -1
 
@@ -69,7 +60,7 @@ class QuartoScape:
 
 
 
-class QuartoScapeNew(gym.Env):
+class QuartoScape(gym.Env):
     '''Custom gym environment for Quarto'''
 
     def __init__(self):
@@ -174,31 +165,6 @@ class QuartoScapeNew(gym.Env):
                 new_rep[i, j, 3] = square
         return new_rep
 
-    # def score(self):
-    #     sum = 0
-    #     board = self.game.state_as_array()
-    #     sum_plane = 0
-    #     for i in range(4):
-    #         sum_row = 0
-    #         for j in range(4):
-    #             sum_row += board[i, j]
-    #         sum_plane += sum_row
-
-    #     for j in range(4):
-    #         sum_col = 0
-    #         for i in range(4):
-    #             sum_col += board[i, j]
-    #         sum_plane += sum_col
-
-    #     sum += sum_plane
-
-    #     for i in range(4):
-    #         sum_diaga = 0
-    #         sum_diagb = 0
-    #         for
-
-    #     return sum_plane
-
     def step(self, action, chosen_piece):
         # position is the position the previous piece should be moved to
         # chosen next piece is the piece the agent chooses for the next player to move
@@ -214,38 +180,24 @@ class QuartoScapeNew(gym.Env):
             # self.game.print()
             if self.game.check_winner() != -1:
                 # this move resulted in a win
-                # reward = self.reward(self.game.state_as_array(), chosen_piece, action)
-                # bonus
-                # print('Winner winner chicken dinner')
-                reward = 1
+                reward = 100
                 return self.game.state_as_array(), reward, self.game.check_is_game_over(), {}
-            # elif self.game.check_if_draw():
-            #     # this move resulted in a draw
-            #     reward = 0.5
-            #     return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
             else:
-                # this move did not result in a win or a draw
-                # print('Nothing happened, reward is 0')
+            #     # this move did not result in a win or a draw
                 reward = self.reward(
                     self.game.state_as_array(), chosen_piece, action)
+                # reward = 0
                 return self.game.state_as_array(), reward, self.game.check_is_game_over(), {}
-        # else:
-        #     print("Invalid move, fuck off")
-        #     reward = -1
-
         return self.game.state_as_array(), reward, self.game.check_finished(), {}
 
     def reset(self):
         self.game = Quarto()
         self.game.set_players((self.main_player, RandomPlayer(self.game)))
-        # print(np.array(list(itertools.chain.from_iterable(
-        #     self.game.state_as_array())) + [-1]))
-        # print(self.observation_space.shape)
         arr = np.array(list(itertools.chain.from_iterable(
             self.game.state_as_array())) + [100])
-        # replace -1 with 18
+        # replace -1 with 17
         arr[arr == -1] = 17
         return arr
 
     def close(self):
-        print("Closing environment")
+        logging.info("Closing environment")

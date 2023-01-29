@@ -1,0 +1,467 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{from} \PYG{n+nn}{collections} \PYG{k+kn}{import} \PYG{n}{defaultdict}
+\PYG{k+kn}{import} \PYG{n+nn}{copy}
+\PYG{k+kn}{import} \PYG{n+nn}{json}
+\PYG{k+kn}{import} \PYG{n+nn}{logging}
+\PYG{k+kn}{import} \PYG{n+nn}{math}
+\PYG{k+kn}{import} \PYG{n+nn}{pickle}
+\PYG{k+kn}{import} \PYG{n+nn}{random}
+\PYG{k+kn}{from} \PYG{n+nn}{threading} \PYG{k+kn}{import} \PYG{n}{Thread}
+
+\PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k}{as} \PYG{n+nn}{np}
+\PYG{k+kn}{from} \PYG{n+nn}{lib.isomorphic} \PYG{k+kn}{import} \PYG{n}{BoardTransforms}
+\PYG{k+kn}{from} \PYG{n+nn}{lib.players} \PYG{k+kn}{import} \PYG{n}{Player}\PYG{p}{,} \PYG{n}{RandomPlayer}
+\PYG{k+kn}{from} \PYG{n+nn}{lib.utilities} \PYG{k+kn}{import} \PYG{n}{Node}\PYG{p}{,} \PYG{n}{NodeDecoder}\PYG{p}{,} \PYG{n}{NodeEncoder}
+
+\PYG{k+kn}{from} \PYG{n+nn}{quarto.objects} \PYG{k+kn}{import} \PYG{n}{Quarto}
+
+\PYG{n}{logging}\PYG{o}{.}\PYG{n}{basicConfig}\PYG{p}{(}\PYG{n}{level}\PYG{o}{=}\PYG{n}{logging}\PYG{o}{.}\PYG{n}{INFO}\PYG{p}{)}
+
+
+\PYG{k}{class} \PYG{n+nc}{MonteCarloTreeSearchEncoder}\PYG{p}{(}\PYG{n}{json}\PYG{o}{.}\PYG{n}{JSONEncoder}\PYG{p}{):}
+    \PYG{k}{def} \PYG{n+nf}{default}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{obj}\PYG{p}{):}
+        \PYG{n}{l} \PYG{o}{=} \PYG{p}{\PYGZob{}}
+            \PYG{l+s+s1}{\PYGZsq{}Q\PYGZsq{}}\PYG{p}{:} \PYG{p}{\PYGZob{}}\PYG{n}{k}\PYG{o}{.}\PYG{n}{hash\PYGZus{}state}\PYG{p}{():} \PYG{n}{v} \PYG{k}{for} \PYG{n}{k}\PYG{p}{,} \PYG{n}{v} \PYG{o+ow}{in} \PYG{n}{obj}\PYG{o}{.}\PYG{n}{Q}\PYG{o}{.}\PYG{n}{items}\PYG{p}{()\PYGZcb{},}
+            \PYG{l+s+s1}{\PYGZsq{}N\PYGZsq{}}\PYG{p}{:} \PYG{p}{\PYGZob{}}\PYG{n}{k}\PYG{o}{.}\PYG{n}{hash\PYGZus{}state}\PYG{p}{():} \PYG{n}{v} \PYG{k}{for} \PYG{n}{k}\PYG{p}{,} \PYG{n}{v} \PYG{o+ow}{in} \PYG{n}{obj}\PYG{o}{.}\PYG{n}{N}\PYG{o}{.}\PYG{n}{items}\PYG{p}{()\PYGZcb{},}
+
+            \PYG{c+c1}{\PYGZsh{} children is a dictionary of nodes}
+            \PYG{l+s+s1}{\PYGZsq{}children\PYGZsq{}}\PYG{p}{:} \PYG{p}{\PYGZob{}}\PYG{n}{k}\PYG{o}{.}\PYG{n}{hash\PYGZus{}state}\PYG{p}{():} \PYG{p}{[}\PYG{n}{NodeEncoder}\PYG{p}{()}\PYG{o}{.}\PYG{n}{default}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n}{v}\PYG{p}{]} \PYG{k}{for} \PYG{n}{k}\PYG{p}{,} \PYG{n}{v} \PYG{o+ow}{in} \PYG{n}{obj}\PYG{o}{.}\PYG{n}{children}\PYG{o}{.}\PYG{n}{items}\PYG{p}{()\PYGZcb{},}
+
+            \PYG{c+c1}{\PYGZsh{} \PYGZsq{}children\PYGZsq{}: [NodeEncoder().default(child) for child in obj.children],}
+            \PYG{l+s+s1}{\PYGZsq{}epsilon\PYGZsq{}}\PYG{p}{:} \PYG{n}{obj}\PYG{o}{.}\PYG{n}{epsilon}\PYG{p}{,}
+        \PYG{p}{\PYGZcb{}}
+        \PYG{k}{return} \PYG{n}{l}
+
+    \PYG{k}{def} \PYG{n+nf}{encode}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{obj}\PYG{p}{):}
+        \PYG{k}{return} \PYG{n+nb}{super}\PYG{p}{()}\PYG{o}{.}\PYG{n}{encode}\PYG{p}{(}\PYG{n}{obj}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{load\PYGZus{}json}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{filename}\PYG{p}{):}
+        \PYG{k}{with} \PYG{n+nb}{open}\PYG{p}{(}\PYG{n}{filename}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}r\PYGZsq{}}\PYG{p}{)} \PYG{k}{as} \PYG{n}{f}\PYG{p}{:}
+            \PYG{k}{return} \PYG{n}{json}\PYG{o}{.}\PYG{n}{load}\PYG{p}{(}\PYG{n}{f}\PYG{p}{,} \PYG{n+nb+bp}{cls}\PYG{o}{=}\PYG{n}{MonteCarloTreeSearchDecoder}\PYG{p}{)}
+
+
+\PYG{k}{class} \PYG{n+nc}{MonteCarloTreeSearchDecoder}\PYG{p}{(}\PYG{n}{json}\PYG{o}{.}\PYG{n}{JSONDecoder}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Recreate MonteCarloTreeSearch object from JSON}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{o}{*}\PYG{n}{args}\PYG{p}{,} \PYG{o}{**}\PYG{n}{kwargs}\PYG{p}{):}
+        \PYG{n}{json}\PYG{o}{.}\PYG{n}{JSONDecoder}\PYG{o}{.}\PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}
+            \PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{object\PYGZus{}hook}\PYG{o}{=}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{object\PYGZus{}hook}\PYG{p}{,} \PYG{o}{*}\PYG{n}{args}\PYG{p}{,} \PYG{o}{**}\PYG{n}{kwargs}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{object\PYGZus{}hook}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{obj}\PYG{p}{):}
+        \PYG{n}{children} \PYG{o}{=} \PYG{p}{\PYGZob{}\PYGZcb{}}
+
+        \PYG{k}{for} \PYG{n}{k}\PYG{p}{,} \PYG{n}{v} \PYG{o+ow}{in} \PYG{n}{obj}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}children\PYGZsq{}}\PYG{p}{]}\PYG{o}{.}\PYG{n}{items}\PYG{p}{():}
+            \PYG{n}{children}\PYG{p}{[}\PYG{n}{Node}\PYG{p}{(}\PYG{n}{hashed\PYGZus{}state}\PYG{o}{=}\PYG{n}{k}\PYG{p}{)]} \PYG{o}{=} \PYG{p}{[}
+                \PYG{n}{NodeDecoder}\PYG{p}{()}\PYG{o}{.}\PYG{n}{object\PYGZus{}hook}\PYG{p}{(}\PYG{n}{node}\PYG{p}{)} \PYG{k}{for} \PYG{n}{node} \PYG{o+ow}{in} \PYG{n}{v}\PYG{p}{]}
+
+        \PYG{k}{if} \PYG{l+s+s1}{\PYGZsq{}Q\PYGZsq{}} \PYG{o+ow}{in} \PYG{n}{obj}\PYG{p}{:}
+            \PYG{k}{return} \PYG{n}{MonteCarloTreeSearch}\PYG{p}{(}
+                \PYG{n}{Q}\PYG{o}{=}\PYG{p}{\PYGZob{}}\PYG{n}{Node}\PYG{p}{(}\PYG{n}{hashed\PYGZus{}state}\PYG{o}{=}\PYG{n}{k}\PYG{p}{):} \PYG{n}{v} \PYG{k}{for} \PYG{n}{k}\PYG{p}{,} \PYG{n}{v} \PYG{o+ow}{in} \PYG{n}{obj}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}Q\PYGZsq{}}\PYG{p}{]}\PYG{o}{.}\PYG{n}{items}\PYG{p}{()\PYGZcb{},}
+                \PYG{n}{N}\PYG{o}{=}\PYG{p}{\PYGZob{}}\PYG{n}{Node}\PYG{p}{(}\PYG{n}{hashed\PYGZus{}state}\PYG{o}{=}\PYG{n}{k}\PYG{p}{):} \PYG{n}{v} \PYG{k}{for} \PYG{n}{k}\PYG{p}{,} \PYG{n}{v} \PYG{o+ow}{in} \PYG{n}{obj}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}N\PYGZsq{}}\PYG{p}{]}\PYG{o}{.}\PYG{n}{items}\PYG{p}{()\PYGZcb{},}
+                \PYG{n}{children}\PYG{o}{=}\PYG{n}{children}\PYG{p}{,}
+                \PYG{n}{epsilon}\PYG{o}{=}\PYG{n}{obj}\PYG{p}{[}\PYG{l+s+s1}{\PYGZsq{}epsilon\PYGZsq{}}\PYG{p}{],}
+            \PYG{p}{)}
+        \PYG{k}{return} \PYG{n}{obj}
+
+
+\PYG{k}{def} \PYG{n+nf}{decode\PYGZus{}tree}\PYG{p}{(}\PYG{n}{tree}\PYG{p}{):}
+    \PYG{k}{return} \PYG{n}{MonteCarloTreeSearchDecoder}\PYG{p}{()}\PYG{o}{.}\PYG{n}{object\PYGZus{}hook}\PYG{p}{(}\PYG{n}{tree}\PYG{p}{)}
+
+
+\PYG{k}{class} \PYG{n+nc}{MonteCarloTreeSearch}\PYG{p}{(}\PYG{n}{Player}\PYG{p}{):}
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    Solve using Monte Carlo Tree Search}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{board}\PYG{o}{=}\PYG{n}{Quarto}\PYG{p}{(),} \PYG{n}{epsilon}\PYG{o}{=}\PYG{l+m+mf}{0.1}\PYG{p}{,} \PYG{n}{max\PYGZus{}depth}\PYG{o}{=}\PYG{l+m+mi}{1000}\PYG{p}{,} \PYG{n}{Q}\PYG{o}{=}\PYG{k+kc}{None}\PYG{p}{,} \PYG{n}{N}\PYG{o}{=}\PYG{k+kc}{None}\PYG{p}{,} \PYG{n}{children}\PYG{o}{=}\PYG{k+kc}{None}\PYG{p}{):}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{epsilon} \PYG{o}{=} \PYG{n}{epsilon}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{max\PYGZus{}depth} \PYG{o}{=} \PYG{n}{max\PYGZus{}depth}
+        \PYG{k}{if} \PYG{n}{Q} \PYG{o+ow}{is} \PYG{k+kc}{None}\PYG{p}{:}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{Q} \PYG{o}{=} \PYG{n}{defaultdict}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{)}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{Q} \PYG{o}{=} \PYG{n}{defaultdict}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{,} \PYG{n}{Q}\PYG{p}{)}
+        \PYG{k}{if} \PYG{n}{N} \PYG{o+ow}{is} \PYG{k+kc}{None}\PYG{p}{:}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N} \PYG{o}{=} \PYG{n}{defaultdict}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{)}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N} \PYG{o}{=} \PYG{n}{defaultdict}\PYG{p}{(}\PYG{n+nb}{int}\PYG{p}{,} \PYG{n}{N}\PYG{p}{)}
+        \PYG{k}{if} \PYG{n}{children} \PYG{o+ow}{is} \PYG{k+kc}{None}\PYG{p}{:}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children} \PYG{o}{=} \PYG{n+nb}{dict}\PYG{p}{()}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children} \PYG{o}{=} \PYG{n}{children}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{MAX\PYGZus{}PIECES} \PYG{o}{=} \PYG{l+m+mi}{16}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{BOARD\PYGZus{}SIDE} \PYG{o}{=} \PYG{l+m+mi}{4}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{board} \PYG{o}{=} \PYG{n}{board}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}factor} \PYG{o}{=} \PYG{l+m+mi}{0}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{decisions} \PYG{o}{=} \PYG{l+m+mi}{0}
+        \PYG{n+nb}{super}\PYG{p}{()}\PYG{o}{.}\PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n}{board}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{set\PYGZus{}board}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{board}\PYG{p}{):}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{board} \PYG{o}{=} \PYG{n}{board}
+
+    \PYG{k}{def} \PYG{n+nf}{choose}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{node}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Choose best successor of node (move)}
+\PYG{l+s+sd}{        Returns the board itself}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{k}{def} \PYG{n+nf}{score}\PYG{p}{(}\PYG{n}{n}\PYG{p}{):}
+            \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Before reading in choose }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{n}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+            \PYG{k}{if} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                \PYG{k}{return} \PYG{n+nb}{float}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}inf\PYGZsq{}}\PYG{p}{)}
+            \PYG{k}{return} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{Q}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]} \PYG{o}{/} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]}
+
+        \PYG{c+c1}{\PYGZsh{} node is board Quarto}
+        \PYG{n}{node} \PYG{o}{=} \PYG{n}{Node}\PYG{p}{(}\PYG{n}{node}\PYG{p}{)}
+        \PYG{k}{if} \PYG{n}{node}\PYG{o}{.}\PYG{n}{is\PYGZus{}terminal}\PYG{p}{():}
+            \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{n}{node}\PYG{o}{.}\PYG{n}{board}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{())}
+            \PYG{k}{raise} \PYG{n+ne}{RuntimeError}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}choose called on terminal node\PYGZdq{}}\PYG{p}{)}
+
+        \PYG{c+c1}{\PYGZsh{} number of moves made in game}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{decisions} \PYG{o}{+=} \PYG{l+m+mi}{1}
+
+        \PYG{k}{for} \PYG{n}{key} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{:}
+            \PYG{k}{if} \PYG{n}{key} \PYG{o}{==} \PYG{n}{node}\PYG{p}{:}
+                \PYG{k}{return} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{key}\PYG{p}{],} \PYG{n}{key}\PYG{o}{=}\PYG{n}{score}\PYG{p}{)}\PYG{o}{.}\PYG{n}{board}
+
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}factor} \PYG{o}{+=} \PYG{l+m+mi}{1}
+        \PYG{k}{if} \PYG{n}{node} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{:}
+            \PYG{k}{for} \PYG{n}{key}\PYG{p}{,} \PYG{n}{value} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{o}{.}\PYG{n}{items}\PYG{p}{():}
+                \PYG{k}{if} \PYG{n}{BoardTransforms}\PYG{p}{()}\PYG{o}{.}\PYG{n}{compare\PYGZus{}boards}\PYG{p}{(}\PYG{n}{node}\PYG{o}{.}\PYG{n}{board}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{(),} \PYG{n}{key}\PYG{o}{.}\PYG{n}{board}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{()):}
+                    \PYG{k}{if} \PYG{n}{key} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{:}
+                        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}found in symmetry\PYGZdq{}}\PYG{p}{)}
+                        \PYG{k}{return} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{key}\PYG{p}{],} \PYG{n}{key}\PYG{o}{=}\PYG{n}{score}\PYG{p}{)}\PYG{o}{.}\PYG{n}{board}
+
+            \PYG{c+c1}{\PYGZsh{} number of times have to resort to random}
+            \PYG{n}{rand\PYGZus{}child} \PYG{o}{=} \PYG{n}{node}\PYG{o}{.}\PYG{n}{find\PYGZus{}random\PYGZus{}child}\PYG{p}{()}
+            \PYG{c+c1}{\PYGZsh{} add to children}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{node}\PYG{p}{]} \PYG{o}{=} \PYG{p}{[}\PYG{n}{rand\PYGZus{}child}\PYG{p}{]}
+            \PYG{k}{return} \PYG{n}{rand\PYGZus{}child}\PYG{o}{.}\PYG{n}{board}
+
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}found in board\PYGZdq{}}\PYG{p}{)}
+        \PYG{k}{return} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{node}\PYG{p}{],} \PYG{n}{key}\PYG{o}{=}\PYG{n}{score}\PYG{p}{)}\PYG{o}{.}\PYG{n}{board}
+
+    \PYG{k}{def} \PYG{n+nf}{choose\PYGZus{}piece}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Choose a piece to make the opponent place}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{n}{node} \PYG{o}{=} \PYG{n}{Node}\PYG{p}{(}\PYG{n}{board}\PYG{o}{=}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{board}\PYG{p}{,}
+                    \PYG{n}{selected\PYGZus{}piece\PYGZus{}index}\PYG{o}{=}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{board}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())}
+
+        \PYG{k}{if} \PYG{n}{node}\PYG{o}{.}\PYG{n}{is\PYGZus{}terminal}\PYG{p}{():}
+            \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{n}{node}\PYG{o}{.}\PYG{n}{board}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{())}
+            \PYG{k}{raise} \PYG{n+ne}{RuntimeError}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}choose called on terminal node\PYGZdq{}}\PYG{p}{)}
+
+        \PYG{k}{if} \PYG{n}{node} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{:}
+            \PYG{c+c1}{\PYGZsh{} index \PYGZhy{}1 of tuple is next piece from a board}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Random child\PYGZdq{}}\PYG{p}{)}
+            \PYG{k}{return} \PYG{n}{node}\PYG{o}{.}\PYG{n}{find\PYGZus{}random\PYGZus{}child}\PYG{p}{()[}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]}
+
+        \PYG{k}{def} \PYG{n+nf}{score}\PYG{p}{(}\PYG{n}{n}\PYG{p}{):}
+            \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Before reading in choose }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{n}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+            \PYG{k}{if} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                \PYG{k}{return} \PYG{n+nb}{float}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}inf\PYGZsq{}}\PYG{p}{)}
+            \PYG{k}{return} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{Q}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]} \PYG{o}{/} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]}
+
+        \PYG{k}{return} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{node}\PYG{p}{],} \PYG{n}{key}\PYG{o}{=}\PYG{n}{score}\PYG{p}{)[}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]}
+
+    \PYG{k}{def} \PYG{n+nf}{place\PYGZus{}piece}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Return position to place piece on board}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{n}{node} \PYG{o}{=} \PYG{n}{Node}\PYG{p}{(}\PYG{n}{board}\PYG{o}{=}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{board}\PYG{p}{,}
+                    \PYG{n}{selected\PYGZus{}piece\PYGZus{}index}\PYG{o}{=}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{board}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())}
+
+        \PYG{k}{if} \PYG{n}{node}\PYG{o}{.}\PYG{n}{is\PYGZus{}terminal}\PYG{p}{():}
+            \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{n}{node}\PYG{o}{.}\PYG{n}{board}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{())}
+            \PYG{k}{raise} \PYG{n+ne}{RuntimeError}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}choose called on terminal node\PYGZdq{}}\PYG{p}{)}
+
+        \PYG{c+c1}{\PYGZsh{} if node not in self.children:}
+        \PYG{c+c1}{\PYGZsh{}     piece, x, y, next\PYGZus{}piece = node.find\PYGZus{}random\PYGZus{}child().move}
+        \PYG{c+c1}{\PYGZsh{}     \PYGZsh{} print(\PYGZdq{}Random child\PYGZdq{})}
+        \PYG{c+c1}{\PYGZsh{}     \PYGZsh{} print(piece, x, y, next\PYGZus{}piece)}
+        \PYG{c+c1}{\PYGZsh{}     return x, y, next\PYGZus{}piece}
+
+        \PYG{k}{if} \PYG{n}{node} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{:}
+            \PYG{k}{for} \PYG{n}{key}\PYG{p}{,} \PYG{n}{value} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{o}{.}\PYG{n}{items}\PYG{p}{():}
+                \PYG{k}{if} \PYG{n}{BoardTransforms}\PYG{p}{()}\PYG{o}{.}\PYG{n}{compare\PYGZus{}boards}\PYG{p}{(}\PYG{n}{node}\PYG{o}{.}\PYG{n}{board}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{(),} \PYG{n}{key}\PYG{o}{.}\PYG{n}{board}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{()):}
+                    \PYG{k}{if} \PYG{n}{key} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{:}
+                        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}found in symmetry\PYGZdq{}}\PYG{p}{)}
+                        \PYG{k}{return} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{key}\PYG{p}{],} \PYG{n}{key}\PYG{o}{=}\PYG{n}{score}\PYG{p}{)}\PYG{o}{.}\PYG{n}{board}
+
+            \PYG{c+c1}{\PYGZsh{} number of times have to resort to random}
+            \PYG{n}{rand\PYGZus{}child} \PYG{o}{=} \PYG{n}{node}\PYG{o}{.}\PYG{n}{find\PYGZus{}random\PYGZus{}child}\PYG{p}{()}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Random child\PYGZdq{}}\PYG{p}{)}
+            \PYG{c+c1}{\PYGZsh{} add to children}
+            \PYG{k}{return} \PYG{n}{rand\PYGZus{}child}\PYG{o}{.}\PYG{n}{board}\PYG{o}{.}\PYG{n}{move}
+
+        \PYG{k}{def} \PYG{n+nf}{score}\PYG{p}{(}\PYG{n}{n}\PYG{p}{):}
+            \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Before reading in choose }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{n}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+            \PYG{k}{if} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                \PYG{k}{return} \PYG{n+nb}{float}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}inf\PYGZsq{}}\PYG{p}{)}
+            \PYG{k}{return} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{Q}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]} \PYG{o}{/} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]}
+
+        \PYG{c+c1}{\PYGZsh{} print(\PYGZdq{}In place piece\PYGZdq{})}
+        \PYG{c+c1}{\PYGZsh{} print(max(self.children[node], key=score).move)}
+        \PYG{k}{return} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{node}\PYG{p}{],} \PYG{n}{key}\PYG{o}{=}\PYG{n}{score}\PYG{p}{)}\PYG{o}{.}\PYG{n}{move}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{:]}
+
+    \PYG{k}{def} \PYG{n+nf}{do\PYGZus{}rollout}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{board}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Rollout from the node for one iteration}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Rollout\PYGZdq{}}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{} if root node, there is no move}
+        \PYG{n}{node} \PYG{o}{=} \PYG{n}{Node}\PYG{p}{(}\PYG{n}{board}\PYG{p}{,} \PYG{n}{move}\PYG{o}{=}\PYG{p}{())}
+        \PYG{n}{path} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{select}\PYG{p}{(}\PYG{n}{node}\PYG{p}{)}
+        \PYG{n}{leaf} \PYG{o}{=} \PYG{n}{path}\PYG{p}{[}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]}
+
+        \PYG{c+c1}{\PYGZsh{} expand a leaf only when necessary, i.e., only if I arrive at it during selection and if it has already been visited (self.N) but not yet expanded (self.children)}
+        \PYG{k}{if} \PYG{n}{leaf} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N} \PYG{o+ow}{and} \PYG{n}{leaf} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{:}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{expand}\PYG{p}{(}\PYG{n}{leaf}\PYG{p}{)}
+
+        \PYG{n}{reward} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{simulate}\PYG{p}{(}\PYG{n}{leaf}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{backpropagate}\PYG{p}{(}\PYG{n}{path}\PYG{p}{,} \PYG{n}{reward}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{select}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{node}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Select path to leaf node}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{n}{path} \PYG{o}{=} \PYG{p}{[]}
+        \PYG{k}{while} \PYG{k+kc}{True}\PYG{p}{:}
+            \PYG{n}{path}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{node}\PYG{p}{)}
+            \PYG{k}{if} \PYG{n}{node} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children} \PYG{o+ow}{or} \PYG{o+ow}{not} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{node}\PYG{p}{]:}
+                \PYG{k}{return} \PYG{n}{path}
+            \PYG{n}{unexplored} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{node}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{o}{.}\PYG{n}{keys}\PYG{p}{()}
+            \PYG{k}{if} \PYG{n}{unexplored}\PYG{p}{:}
+                \PYG{n}{n} \PYG{o}{=} \PYG{n}{unexplored}\PYG{o}{.}\PYG{n}{pop}\PYG{p}{()}
+                \PYG{n}{path}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{n}\PYG{p}{)}
+                \PYG{k}{return} \PYG{n}{path}
+            \PYG{n}{node} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{uct\PYGZus{}select}\PYG{p}{(}\PYG{n}{node}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{expand}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{node}\PYG{p}{):}
+        \PYG{c+c1}{\PYGZsh{} logging.debug(\PYGZsq{}Expanding\PYGZsq{})}
+        \PYG{k}{if} \PYG{n}{node} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{:}
+            \PYG{k}{return}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{node}\PYG{p}{]} \PYG{o}{=} \PYG{n}{node}\PYG{o}{.}\PYG{n}{find\PYGZus{}children}\PYG{p}{()}
+        \PYG{c+c1}{\PYGZsh{} logging.debug(\PYGZsq{}Children: \PYGZsq{}, self.children[node])}
+
+    \PYG{k}{def} \PYG{n+nf}{simulate}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{node}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Returns reward for random simulation}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{n}{invert\PYGZus{}reward} \PYG{o}{=} \PYG{k+kc}{False}
+        \PYG{k}{while} \PYG{k+kc}{True}\PYG{p}{:}
+            \PYG{k}{if} \PYG{n}{node}\PYG{o}{.}\PYG{n}{is\PYGZus{}terminal}\PYG{p}{():}
+                \PYG{n}{reward} \PYG{o}{=} \PYG{n}{node}\PYG{o}{.}\PYG{n}{reward}\PYG{p}{()}
+
+                \PYG{k}{return} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{reward} \PYG{k}{if} \PYG{n}{invert\PYGZus{}reward} \PYG{k}{else} \PYG{n}{reward}
+            \PYG{n}{node} \PYG{o}{=} \PYG{n}{node}\PYG{o}{.}\PYG{n}{find\PYGZus{}random\PYGZus{}child}\PYG{p}{()}
+            \PYG{c+c1}{\PYGZsh{} invert\PYGZus{}reward = not invert\PYGZus{}reward}
+
+    \PYG{k}{def} \PYG{n+nf}{backpropagate}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{path}\PYG{p}{,} \PYG{n}{reward}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Backpropagate reward}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}Backpropagating\PYGZsq{}}\PYG{p}{)}
+        \PYG{k}{for} \PYG{n}{node} \PYG{o+ow}{in} \PYG{n+nb}{reversed}\PYG{p}{(}\PYG{n}{path}\PYG{p}{):}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{p}{[}\PYG{n}{node}\PYG{p}{]} \PYG{o}{+=} \PYG{l+m+mi}{1}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{Q}\PYG{p}{[}\PYG{n}{node}\PYG{p}{]} \PYG{o}{+=} \PYG{n}{reward}
+            \PYG{c+c1}{\PYGZsh{} TODO: check if this is correct}
+            \PYG{n}{reward} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{reward}
+
+    \PYG{k}{def} \PYG{n+nf}{uct\PYGZus{}select}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{node}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Select a child of node, balancing exploration \PYGZam{} exploitation}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{k}{assert} \PYG{n+nb}{all}\PYG{p}{(}\PYG{n}{n} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children} \PYG{k}{for} \PYG{n}{n} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{node}\PYG{p}{])}
+
+        \PYG{n}{log\PYGZus{}N\PYGZus{}vertex} \PYG{o}{=} \PYG{n}{math}\PYG{o}{.}\PYG{n}{log}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{p}{[}\PYG{n}{node}\PYG{p}{])}
+
+        \PYG{k}{def} \PYG{n+nf}{uct}\PYG{p}{(}\PYG{n}{n}\PYG{p}{):}
+            \PYG{k}{return} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{Q}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]} \PYG{o}{/} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]} \PYG{o}{+} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{epsilon} \PYG{o}{*} \PYG{n}{math}\PYG{o}{.}\PYG{n}{sqrt}\PYG{p}{(}\PYG{n}{log\PYGZus{}N\PYGZus{}vertex} \PYG{o}{/} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{p}{[}\PYG{n}{n}\PYG{p}{])}
+
+        \PYG{k}{return} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{node}\PYG{p}{],} \PYG{n}{key}\PYG{o}{=}\PYG{n}{uct}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{test\PYGZus{}win\PYGZus{}rate}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{num\PYGZus{}trials}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{,} \PYG{n}{rollouts}\PYG{o}{=}\PYG{l+m+mi}{20}\PYG{p}{):}
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Testing win rate\PYGZdq{}}\PYG{p}{)}
+        \PYG{n}{agent\PYGZus{}wins} \PYG{o}{=} \PYG{l+m+mi}{0}
+        \PYG{n}{opponent\PYGZus{}wins} \PYG{o}{=} \PYG{l+m+mi}{0}
+        \PYG{n}{draws} \PYG{o}{=} \PYG{l+m+mi}{0}
+        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{num\PYGZus{}trials}\PYG{p}{):}
+            \PYG{n}{board} \PYG{o}{=} \PYG{n}{Quarto}\PYG{p}{()}
+            \PYG{n}{random\PYGZus{}player} \PYG{o}{=} \PYG{n}{RandomPlayer}\PYG{p}{(}\PYG{n}{board}\PYG{p}{)}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{board} \PYG{o}{=} \PYG{n}{board}
+            \PYG{n}{board}\PYG{o}{.}\PYG{n}{set\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{(}\PYG{n}{board}\PYG{p}{))}
+            \PYG{k}{while} \PYG{k+kc}{True}\PYG{p}{:}
+                \PYG{c+c1}{\PYGZsh{} random player moves}
+                \PYG{n}{chosen\PYGZus{}location} \PYG{o}{=} \PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{place\PYGZus{}piece}\PYG{p}{(}
+                    \PYG{n}{board}\PYG{p}{,} \PYG{n}{board}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())}
+                \PYG{n}{chosen\PYGZus{}piece} \PYG{o}{=} \PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{(}\PYG{n}{board}\PYG{p}{)}
+                \PYG{k}{while} \PYG{o+ow}{not} \PYG{n}{board}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}move\PYGZus{}valid}\PYG{p}{(}\PYG{n}{board}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(),} \PYG{n}{chosen\PYGZus{}location}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{chosen\PYGZus{}location}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{chosen\PYGZus{}piece}\PYG{p}{):}
+                    \PYG{n}{chosen\PYGZus{}location} \PYG{o}{=} \PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{place\PYGZus{}piece}\PYG{p}{(}
+                        \PYG{n}{board}\PYG{p}{,} \PYG{n}{board}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())}
+                    \PYG{n}{chosen\PYGZus{}piece} \PYG{o}{=} \PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{(}\PYG{n}{board}\PYG{p}{)}
+                \PYG{n}{board}\PYG{o}{.}\PYG{n}{select}\PYG{p}{(}\PYG{n}{board}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())}
+                \PYG{n}{board}\PYG{o}{.}\PYG{n}{place}\PYG{p}{(}\PYG{n}{chosen\PYGZus{}location}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{chosen\PYGZus{}location}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])}
+                \PYG{c+c1}{\PYGZsh{} setting the piece for the next player}
+                \PYG{n}{board}\PYG{o}{.}\PYG{n}{set\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(}\PYG{n}{chosen\PYGZus{}piece}\PYG{p}{)}
+                \PYG{n}{board}\PYG{o}{.}\PYG{n}{switch\PYGZus{}player}\PYG{p}{()}
+
+                \PYG{k}{if} \PYG{n}{board}\PYG{o}{.}\PYG{n}{check\PYGZus{}is\PYGZus{}game\PYGZus{}over}\PYG{p}{():}
+                    \PYG{k}{if} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{board}\PYG{o}{.}\PYG{n}{check\PYGZus{}winner}\PYG{p}{()} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                        \PYG{n}{opponent\PYGZus{}wins} \PYG{o}{+=} \PYG{l+m+mi}{1}
+                    \PYG{k}{else}\PYG{p}{:}
+                        \PYG{n}{draws} \PYG{o}{+=} \PYG{l+m+mi}{1}
+                    \PYG{k}{break}
+                \PYG{c+c1}{\PYGZsh{} monte carlo tree search moves}
+
+                \PYG{c+c1}{\PYGZsh{} make move with monte carlo tree search}
+                \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{rollouts}\PYG{p}{):}
+                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{do\PYGZus{}rollout}\PYG{p}{(}\PYG{n}{board}\PYG{p}{)}
+                \PYG{n}{board} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{choose}\PYG{p}{(}\PYG{n}{board}\PYG{p}{)}
+
+                \PYG{k}{if} \PYG{n}{board}\PYG{o}{.}\PYG{n}{check\PYGZus{}is\PYGZus{}game\PYGZus{}over}\PYG{p}{():}
+                    \PYG{c+c1}{\PYGZsh{} TODO: check if it\PYGZsq{}s a draw}
+                    \PYG{k}{if} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{board}\PYG{o}{.}\PYG{n}{check\PYGZus{}winner}\PYG{p}{()} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{:}
+                        \PYG{n}{agent\PYGZus{}wins} \PYG{o}{+=} \PYG{l+m+mi}{1}
+                    \PYG{k}{else}\PYG{p}{:}
+                        \PYG{n}{draws} \PYG{o}{+=} \PYG{l+m+mi}{1}
+                    \PYG{k}{break}
+                \PYG{c+c1}{\PYGZsh{} don\PYGZsq{}t need to switch player because it\PYGZsq{}s done in choose}
+                \PYG{c+c1}{\PYGZsh{} random\PYGZus{}player needs to do it because it is not done automatically}
+
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Agent wins: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{agent\PYGZus{}wins}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{/}\PYG{l+s+si}{\PYGZob{}}\PYG{n}{i}\PYG{o}{+}\PYG{l+m+mi}{1}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Random factor \PYGZdq{}}\PYG{p}{,} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}factor} \PYG{o}{/} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{decisions}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}factor} \PYG{o}{=} \PYG{l+m+mi}{0}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{decisions} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+    \PYG{k}{def} \PYG{n+nf}{train\PYGZus{}engine}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{board}\PYG{p}{,} \PYG{n}{num\PYGZus{}sims}\PYG{o}{=}\PYG{l+m+mi}{200}\PYG{p}{,} \PYG{n}{save\PYGZus{}format}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}json\PYGZsq{}}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Train the model}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{num\PYGZus{}sims}\PYG{p}{):}
+            \PYG{n}{board} \PYG{o}{=} \PYG{n}{Quarto}\PYG{p}{()}
+            \PYG{n}{random\PYGZus{}player} \PYG{o}{=} \PYG{n}{RandomPlayer}\PYG{p}{(}\PYG{n}{board}\PYG{p}{)}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{board} \PYG{o}{=} \PYG{n}{board}
+            \PYG{n}{board}\PYG{o}{.}\PYG{n}{set\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{(}\PYG{n}{board}\PYG{p}{))}
+            \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Iteration: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{i}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{ with tree size }\PYG{l+s+si}{\PYGZob{}}\PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{)}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+            \PYG{k}{while} \PYG{k+kc}{True}\PYG{p}{:}
+                \PYG{c+c1}{\PYGZsh{} random player moves}
+                \PYG{n}{chosen\PYGZus{}location} \PYG{o}{=} \PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{place\PYGZus{}piece}\PYG{p}{(}
+                    \PYG{n}{board}\PYG{p}{,} \PYG{n}{board}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())}
+                \PYG{n}{chosen\PYGZus{}piece} \PYG{o}{=} \PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{(}\PYG{n}{board}\PYG{p}{)}
+                \PYG{k}{while} \PYG{o+ow}{not} \PYG{n}{board}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}move\PYGZus{}valid}\PYG{p}{(}\PYG{n}{board}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(),} \PYG{n}{chosen\PYGZus{}location}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{chosen\PYGZus{}location}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{chosen\PYGZus{}piece}\PYG{p}{):}
+                    \PYG{n}{chosen\PYGZus{}location} \PYG{o}{=} \PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{place\PYGZus{}piece}\PYG{p}{(}
+                        \PYG{n}{board}\PYG{p}{,} \PYG{n}{board}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())}
+                    \PYG{n}{chosen\PYGZus{}piece} \PYG{o}{=} \PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{(}\PYG{n}{board}\PYG{p}{)}
+                \PYG{n}{board}\PYG{o}{.}\PYG{n}{select}\PYG{p}{(}\PYG{n}{board}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())}
+                \PYG{n}{board}\PYG{o}{.}\PYG{n}{place}\PYG{p}{(}\PYG{n}{chosen\PYGZus{}location}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{chosen\PYGZus{}location}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])}
+                \PYG{c+c1}{\PYGZsh{} setting the piece for the next player}
+                \PYG{n}{board}\PYG{o}{.}\PYG{n}{set\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(}\PYG{n}{chosen\PYGZus{}piece}\PYG{p}{)}
+                \PYG{n}{board}\PYG{o}{.}\PYG{n}{switch\PYGZus{}player}\PYG{p}{()}
+
+                \PYG{k}{if} \PYG{n}{board}\PYG{o}{.}\PYG{n}{check\PYGZus{}is\PYGZus{}game\PYGZus{}over}\PYG{p}{():}
+                    \PYG{k}{if} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{board}\PYG{o}{.}\PYG{n}{check\PYGZus{}winner}\PYG{p}{()} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                        \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Random player won\PYGZdq{}}\PYG{p}{)}
+                    \PYG{k}{else}\PYG{p}{:}
+                        \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Draw\PYGZdq{}}\PYG{p}{)}
+                    \PYG{k}{break}
+                \PYG{c+c1}{\PYGZsh{} monte carlo tree search moves}
+
+                \PYG{c+c1}{\PYGZsh{} make move with monte carlo tree search}
+                \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{20}\PYG{p}{):}
+                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{do\PYGZus{}rollout}\PYG{p}{(}\PYG{n}{board}\PYG{p}{)}
+                \PYG{n}{board} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{choose}\PYG{p}{(}\PYG{n}{board}\PYG{p}{)}
+
+                \PYG{k}{if} \PYG{n}{board}\PYG{o}{.}\PYG{n}{check\PYGZus{}is\PYGZus{}game\PYGZus{}over}\PYG{p}{():}
+                    \PYG{c+c1}{\PYGZsh{} TODO: check if it\PYGZsq{}s a draw}
+                    \PYG{k}{if} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{board}\PYG{o}{.}\PYG{n}{check\PYGZus{}winner}\PYG{p}{()} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{:}
+                        \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Agent won\PYGZdq{}}\PYG{p}{)}
+                    \PYG{k}{else}\PYG{p}{:}
+                        \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Draw\PYGZdq{}}\PYG{p}{)}
+                    \PYG{k}{break}
+                \PYG{c+c1}{\PYGZsh{} don\PYGZsq{}t need to switch player because it\PYGZsq{}s done in choose}
+                \PYG{c+c1}{\PYGZsh{} random\PYGZus{}player needs to do it because it is not done automatically}
+
+            \PYG{k}{if} \PYG{n}{i} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{2} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                \PYG{c+c1}{\PYGZsh{} run a test to see if the agent is improving}
+                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{test\PYGZus{}win\PYGZus{}rate}\PYG{p}{()}
+
+            \PYG{c+c1}{\PYGZsh{} save progress every 10 iterations}
+            \PYG{k}{if} \PYG{n}{i} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{100} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Saving progress\PYGZdq{}}\PYG{p}{)}
+                \PYG{k}{if} \PYG{n}{save\PYGZus{}format} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}json\PYGZsq{}}\PYG{p}{:}
+                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{save\PYGZus{}progress\PYGZus{}json}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}/Volumes/USB/progress3.json\PYGZsq{}}\PYG{p}{)}
+                \PYG{k}{else}\PYG{p}{:}
+                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{save\PYGZus{}progress\PYGZus{}pickle}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}progress.pkl\PYGZsq{}}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{train}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Train without multithreading}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{train\PYGZus{}engine}\PYG{p}{(}\PYG{n}{Quarto}\PYG{p}{(),} \PYG{l+m+mi}{100}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}json\PYGZsq{}}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{threaded\PYGZus{}training}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{num\PYGZus{}threads}\PYG{o}{=}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{n}{save\PYGZus{}format}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}json\PYGZsq{}}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Train the model}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{n}{thread\PYGZus{}pool} \PYG{o}{=} \PYG{p}{[]}
+
+        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n}{num\PYGZus{}threads}\PYG{p}{):}
+            \PYG{n}{t} \PYG{o}{=} \PYG{n}{Thread}\PYG{p}{(}\PYG{n}{target}\PYG{o}{=}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{train\PYGZus{}engine}\PYG{p}{,} \PYG{n}{args}\PYG{o}{=}\PYG{p}{(}\PYG{n}{Quarto}\PYG{p}{(),} \PYG{l+m+mi}{100}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}json\PYGZsq{}}\PYG{p}{))}
+            \PYG{n}{t}\PYG{o}{.}\PYG{n}{start}\PYG{p}{()}
+            \PYG{n}{thread\PYGZus{}pool}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{t}\PYG{p}{)}
+
+        \PYG{k}{for} \PYG{n}{t} \PYG{o+ow}{in} \PYG{n}{thread\PYGZus{}pool}\PYG{p}{:}
+            \PYG{n}{t}\PYG{o}{.}\PYG{n}{join}\PYG{p}{()}
+
+        \PYG{c+c1}{\PYGZsh{} final save after training}
+        \PYG{k}{if} \PYG{n}{save\PYGZus{}format} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}json\PYGZsq{}}\PYG{p}{:}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{save\PYGZus{}progress\PYGZus{}json}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}progress.json\PYGZsq{}}\PYG{p}{)}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{save\PYGZus{}progress\PYGZus{}pickle}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}progress.pkl\PYGZsq{}}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{generate\PYGZus{}future\PYGZus{}probabilities}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{root}\PYG{p}{:} \PYG{n}{Node}\PYG{p}{,} \PYG{n}{node}\PYG{p}{:} \PYG{n}{Node}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        play an action a from the root state st with probability proportional to the number of times that action was chosen during Phase One. To do this, AlphaGo Zero creates a probability distribution πt over the actions from the state st such that πt(a) ∝ N(st,a)\PYGZca{}\PYGZhy{}1/τ for some hyperparameter τ; when τ = 1 the distribution exactly matches the ratios of the visit counts, while when τ → 0 the probability mass focuses on the action that was chosen most often. Using this distribution to selects actions improves the performance of AlphaGo Zero because πt is a refinement of the prediction pt for the start state st; as MCTS is allowed to run, it starts selecting actions with high value estimates more frequently rather than relying on the prior probability bonus exploration term.}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{c+c1}{\PYGZsh{} 1 is the default value, but it can be changed to 0.5 or 0.1}
+
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{tau} \PYG{o}{=} \PYG{l+m+mf}{0.5}
+        \PYG{k}{if} \PYG{n}{node} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{:}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{do\PYGZus{}rollout}\PYG{p}{(}\PYG{n}{root}\PYG{o}{.}\PYG{n}{board}\PYG{p}{)}
+
+        \PYG{n}{probs} \PYG{o}{=} \PYG{p}{[}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{p}{[}\PYG{n}{child}\PYG{p}{]} \PYG{o}{/} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{N}\PYG{p}{[}\PYG{n}{root}\PYG{p}{]}
+                    \PYG{k}{for} \PYG{n}{child} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{node}\PYG{p}{]]}
+
+        \PYG{n}{probs} \PYG{o}{=} \PYG{p}{[}\PYG{n}{p} \PYG{o}{**} \PYG{p}{(}\PYG{l+m+mi}{1} \PYG{o}{/} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{tau}\PYG{p}{)} \PYG{k}{for} \PYG{n}{p} \PYG{o+ow}{in} \PYG{n}{probs}\PYG{p}{]}
+
+        \PYG{n}{probs} \PYG{o}{=} \PYG{p}{[}\PYG{n}{p} \PYG{o}{/} \PYG{n+nb}{sum}\PYG{p}{(}\PYG{n}{probs}\PYG{p}{)} \PYG{k}{for} \PYG{n}{p} \PYG{o+ow}{in} \PYG{n}{probs}\PYG{p}{]}
+
+        \PYG{k}{return} \PYG{n}{probs}
+
+    \PYG{k}{def} \PYG{n+nf}{save\PYGZus{}progress\PYGZus{}pickle}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{filename}\PYG{p}{):}
+        \PYG{k}{with} \PYG{n+nb}{open}\PYG{p}{(}\PYG{n}{filename}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}wb\PYGZsq{}}\PYG{p}{)} \PYG{k}{as} \PYG{n}{f}\PYG{p}{:}
+            \PYG{n}{pickle}\PYG{o}{.}\PYG{n}{dump}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{f}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{save\PYGZus{}progress\PYGZus{}json}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{filename}\PYG{p}{):}
+        \PYG{k}{with} \PYG{n+nb}{open}\PYG{p}{(}\PYG{n}{filename}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}w\PYGZsq{}}\PYG{p}{)} \PYG{k}{as} \PYG{n}{f}\PYG{p}{:}
+            \PYG{n}{json}\PYG{o}{.}\PYG{n}{dump}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{f}\PYG{p}{,} \PYG{n+nb+bp}{cls}\PYG{o}{=}\PYG{n}{MonteCarloTreeSearchEncoder}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{load\PYGZus{}progress\PYGZus{}json}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{filename}\PYG{p}{):}
+        \PYG{k}{with} \PYG{n+nb}{open}\PYG{p}{(}\PYG{n}{filename}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}r\PYGZsq{}}\PYG{p}{)} \PYG{k}{as} \PYG{n}{f}\PYG{p}{:}
+            \PYG{k}{return} \PYG{n}{json}\PYG{o}{.}\PYG{n}{load}\PYG{p}{(}\PYG{n}{f}\PYG{p}{,} \PYG{n+nb+bp}{cls}\PYG{o}{=}\PYG{n}{MonteCarloTreeSearchDecoder}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{load\PYGZus{}progress}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{filename}\PYG{p}{):}
+        \PYG{k}{with} \PYG{n+nb}{open}\PYG{p}{(}\PYG{n}{filename}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}rb\PYGZsq{}}\PYG{p}{)} \PYG{k}{as} \PYG{n}{f}\PYG{p}{:}
+            \PYG{k}{return} \PYG{n}{pickle}\PYG{o}{.}\PYG{n}{load}\PYG{p}{(}\PYG{n}{f}\PYG{p}{)}
+
+
+\PYG{k}{if} \PYG{n+nv+vm}{\PYGZus{}\PYGZus{}name\PYGZus{}\PYGZus{}} \PYG{o}{==} \PYG{l+s+s2}{\PYGZdq{}\PYGZus{}\PYGZus{}main\PYGZus{}\PYGZus{}\PYGZdq{}}\PYG{p}{:}
+    \PYG{n}{mcts} \PYG{o}{=} \PYG{n}{MonteCarloTreeSearch}\PYG{p}{()}
+    \PYG{c+c1}{\PYGZsh{} with open(\PYGZsq{}/Volumes/USB/progress3.json\PYGZsq{}, \PYGZsq{}r\PYGZsq{}) as f:}
+    \PYG{c+c1}{\PYGZsh{}     mcts = decode\PYGZus{}tree(json.load(f))}
+    \PYG{c+c1}{\PYGZsh{}     logging.info(\PYGZdq{}Loaded progress\PYGZdq{})}
+    \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Starting training\PYGZdq{}}\PYG{p}{)}
+    \PYG{n}{mcts}\PYG{o}{.}\PYG{n}{train}\PYG{p}{()}
+\end{Verbatim}
