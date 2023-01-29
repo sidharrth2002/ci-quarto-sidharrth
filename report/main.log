@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2022/dev) (preloaded format=pdflatex 2021.11.1)  29 JAN 2023 14:48
+This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2022/dev) (preloaded format=pdflatex 2021.11.1)  29 JAN 2023 17:39
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -801,7 +801,7 @@ runsystem(which pygmentize && touch main.aex)...executed.
 
 runsystem(rm main.aex)...executed.
 
- (./main.aux)
+ (./main.aux (./lab1.aux) (./lab2.aux) (./lab3.aux) (./final-project.aux))
 \openout1 = `main.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 85.
@@ -892,6 +892,7 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 LaTeX Info: Redefining \ref on input line 85.
 LaTeX Info: Redefining \pageref on input line 85.
 LaTeX Info: Redefining \nameref on input line 85.
+ (./main.out) (./main.out)
 \@outlinefile=\write8
 \openout8 = `main.out'.
 
@@ -908,15 +909,23 @@ LaTeX Info: Redefining \BHBI on input line 130.
 \c@lstlisting=\count400
  [1
 
-{/usr/local/texlive/2021/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
+{/usr/local/texlive/2021/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] (./main.toc
+LaTeX Font Info:    Trying to load font information for U+msa on input line 4.
+ (/usr/local/texlive/2021/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 4.
+ (/usr/local/texlive/2021/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has been already used, duplicate ignored
+<to be read again> 
+                   \relax 
+l.55 ...earch Algorithms}{94}{subsubsection.5.2.1}
+                                                  % [1])
 \tf@toc=\write9
 \openout9 = `main.toc'.
 
-pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has been already used, duplicate ignored
-<to be read again> 
-                   \relax 
-l.114 \newpage
-               [1] [2]
+ [2] [3]
 \openout2 = `lab1.aux'.
 
  (./lab1.tex
@@ -930,43 +939,36 @@ File: t1cmtt.fd 2019/12/16 v2.5j Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10.95> not available
 (Font)              Font shape `T1/cmtt/m/n' tried instead on input line 2.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 14.
- (/usr/local/texlive/2021/texmf-dist/tex/latex/amsfonts/umsa.fd
-File: umsa.fd 2013/01/14 v3.01 AMS symbols A
-)
-LaTeX Font Info:    Trying to load font information for U+msb on input line 14.
- (/usr/local/texlive/2021/texmf-dist/tex/latex/amsfonts/umsb.fd
-File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-)) [3
+) [4
 
 ]
 \openout10 = `main.listing'.
 
- (./_minted-main/179A964FC8AB193809CAF48A781516DFECA43E68929C128CBEDBF6B90FA12E36.pygtex) [4]
+ (./_minted-main/179A964FC8AB193809CAF48A781516DFECA43E68929C128CBEDBF6B90FA12E36.pygtex) [5]
 \openout10 = `main.listing'.
 
  (./_minted-main/7D1E65A51D7A7FF2E1523C0DB6D7BE92ECA43E68929C128CBEDBF6B90FA12E36.pygtex
 LaTeX Font Info:    Trying to load font information for TS1+cmtt on input line 13.
  (/usr/local/texlive/2021/texmf-dist/tex/latex/base/ts1cmtt.fd
 File: ts1cmtt.fd 2019/12/16 v2.5j Standard LaTeX font definitions
-)) [5] [6] [7]
-<images/astar.png, id=75, 186.6975pt x 264.99pt>
+)) [6] [7] [8]
+<images/astar.png, id=359, 186.6975pt x 264.99pt>
 File: images/astar.png Graphic file (type png)
 <use images/astar.png>
 Package pdftex.def Info: images/astar.png  used on input line 219.
 (pdftex.def)             Requested size: 145.11053pt x 205.97163pt.
 \openout10 = `main.listing'.
 
- (./_minted-main/03C7EFE36E542C5AF1A351FCE241BA9CECA43E68929C128CBEDBF6B90FA12E36.pygtex) [8 <./images/astar.png>] [9] [10] [11] [12]
+ (./_minted-main/03C7EFE36E542C5AF1A351FCE241BA9CECA43E68929C128CBEDBF6B90FA12E36.pygtex) [9 <./images/astar.png>] [10] [11] [12] [13]
 \openout10 = `main.listing'.
 
- (./_minted-main/E87937DBF614D3837438C5546F6B0841ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [13] [14]
+ (./_minted-main/E87937DBF614D3837438C5546F6B0841ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [14] [15]
 \openout10 = `main.listing'.
 
- (./_minted-main/D7925BB0BA123BED89758A7EE1BEFBF9ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [15] [16]
+ (./_minted-main/D7925BB0BA123BED89758A7EE1BEFBF9ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [16] [17]
 \openout10 = `main.listing'.
 
- (./_minted-main/732C01C0EB96129750CB3EB04B53E6AEECA43E68929C128CBEDBF6B90FA12E36.pygtex)) [17]
+ (./_minted-main/732C01C0EB96129750CB3EB04B53E6AEECA43E68929C128CBEDBF6B90FA12E36.pygtex)) [18]
 \openout2 = `lab2.aux'.
 
  (./lab2.tex
@@ -974,20 +976,20 @@ Overfull \hbox (1.67892pt too wide) detected at line 43
 []\OML/cmm/m/it/14.4 len\OT1/cmr/m/n/14.4 (\OML/cmm/m/it/14.4 distinct[]elements\OT1/cmr/m/n/14.4 )\OML/cmm/m/it/14.4 =\OT1/cmr/m/n/14.4 (\OML/cmm/m/it/14.4 num[]duplicates \OT1/cmr/m/n/14.4 + 1) \OMS/cmsy/m/n/14.4 ^^@ \OML/cmm/m/it/14.4 num[]undiscovered[]elements
  []
 
-[18
+[19
 
 
 
 ]
 \openout10 = `main.listing'.
 
- (./_minted-main/2867A2B4F124C8A5F5FB04A43D1A99C2ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [19]
+ (./_minted-main/2867A2B4F124C8A5F5FB04A43D1A99C2ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [20]
 \openout10 = `main.listing'.
 
  (./_minted-main/532647801A68906889CF0A1BB09FF629ECA43E68929C128CBEDBF6B90FA12E36.pygtex)
 \openout10 = `main.listing'.
 
- (./_minted-main/ABE7A9A3213033C15162FA521188AFD3ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [20]
+ (./_minted-main/ABE7A9A3213033C15162FA521188AFD3ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [21]
 \openout10 = `main.listing'.
 
  (./_minted-main/EA5075D2293B14662EBC8CD62F73F9CEECA43E68929C128CBEDBF6B90FA12E36.pygtex)
@@ -1001,7 +1003,7 @@ Overfull \hbox (69.4322pt too wide) in paragraph at lines 213--213
 \T1/cmtt/m/it/10.95 https://www.tutorialspoint.com/genetic_algorithms/genetic_algorithms_parent_selection.htm[]|  
  []
 
-) [21] [22] [23] [24] [25] [26] [27]
+) [22] [23] [24] [25] [26] [27] [28]
 \openout10 = `main.listing'.
 
  (./_minted-main/6A611EE23792297A0F70BEAED45BD4D8ECA43E68929C128CBEDBF6B90FA12E36.pygtex)
@@ -1016,7 +1018,7 @@ Overfull \hbox (69.4322pt too wide) in paragraph at lines 213--213
  (./_minted-main/AB6414223BFEC76E359D3590FFACAFD2ECA43E68929C128CBEDBF6B90FA12E36.pygtex)
 \openout10 = `main.listing'.
 
- (./_minted-main/31253B2810EA49E5580753F71839587EECA43E68929C128CBEDBF6B90FA12E36.pygtex) [28]
+ (./_minted-main/31253B2810EA49E5580753F71839587EECA43E68929C128CBEDBF6B90FA12E36.pygtex) [29]
 Underfull \hbox (badness 10000) in paragraph at lines 540--542
 []\T1/cmr/m/n/14.4 In the README, I was won-der-ing if the func-tion
  []
@@ -1028,13 +1030,13 @@ Underfull \hbox (badness 1997) in paragraph at lines 540--542
 
 \openout10 = `main.listing'.
 
-(./_minted-main/98AA7280C2FF140EC0FD1D39001C26D4ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [29]
+(./_minted-main/98AA7280C2FF140EC0FD1D39001C26D4ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [30]
 \openout10 = `main.listing'.
 
- (./_minted-main/B3B8108FA98962C17BAA7C3565290932ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [30] [31]
+ (./_minted-main/B3B8108FA98962C17BAA7C3565290932ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [31] [32]
 \openout10 = `main.listing'.
 
- (./_minted-main/BD37F6BB0AA108C9C5567E252E216E60ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [32]
+ (./_minted-main/BD37F6BB0AA108C9C5567E252E216E60ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [33]
 Underfull \hbox (badness 10000) in paragraph at lines 684--685
 
  []
@@ -1047,10 +1049,10 @@ Underfull \hbox (badness 10000) in paragraph at lines 684--685
  (./_minted-main/34BA6A4F84CFB5A6A2E6B60370100473ECA43E68929C128CBEDBF6B90FA12E36.pygtex)
 \openout10 = `main.listing'.
 
- (./_minted-main/CAFA0314E231AB766FCE0B23413D2795ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [33]
+ (./_minted-main/CAFA0314E231AB766FCE0B23413D2795ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [34]
 \openout10 = `main.listing'.
 
- (./_minted-main/8F2346071328480ED7BF413A200C3B30ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [34] [35] [36] [37] [38]
+ (./_minted-main/8F2346071328480ED7BF413A200C3B30ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [35] [36] [37] [38] [39]
 \openout10 = `main.listing'.
 
  (./_minted-main/97AE3A5F1C9F7022389665C36D4A510BECA43E68929C128CBEDBF6B90FA12E36.pygtex)
@@ -1059,34 +1061,34 @@ Underfull \hbox (badness 10000) in paragraph at lines 684--685
  (./_minted-main/D3644AD64787324C4469A4038390F025ECA43E68929C128CBEDBF6B90FA12E36.pygtex)
 \openout10 = `main.listing'.
 
- (./_minted-main/138057D199552FEAFF791ACCF26A208BECA43E68929C128CBEDBF6B90FA12E36.pygtex) [39] [40] [41] [42]
+ (./_minted-main/138057D199552FEAFF791ACCF26A208BECA43E68929C128CBEDBF6B90FA12E36.pygtex) [40] [41] [42] [43]
 \openout10 = `main.listing'.
 
- (./_minted-main/7D4EA6B01DA772AD76766E8FF4027658ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [43]
+ (./_minted-main/7D4EA6B01DA772AD76766E8FF4027658ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [44]
 \openout10 = `main.listing'.
 
  (./_minted-main/E093441545DEAEF74C67208DBB543DC6ECA43E68929C128CBEDBF6B90FA12E36.pygtex)
 \openout10 = `main.listing'.
 
- (./_minted-main/64C71E5019CF51413CFC5E1E7E84B62BECA43E68929C128CBEDBF6B90FA12E36.pygtex) [44] [45] [46]) [47]
+ (./_minted-main/64C71E5019CF51413CFC5E1E7E84B62BECA43E68929C128CBEDBF6B90FA12E36.pygtex) [45] [46] [47]) [48]
 \openout2 = `lab3.aux'.
 
  (./lab3.tex
-<images/rules.png, id=281, 542.025pt x 612.2875pt>
+<images/rules.png, id=543, 542.025pt x 612.2875pt>
 File: images/rules.png Graphic file (type png)
 <use images/rules.png>
 Package pdftex.def Info: images/rules.png  used on input line 33.
 (pdftex.def)             Requested size: 241.84843pt x 273.20049pt.
 \openout10 = `main.listing'.
 
- (./_minted-main/A68E4690962AB39BE5792DEE2297D56AECA43E68929C128CBEDBF6B90FA12E36.pygtex) [48
+ (./_minted-main/A68E4690962AB39BE5792DEE2297D56AECA43E68929C128CBEDBF6B90FA12E36.pygtex) [49
 
 
 
-] [49 <./images/rules.png>] [50] [51] [52]
+] [50 <./images/rules.png>] [51] [52] [53]
 \openout10 = `main.listing'.
 
- (./_minted-main/BFB980872D967844F7C7974F3F44B1F7ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [53]
+ (./_minted-main/BFB980872D967844F7C7974F3F44B1F7ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [54]
 \openout4 = `main.markdown.in'.
 
 Package markdown Info: Buffering markdown input into the temporary input file "main.markdown.in" and scanning for the closing token sequence "\end{markdown}" on input line 282.
@@ -1098,29 +1100,29 @@ Package markdown Info: Writing a helper Lua script to the file "main.markdown.lu
 Package markdown Info: Executing a helper Lua script from the file "main.markdown.lua" and storing the result in the file "main.markdown.out" on input line 298.
 runsystem(texlua "./main.markdown.lua" > "./main.markdown.out")...executed.
 
- (./main.markdown.out (./_markdown_main/2f02d8bf48c1a2a96653d53f4257966d.md.tex [54]))
+ (./main.markdown.out (./_markdown_main/2f02d8bf48c1a2a96653d53f4257966d.md.tex [55]))
 \openout10 = `main.listing'.
 
- (./_minted-main/2DA8BAB9767C9579460AC6DDD3CE9703ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [55] [56] [57] [58] [59] [60] [61] [62]
+ (./_minted-main/2DA8BAB9767C9579460AC6DDD3CE9703ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [56] [57] [58] [59] [60] [61] [62] [63]
 \openout10 = `main.listing'.
 
  (./_minted-main/BEBBB6AC2B6DFE3217A0AEAD66710384ECA43E68929C128CBEDBF6B90FA12E36.pygtex)
 \openout10 = `main.listing'.
 
- (./_minted-main/A79127B2213512503FEC1621C66FB6F8ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [63] [64] [65]
+ (./_minted-main/A79127B2213512503FEC1621C66FB6F8ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [64] [65] [66]
 \openout10 = `main.listing'.
 
- (./_minted-main/541E8D5E576A6BB36AD3854F85EBD058ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [66] [67] [68]
+ (./_minted-main/541E8D5E576A6BB36AD3854F85EBD058ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [67] [68] [69]
 Underfull \hbox (badness 10000) in paragraph at lines 944--945
 
  []
 
 \openout10 = `main.listing'.
 
-(./_minted-main/5D83F07CD582593394660B955512F30DECA43E68929C128CBEDBF6B90FA12E36.pygtex) [69] [70] [71] [72] [73] [74]
+(./_minted-main/5D83F07CD582593394660B955512F30DECA43E68929C128CBEDBF6B90FA12E36.pygtex) [70] [71] [72] [73] [74] [75]
 \openout10 = `main.listing'.
 
- (./_minted-main/F5343A7CFBF96FE304AED9F9C7CA2C16ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [75] [76]
+ (./_minted-main/F5343A7CFBF96FE304AED9F9C7CA2C16ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [76] [77]
 Underfull \hbox (badness 10000) in paragraph at lines 1336--1343
 
  []
@@ -1130,10 +1132,10 @@ Underfull \hbox (badness 10000) in paragraph at lines 1336--1343
 
  []
 
-[77]
+[78]
 Overfull \vbox (38.03879pt too high) has occurred while \output is active []
 
- [78]
+ [79]
 \openout10 = `main.listing'.
 
  (./_minted-main/FB095F66669C66F3F0A41EB4A57D20B5ECA43E68929C128CBEDBF6B90FA12E36.pygtex
@@ -1141,53 +1143,53 @@ Overfull \hbox (22.26466pt too wide) in paragraph at lines 403--403
 \T1/cmtt/m/n/10.95 random[].[]choice([]tuple[]([]self[][].[]states[[]self[][].[]current_state][[]\TS1/cmtt/m/n/10.95 '\T1/cmtt/m/n/10.95 child_states\TS1/cmtt/m/n/10.95 '[]\T1/cmtt/m/n/10.95 ]))|  
  []
 
-) [79] [80] [81] [82] [83] [84] [85] [86] [87] [88] [89] [90] [91]
+) [80] [81] [82] [83] [84] [85] [86] [87] [88] [89] [90] [91] [92]
 Underfull \hbox (badness 10000) in paragraph at lines 1947--1948
 
  []
 
-) [92]
+) [93]
 \openout2 = `final-project.aux'.
 
- (./final-project.tex [93
+ (./final-project.tex [94
 
 
 
 ]
-Underfull \hbox (badness 10000) in paragraph at lines 41--43
-
- []
-
-[94]
-Underfull \hbox (badness 10000) in paragraph at lines 52--54
-
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 62--63
+Underfull \hbox (badness 10000) in paragraph at lines 43--45
 
  []
 
 [95]
+Underfull \hbox (badness 10000) in paragraph at lines 54--56
 
-LaTeX Warning: Reference `fig:hybrid-agent' on page 96 undefined on input line 74.
+ []
 
-<images/methodology.drawio.png, id=539, 834.11626pt x 382.42876pt>
+
+Underfull \hbox (badness 10000) in paragraph at lines 64--65
+
+ []
+
+[96]
+<images/methodology.drawio.png, id=787, 834.11626pt x 382.42876pt>
 File: images/methodology.drawio.png Graphic file (type png)
 <use images/methodology.drawio.png>
-Package pdftex.def Info: images/methodology.drawio.png  used on input line 78.
+Package pdftex.def Info: images/methodology.drawio.png  used on input line 80.
 (pdftex.def)             Requested size: 435.32422pt x 199.5935pt.
-
-LaTeX Warning: Reference `json-example' on page 96 undefined on input line 89.
-
 \openout6 = `main.pyg'.
 
-(./_minted-main/7F1471B6EFF0F259047F15E7D053CADA59903D0DCC0BD27D24705E832EFCA227.pygtex
+ (./_minted-main/7F1471B6EFF0F259047F15E7D053CADA59903D0DCC0BD27D24705E832EFCA227.pygtex
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <12> not available
 (Font)              Font shape `T1/cmtt/m/n' tried instead on input line 3.
 )
-Package hyperref Info: bookmark level for unknown listing defaults to 0 on input line 99.
- [96 <./images/methodology.drawio.png>]
+Package hyperref Info: bookmark level for unknown listing defaults to 0 on input line 101.
+ [97 <./images/methodology.drawio.png>]
+\openout6 = `main.pyg'.
+
+ (./_minted-main/66C83310F0F2BCB566ECB72B50836E7059903D0DCC0BD27D24705E832EFCA227.pygtex
+LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <14.4> not available
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 3.
+) [98]
 \openout10 = `main.listing'.
 
  (./_minted-main/8C2DAF21EA7B96F714E4D7A5DD926854ECA43E68929C128CBEDBF6B90FA12E36.pygtex
@@ -1225,261 +1227,48 @@ Overfull \hbox (101.48186pt too wide) in paragraph at lines 351--351
 []\T1/cmtt/m/n/10.95 self[][].[]current_state[].[]check_if_move_valid([]self[][].[]current_state[].[]get_selected_piece(), 
  []
 
-) [97] [98] [99] [100] [101] [102] [103] [104]
+) [99] [100] [101] [102] [103] [104] [105] [106]
 \openout10 = `main.listing'.
 
- (./_minted-main/769F89B6B67F1DBAF62C7B240027BCE7ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [105] [106] [107] [108]
+ (./_minted-main/769F89B6B67F1DBAF62C7B240027BCE7ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [107] [108] [109] [110]
 \openout10 = `main.listing'.
 
- (./_minted-main/D6C664A501ED84F8E52E2DD67EC61B01ECA43E68929C128CBEDBF6B90FA12E36.pygtex
-
-./_minted-main/D6C664A501ED84F8E52E2DD67EC61B01ECA43E68929C128CBEDBF6B90FA12E36.pygtex:426: Package inputenc Error: Unicode character π (U+03C0)
-(inputenc)                not set up for use with LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.426 ...rior probability bonus exploration term.}
-                                                  
-You may provide a definition with
-\DeclareUnicodeCharacter 
-
-
-./_minted-main/D6C664A501ED84F8E52E2DD67EC61B01ECA43E68929C128CBEDBF6B90FA12E36.pygtex:426: Package inputenc Error: Unicode character π (U+03C0)
-(inputenc)                not set up for use with LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.426 ...rior probability bonus exploration term.}
-                                                  
-You may provide a definition with
-\DeclareUnicodeCharacter 
-
-
-./_minted-main/D6C664A501ED84F8E52E2DD67EC61B01ECA43E68929C128CBEDBF6B90FA12E36.pygtex:426: Package inputenc Error: Unicode character ∝ (U+221D)
-(inputenc)                not set up for use with LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.426 ...rior probability bonus exploration term.}
-                                                  
-You may provide a definition with
-\DeclareUnicodeCharacter 
-
-
-./_minted-main/D6C664A501ED84F8E52E2DD67EC61B01ECA43E68929C128CBEDBF6B90FA12E36.pygtex:426: Package inputenc Error: Unicode character τ (U+03C4)
-(inputenc)                not set up for use with LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.426 ...rior probability bonus exploration term.}
-                                                  
-You may provide a definition with
-\DeclareUnicodeCharacter 
-
-
-./_minted-main/D6C664A501ED84F8E52E2DD67EC61B01ECA43E68929C128CBEDBF6B90FA12E36.pygtex:426: Package inputenc Error: Unicode character τ (U+03C4)
-(inputenc)                not set up for use with LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.426 ...rior probability bonus exploration term.}
-                                                  
-You may provide a definition with
-\DeclareUnicodeCharacter 
-
-
-./_minted-main/D6C664A501ED84F8E52E2DD67EC61B01ECA43E68929C128CBEDBF6B90FA12E36.pygtex:426: Package inputenc Error: Unicode character τ (U+03C4)
-(inputenc)                not set up for use with LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.426 ...rior probability bonus exploration term.}
-                                                  
-You may provide a definition with
-\DeclareUnicodeCharacter 
-
-
-./_minted-main/D6C664A501ED84F8E52E2DD67EC61B01ECA43E68929C128CBEDBF6B90FA12E36.pygtex:426: Package inputenc Error: Unicode character τ (U+03C4)
-(inputenc)                not set up for use with LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.426 ...rior probability bonus exploration term.}
-                                                  
-You may provide a definition with
-\DeclareUnicodeCharacter 
-
-
-./_minted-main/D6C664A501ED84F8E52E2DD67EC61B01ECA43E68929C128CBEDBF6B90FA12E36.pygtex:426: Package inputenc Error: Unicode character π (U+03C0)
-(inputenc)                not set up for use with LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.426 ...rior probability bonus exploration term.}
-                                                  
-You may provide a definition with
-\DeclareUnicodeCharacter 
-
-
-./_minted-main/D6C664A501ED84F8E52E2DD67EC61B01ECA43E68929C128CBEDBF6B90FA12E36.pygtex:426: Package inputenc Error: Unicode character π (U+03C0)
-(inputenc)                not set up for use with LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.426 ...rior probability bonus exploration term.}
-                                                  
-You may provide a definition with
-\DeclareUnicodeCharacter 
-
-
-./_minted-main/D6C664A501ED84F8E52E2DD67EC61B01ECA43E68929C128CBEDBF6B90FA12E36.pygtex:426: Package inputenc Error: Unicode character π (U+03C0)
-(inputenc)                not set up for use with LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.426 ...rior probability bonus exploration term.}
-                                                  
-You may provide a definition with
-\DeclareUnicodeCharacter 
-
-
-./_minted-main/D6C664A501ED84F8E52E2DD67EC61B01ECA43E68929C128CBEDBF6B90FA12E36.pygtex:426: Package inputenc Error: Unicode character ∝ (U+221D)
-(inputenc)                not set up for use with LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.426 ...rior probability bonus exploration term.}
-                                                  
-You may provide a definition with
-\DeclareUnicodeCharacter 
-
-
-./_minted-main/D6C664A501ED84F8E52E2DD67EC61B01ECA43E68929C128CBEDBF6B90FA12E36.pygtex:426: Package inputenc Error: Unicode character τ (U+03C4)
-(inputenc)                not set up for use with LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.426 ...rior probability bonus exploration term.}
-                                                  
-You may provide a definition with
-\DeclareUnicodeCharacter 
-
-
-./_minted-main/D6C664A501ED84F8E52E2DD67EC61B01ECA43E68929C128CBEDBF6B90FA12E36.pygtex:426: Package inputenc Error: Unicode character τ (U+03C4)
-(inputenc)                not set up for use with LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.426 ...rior probability bonus exploration term.}
-                                                  
-You may provide a definition with
-\DeclareUnicodeCharacter 
-
-
-./_minted-main/D6C664A501ED84F8E52E2DD67EC61B01ECA43E68929C128CBEDBF6B90FA12E36.pygtex:426: Package inputenc Error: Unicode character τ (U+03C4)
-(inputenc)                not set up for use with LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.426 ...rior probability bonus exploration term.}
-                                                  
-You may provide a definition with
-\DeclareUnicodeCharacter 
-
-
-./_minted-main/D6C664A501ED84F8E52E2DD67EC61B01ECA43E68929C128CBEDBF6B90FA12E36.pygtex:426: Package inputenc Error: Unicode character τ (U+03C4)
-(inputenc)                not set up for use with LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.426 ...rior probability bonus exploration term.}
-                                                  
-You may provide a definition with
-\DeclareUnicodeCharacter 
-
-
-./_minted-main/D6C664A501ED84F8E52E2DD67EC61B01ECA43E68929C128CBEDBF6B90FA12E36.pygtex:426: Package inputenc Error: Unicode character π (U+03C0)
-(inputenc)                not set up for use with LaTeX.
-
-See the inputenc package documentation for explanation.
-Type  H <return>  for immediate help.
- ...                                              
-                                                  
-l.426 ...rior probability bonus exploration term.}
-                                                  
-You may provide a definition with
-\DeclareUnicodeCharacter 
-
-) [109] [110] [111] [112] [113] [114] [115] [116] [117] [118] [119]
+ (./_minted-main/CB57D86DEC19EAFEB6D64544A9692AB7ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [111] [112] [113] [114] [115] [116] [117] [118] [119] [120]
 \openout10 = `main.listing'.
 
- (./_minted-main/A7F24F88430D04E456184B042856F3FCECA43E68929C128CBEDBF6B90FA12E36.pygtex) [120] [121] [122] [123] [124] [125] [126] [127] [128] [129]
+ (./_minted-main/E38D269B6C2BF68AE2C45C19681FDCA9ECA43E68929C128CBEDBF6B90FA12E36.pygtex
+Overfull \hbox (33.5814pt too wide) in paragraph at lines 322--322
+[]\T1/cmtt/m/n/10.95 self[][].[]board[].[]check_if_move_valid([]self[][].[]board[].[]get_selected_piece(), 
+ []
+
+) [121] [122] [123] [124] [125] [126] [127] [128]
 \openout10 = `main.listing'.
 
- (./_minted-main/420173D8269AC905D2D08016A1B543B7ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [130] [131] [132] [133] [134] [135] [136]) [137] [138
+ (./_minted-main/A7F24F88430D04E456184B042856F3FCECA43E68929C128CBEDBF6B90FA12E36.pygtex) [129] [130] [131] [132] [133] [134] [135] [136] [137] [138]
+\openout10 = `main.listing'.
+
+ (./_minted-main/420173D8269AC905D2D08016A1B543B7ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [139] [140] [141] [142] [143] [144] [145]) [146] [147
 
 
 ] (./main.aux (./lab1.aux) (./lab2.aux) (./lab3.aux) (./final-project.aux))
-
-LaTeX Warning: There were undefined references.
-
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
-
-Package rerunfilecheck Warning: File `main.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `main.out':
-(rerunfilecheck)             Before: <no file>
-(rerunfilecheck)             After:  1A399611B37584779C752F282538AF6E;8497.
+Package rerunfilecheck Info: File `main.out' has not changed.
+(rerunfilecheck)             Checksum: 6C6E7623EB86DEFC7DB60B75F9AC5CF3;8887.
 runsystem(rm main.pyg)...executed.
 
  ) 
 Here is how much of TeX's memory you used:
- 34649 strings out of 478579
- 684559 string characters out of 5853443
- 1270942 words of memory out of 5000000
- 51516 multiletter control sequences out of 15000+600000
- 426455 words of font info for 84 fonts, out of 8000000 for 9000
+ 34758 strings out of 478579
+ 687064 string characters out of 5853443
+ 1283038 words of memory out of 5000000
+ 51592 multiletter control sequences out of 15000+600000
+ 426752 words of font info for 85 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  99i,13n,117p,1025b,1514s stack positions out of 5000i,500n,10000p,200000b,80000s
-{/usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}{/usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}</usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1728.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx2488.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfcc1728.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfcc2074.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfit1095.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm0600.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1440.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfti1440.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sftt1095.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sftt1200.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sftt1440.pfb>
-Output written on main.pdf (139 pages, 894238 bytes).
+{/usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}{/usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}</usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1728.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx2488.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfcc1728.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfcc2074.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfit1095.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm0600.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1440.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfti1440.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sftt1095.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sftt1200.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sftt1440.pfb>
+Output written on main.pdf (148 pages, 925831 bytes).
 PDF statistics:
- 904 PDF objects out of 1000 (max. 8388607)
- 699 compressed objects within 7 object streams
- 249 named destinations out of 1000 (max. 500000)
- 28 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1185 PDF objects out of 1200 (max. 8388607)
+ 967 compressed objects within 10 object streams
+ 261 named destinations out of 1000 (max. 500000)
+ 484 words of extra memory for PDF output out of 10000 (max. 10000000)
 

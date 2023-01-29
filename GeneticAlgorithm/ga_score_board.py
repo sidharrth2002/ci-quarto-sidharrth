@@ -364,8 +364,8 @@ class FinalPlayer(Player):
                 return action[0], action[1]
 
     def test_thresholds(self):
-        thresholds = {'random': 2.090773081612301,
-                      'hardcoded': 3.790328881747581, 'ql-mcts': 7.251997327518943}
+        thresholds = {'random': 10000,
+                      'hardcoded': 10000, 'ql-mcts': 3}
         win_rate = self.play_game(thresholds, num_games=10)
         return win_rate
 

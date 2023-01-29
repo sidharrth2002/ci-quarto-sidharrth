@@ -422,9 +422,6 @@
             \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{save\PYGZus{}progress\PYGZus{}pickle}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}progress.pkl\PYGZsq{}}\PYG{p}{)}
 
     \PYG{k}{def} \PYG{n+nf}{generate\PYGZus{}future\PYGZus{}probabilities}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{root}\PYG{p}{:} \PYG{n}{Node}\PYG{p}{,} \PYG{n}{node}\PYG{p}{:} \PYG{n}{Node}\PYG{p}{):}
-        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
-\PYG{l+s+sd}{        play an action a from the root state st with probability proportional to the number of times that action was chosen during Phase One. To do this, AlphaGo Zero creates a probability distribution πt over the actions from the state st such that πt(a) ∝ N(st,a)\PYGZca{}\PYGZhy{}1/τ for some hyperparameter τ; when τ = 1 the distribution exactly matches the ratios of the visit counts, while when τ → 0 the probability mass focuses on the action that was chosen most often. Using this distribution to selects actions improves the performance of AlphaGo Zero because πt is a refinement of the prediction pt for the start state st; as MCTS is allowed to run, it starts selecting actions with high value estimates more frequently rather than relying on the prior probability bonus exploration term.}
-\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
         \PYG{c+c1}{\PYGZsh{} 1 is the default value, but it can be changed to 0.5 or 0.1}
 
         \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{tau} \PYG{o}{=} \PYG{l+m+mf}{0.5}
