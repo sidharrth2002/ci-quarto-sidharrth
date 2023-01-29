@@ -40,10 +40,12 @@ class HardcodedPlayer(Player):
                         return True, [i, j]
         return False, None
 
-    def hardcoded_strategy_get_piece(self, state):
+    def hardcoded_strategy_get_piece(self):
         '''
         Returns a piece to be placed on the board
         '''
+        state = self.get_game()
+
         possible_pieces = []
         for i in range(16):
             # check if the piece is a winning piece
@@ -136,44 +138,75 @@ class HardcodedPlayer(Player):
 
             # check if characteristics has an empty row
             if [-1, -1, -1, -1] in characteristics:
-                # insert the selected piece in the empty row
-                empty_piece_index = characteristics.index(
-                    [-1, -1, -1, -1])
-                characteristics[empty_piece_index] = selected_piece_char
+                # count how many [-1, -1, -1, -1] are in characteristics
+                empty_indexes = [i for i, x in enumerate(
+                    characteristics) if x == [-1, -1, -1, -1]]
 
-                # check if any column has the same characteristics
-                col1 = [characteristics[0][0], characteristics[1][0],
-                        characteristics[2][0], characteristics[3][0]]
-                col2 = [characteristics[0][1], characteristics[1][1],
-                        characteristics[2][1], characteristics[3][1]]
-                col3 = [characteristics[0][2], characteristics[1][2],
-                        characteristics[2][2], characteristics[3][2]]
-                col4 = [characteristics[0][3], characteristics[1][3],
-                        characteristics[2][3], characteristics[3][3]]
+                empty_rows_count = characteristics.count([-1, -1, -1, -1])
+                characteristics_copy = characteristics.copy()
 
-                col1 = [int(i) for i in col1]
-                col2 = [int(i) for i in col2]
-                col3 = [int(i) for i in col3]
-                col4 = [int(i) for i in col4]
+                # proceeding to check couplets and see if they can build triplets
+                # since 2 empty rows may be present and either could create a triplet, have to choose randomly later
+                potential_moves = []
 
-                if len(set(col1)) == 1 or len(set(col2)) == 1 or len(set(col3)) == 1 or len(set(col4)) == 1:
-                    # this piece can be used to build a line of like pieces
-                    logging.debug('playing to build a line of like pieces')
-                    if return_winning_piece_boolean:
-                        return True, list(reversed(empty_rows[-1]))
-                    else:
-                        move = list(reversed(empty_rows[-1]))
-                        return move[0], move[1]
+                for i, index in enumerate(empty_indexes):
+                    position = empty_rows[i]
+                    # insert the selected piece in the empty row
+                    # empty_piece_index = characteristics.index(
+                    #     [-1, -1, -1, -1])
+                    characteristics = characteristics_copy.copy()
+                    characteristics[index] = selected_piece_char
+
+                    # check if any column has the same characteristics
+                    col1 = [characteristics[0][0], characteristics[1][0],
+                            characteristics[2][0], characteristics[3][0]]
+                    col2 = [characteristics[0][1], characteristics[1][1],
+                            characteristics[2][1], characteristics[3][1]]
+                    col3 = [characteristics[0][2], characteristics[1][2],
+                            characteristics[2][2], characteristics[3][2]]
+                    col4 = [characteristics[0][3], characteristics[1][3],
+                            characteristics[2][3], characteristics[3][3]]
+
+                    col1 = [int(i) for i in col1]
+                    col2 = [int(i) for i in col2]
+                    col3 = [int(i) for i in col3]
+                    col4 = [int(i) for i in col4]
+
+                    # print(col1, col2, col3, col4)
+                    def check_if_form_triplet(line):
+                        # earlier we checked if we can complete a line
+                        # here we check if we can form a triplet (one step away from completing a line)
+                        return line.count(1) == 3 or line.count(0) == 3
+
+                    # if len(set(col1)) == 1 or len(set(col2)) == 1 or len(set(col3)) == 1 or len(set(col4)) == 1:
+                    if check_if_form_triplet(col1) or check_if_form_triplet(col2) or check_if_form_triplet(col3) or check_if_form_triplet(col4):
+                        # this piece can be used to build a line of like pieces
+                        logging.debug('playing to build a line of like pieces')
+                        potential_moves.append(list(reversed(position)))
+
+                    if len(potential_moves) >= 1:
+                        if return_winning_piece_boolean:
+                            # return True, list(reversed(empty_rows[-1]))
+                            return True, random.choice(potential_moves)
+                        else:
+                            # move = list(reversed(empty_rows[-1]))
+                            # move = list(reversed(position))
+                            move = random.choice(potential_moves)
+                            return move[0], move[1]
 
         # play randomly
+        possible_moves = []
         for i in range(self.BOARD_SIDE):
             for j in range(self.BOARD_SIDE):
                 for next_piece in range(16):
                     if state.check_if_move_valid(selected_piece, i, j, next_piece):
                         if return_winning_piece_boolean:
-                            return False, [i, j]
+                            possible_moves.append([False, [i, j]])
                         else:
-                            return i, j
+                            possible_moves.append([i, j])
+
+        random_move = random.choice(possible_moves)
+        return random_move[0], random_move[1]
 
         logging.debug(f"Selected piece: {selected_piece}")
         logging.debug(f"Board: {board}")
