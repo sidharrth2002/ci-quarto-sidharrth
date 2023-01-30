@@ -1,0 +1,177 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{In this file, we build an MCTS player using a different, simpler node structure.}
+\PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+
+\PYG{k+kn}{import} \PYG{n+nn}{copy}
+\PYG{k+kn}{import} \PYG{n+nn}{itertools}
+\PYG{k+kn}{import} \PYG{n+nn}{logging}
+\PYG{k+kn}{import} \PYG{n+nn}{math}
+\PYG{k+kn}{import} \PYG{n+nn}{random}
+\PYG{k+kn}{from} \PYG{n+nn}{lib.players} \PYG{k+kn}{import} \PYG{n}{Player}
+\PYG{k+kn}{from} \PYG{n+nn}{quarto.objects} \PYG{k+kn}{import} \PYG{n}{Quarto}
+\PYG{k+kn}{from} \PYG{n+nn}{.node} \PYG{k+kn}{import} \PYG{n}{Node}
+
+
+\PYG{k}{class} \PYG{n+nc}{MCTS}\PYG{p}{(}\PYG{n}{Player}\PYG{p}{):}
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{board}\PYG{p}{,} \PYG{n}{player\PYGZus{}id} \PYG{o}{=} \PYG{l+m+mi}{0}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Initialise player with empty children dictionary}
+\PYG{l+s+sd}{        and player id (indicates position MCTS plays)}
+\PYG{l+s+sd}{        This is important for reward function.}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{c+c1}{\PYGZsh{} by default MCTS is player 0}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children} \PYG{o}{=} \PYG{n+nb}{dict}\PYG{p}{()}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}player\PYGZus{}id} \PYG{o}{=} \PYG{n}{player\PYGZus{}id}
+        \PYG{n+nb}{super}\PYG{p}{()}\PYG{o}{.}\PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n}{board}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{uct}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{node}\PYG{p}{,} \PYG{n}{child}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Apply UCT formula to select best child}
+\PYG{l+s+sd}{        Formula: UCT = wins/visits + sqrt(2*log(parent\PYGZus{}visits)/child\PYGZus{}visits)}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{k}{return} \PYG{n}{child}\PYG{o}{.}\PYG{n}{\PYGZus{}wins}\PYG{o}{/}\PYG{n}{child}\PYG{o}{.}\PYG{n}{\PYGZus{}visits} \PYG{o}{+} \PYG{n}{math}\PYG{o}{.}\PYG{n}{sqrt}\PYG{p}{(}\PYG{l+m+mi}{2}\PYG{o}{*}\PYG{n}{math}\PYG{o}{.}\PYG{n}{log}\PYG{p}{(}\PYG{n}{node}\PYG{o}{.}\PYG{n}{\PYGZus{}visits}\PYG{p}{)}\PYG{o}{/}\PYG{n}{child}\PYG{o}{.}\PYG{n}{\PYGZus{}visits}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{select}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{node}\PYG{p}{:} \PYG{n}{Node}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Select the child with the highest UCT value}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{n}{points} \PYG{o}{=} \PYG{p}{[]}
+        \PYG{k}{for} \PYG{n}{child} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{node}\PYG{p}{]:}
+            \PYG{n}{points}\PYG{o}{.}\PYG{n}{append}\PYG{p}{((}\PYG{n}{child}\PYG{p}{,} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{uct}\PYG{p}{(}\PYG{n}{node}\PYG{p}{,} \PYG{n}{child}\PYG{p}{)))}
+
+        \PYG{k}{return} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{points}\PYG{p}{,} \PYG{n}{key}\PYG{o}{=}\PYG{k}{lambda} \PYG{n}{x}\PYG{p}{:} \PYG{n}{x}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])[}\PYG{l+m+mi}{0}\PYG{p}{]}
+
+    \PYG{k}{def} \PYG{n+nf}{traverse}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{node}\PYG{p}{:} \PYG{n}{Node}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Traverse the tree to find the leaf node}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{n}{path} \PYG{o}{=} \PYG{p}{[]}
+        \PYG{k}{while} \PYG{k+kc}{True}\PYG{p}{:}
+            \PYG{n}{path}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{node}\PYG{p}{)}
+            \PYG{k}{if} \PYG{n}{node} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children} \PYG{o+ow}{or} \PYG{o+ow}{not} \PYG{o+ow}{not} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{node}\PYG{p}{]:}
+                \PYG{k}{return} \PYG{n}{path}
+
+            \PYG{n}{unexplored} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{node}\PYG{p}{]} \PYG{o}{\PYGZhy{}} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{o}{.}\PYG{n}{keys}\PYG{p}{()}
+            \PYG{k}{if} \PYG{n}{unexplored}\PYG{p}{:}
+                \PYG{n}{path}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{unexplored}\PYG{o}{.}\PYG{n}{pop}\PYG{p}{())}
+                \PYG{k}{return} \PYG{n}{path}
+            \PYG{n}{node} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{select}\PYG{p}{(}\PYG{n}{node}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{expand}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{node}\PYG{p}{:} \PYG{n}{Node}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Expands from the leaf node to a state that is hopefully terminal. In this approach (different from MCTS1), the next piece is not passed down to the next node, but is directly applied to all empty positions.}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{k}{if} \PYG{n}{node}\PYG{o}{.}\PYG{n}{final\PYGZus{}point}\PYG{p}{:}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{node}\PYG{p}{]} \PYG{o}{=} \PYG{k+kc}{None}
+            \PYG{k}{return}
+
+        \PYG{n}{free\PYGZus{}places} \PYG{o}{=} \PYG{p}{[]}
+        \PYG{n}{board} \PYG{o}{=} \PYG{n}{node}\PYG{o}{.}\PYG{n}{\PYGZus{}state}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{()}
+        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{4}\PYG{p}{):}
+            \PYG{k}{for} \PYG{n}{j} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{4}\PYG{p}{):}
+                \PYG{k}{if} \PYG{n}{board}\PYG{p}{[}\PYG{n}{i}\PYG{p}{][}\PYG{n}{j}\PYG{p}{]} \PYG{o}{==} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{:}
+                    \PYG{n}{free\PYGZus{}places}\PYG{o}{.}\PYG{n}{append}\PYG{p}{((}\PYG{n}{i}\PYG{p}{,} \PYG{n}{j}\PYG{p}{))}
+
+        \PYG{n}{children} \PYG{o}{=} \PYG{p}{[]}
+        \PYG{k}{for} \PYG{n}{y}\PYG{p}{,} \PYG{n}{x} \PYG{o+ow}{in} \PYG{n}{free\PYGZus{}places}\PYG{p}{:}
+            \PYG{n}{quarto} \PYG{o}{=} \PYG{n}{copy}\PYG{o}{.}\PYG{n}{deepcopy}\PYG{p}{(}\PYG{n}{node}\PYG{o}{.}\PYG{n}{\PYGZus{}state}\PYG{p}{)}
+            \PYG{n}{quarto}\PYG{o}{.}\PYG{n}{place}\PYG{p}{(}\PYG{n}{x}\PYG{p}{,} \PYG{n}{y}\PYG{p}{)}
+            \PYG{k}{if} \PYG{n}{quarto}\PYG{o}{.}\PYG{n}{check\PYGZus{}finished}\PYG{p}{()} \PYG{o+ow}{or} \PYG{n}{quarto}\PYG{o}{.}\PYG{n}{check\PYGZus{}winner}\PYG{p}{()} \PYG{o}{!=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{:}
+                \PYG{n}{n} \PYG{o}{=} \PYG{n}{Node}\PYG{p}{(}\PYG{n}{copy}\PYG{o}{.}\PYG{n}{deepcopy}\PYG{p}{(}\PYG{n}{quarto}\PYG{p}{),} \PYG{p}{(}\PYG{n}{x}\PYG{p}{,} \PYG{n}{y}\PYG{p}{),} \PYG{k+kc}{True}\PYG{p}{)}
+                \PYG{n}{children}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{n}\PYG{p}{)}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{n}{free\PYGZus{}pieces} \PYG{o}{=} \PYG{p}{[}\PYG{n}{i} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{16}\PYG{p}{)} \PYG{k}{if} \PYG{n}{i} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n+nb}{list}\PYG{p}{(}
+                    \PYG{n}{itertools}\PYG{o}{.}\PYG{n}{chain}\PYG{o}{.}\PYG{n}{from\PYGZus{}iterable}\PYG{p}{(}\PYG{n}{quarto}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{()))]}
+                \PYG{k}{for} \PYG{n}{piece} \PYG{o+ow}{in} \PYG{n}{free\PYGZus{}pieces}\PYG{p}{:}
+                    \PYG{n}{new\PYGZus{}quarto} \PYG{o}{=} \PYG{n}{copy}\PYG{o}{.}\PYG{n}{deepcopy}\PYG{p}{(}\PYG{n}{quarto}\PYG{p}{)}
+                    \PYG{n}{new\PYGZus{}quarto}\PYG{o}{.}\PYG{n}{select}\PYG{p}{(}\PYG{n}{piece}\PYG{p}{)}
+                    \PYG{n}{new\PYGZus{}quarto}\PYG{o}{.}\PYG{n}{\PYGZus{}current\PYGZus{}player} \PYG{o}{=} \PYG{p}{(}
+                        \PYG{n}{new\PYGZus{}quarto}\PYG{o}{.}\PYG{n}{\PYGZus{}current\PYGZus{}player} \PYG{o}{+} \PYG{l+m+mi}{1}\PYG{p}{)} \PYG{o}{\PYGZpc{}} \PYG{l+m+mi}{2}
+                    \PYG{n}{child} \PYG{o}{=} \PYG{n}{Node}\PYG{p}{(}\PYG{n}{new\PYGZus{}quarto}\PYG{p}{,} \PYG{p}{(}\PYG{n}{x}\PYG{p}{,} \PYG{n}{y}\PYG{p}{))}
+                    \PYG{n}{children}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{child}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{node}\PYG{p}{]} \PYG{o}{=} \PYG{n}{children}
+
+    \PYG{k}{def} \PYG{n+nf}{simulate}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{node}\PYG{p}{:} \PYG{n}{Node}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Simulate until terminal state is reached}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{k}{while} \PYG{k+kc}{True}\PYG{p}{:}
+            \PYG{k}{if} \PYG{n}{node}\PYG{o}{.}\PYG{n}{final\PYGZus{}point}\PYG{p}{:}
+                \PYG{n}{reward} \PYG{o}{=} \PYG{n}{node}\PYG{o}{.}\PYG{n}{reward}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}player\PYGZus{}id}\PYG{p}{)}
+                \PYG{k}{return} \PYG{n}{reward}
+            \PYG{n}{node} \PYG{o}{=} \PYG{n}{node}\PYG{o}{.}\PYG{n}{find\PYGZus{}random\PYGZus{}child}\PYG{p}{()}
+
+    \PYG{k}{def} \PYG{n+nf}{backpropagate}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{reward}\PYG{p}{,} \PYG{n}{path}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Backpropagate reward to all nodes in path}
+\PYG{l+s+sd}{        (Invert rewards based on player id)}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{k}{for} \PYG{n}{node} \PYG{o+ow}{in} \PYG{n+nb}{reversed}\PYG{p}{(}\PYG{n}{path}\PYG{p}{):}
+            \PYG{n}{node}\PYG{o}{.}\PYG{n}{update}\PYG{p}{(}\PYG{n}{reward}\PYG{p}{)}
+            \PYG{n}{reward} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{reward}
+
+    \PYG{k}{def} \PYG{n+nf}{best\PYGZus{}child}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{node}\PYG{p}{:} \PYG{n}{Node}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Choose best child purely based on wins and visits}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{k}{if} \PYG{n}{node}\PYG{o}{.}\PYG{n}{final\PYGZus{}point}\PYG{p}{:}
+            \PYG{k}{raise} \PYG{n+ne}{RuntimeError}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s1}{\PYGZsq{}called on unterminal node\PYGZsq{}}\PYG{p}{)}
+
+        \PYG{k}{def} \PYG{n+nf}{score}\PYG{p}{(}\PYG{n}{n}\PYG{p}{):}
+            \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Before reading in choose }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{n}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+            \PYG{k}{if} \PYG{n}{n}\PYG{o}{.}\PYG{n}{visits} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
+                \PYG{k}{return} \PYG{n+nb}{float}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}\PYGZhy{}inf\PYGZsq{}}\PYG{p}{)}
+            \PYG{k}{return} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{wins}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]} \PYG{o}{/} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{visits}\PYG{p}{[}\PYG{n}{n}\PYG{p}{]}
+
+        \PYG{k}{return} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{children}\PYG{p}{[}\PYG{n}{node}\PYG{p}{],} \PYG{n}{key}\PYG{o}{=}\PYG{n}{score}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{search}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{node}\PYG{p}{:} \PYG{n}{Node}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        1. Traverse tree to find leaf node}
+\PYG{l+s+sd}{        2. Expand leaf node}
+\PYG{l+s+sd}{        3. Simulate from leaf node until terminal state is reached}
+\PYG{l+s+sd}{        4. Backpropagate reward to all nodes in path}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{n}{path} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{traverse}\PYG{p}{(}\PYG{n}{node}\PYG{p}{)}
+        \PYG{n}{leaf} \PYG{o}{=} \PYG{n}{path}\PYG{p}{[}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{expand}\PYG{p}{(}\PYG{n}{leaf}\PYG{p}{)}
+        \PYG{n}{reward} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{simulate}\PYG{p}{(}\PYG{n}{leaf}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{backpropagate}\PYG{p}{(}\PYG{n}{reward}\PYG{p}{,} \PYG{n}{path}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{do\PYGZus{}rollout}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{root}\PYG{p}{:} \PYG{n}{Quarto}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Create node and rollout from it}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{k}{if} \PYG{n+nb}{type}\PYG{p}{(}\PYG{n}{root}\PYG{p}{)} \PYG{o}{!=} \PYG{n}{Node}\PYG{p}{:}
+            \PYG{n}{root} \PYG{o}{=} \PYG{n}{Node}\PYG{p}{(}\PYG{n}{state}\PYG{o}{=}\PYG{n}{root}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{search}\PYG{p}{(}\PYG{n}{root}\PYG{p}{)}
+        \PYG{k}{return} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{best\PYGZus{}child}\PYG{p}{(}\PYG{n}{root}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf}{choose\PYGZus{}piece}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Subclassed from Calabrese\PYGZsq{}s player class. Will return a random piece if first move. If not, will return piece computed in `place\PYGZus{}piece`}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{k}{if} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{mcts\PYGZus{}last\PYGZus{}board} \PYG{o}{==} \PYG{k+kc}{None}\PYG{p}{:}
+            \PYG{k}{return} \PYG{n}{random}\PYG{o}{.}\PYG{n}{randint}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{15}\PYG{p}{)}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{k}{return} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{mcts\PYGZus{}last\PYGZus{}board}\PYG{o}{.}\PYG{n}{\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{()}
+
+    \PYG{k}{def} \PYG{n+nf}{place\PYGZus{}piece}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{        Iterate through and rollout before returning best child (next move to make)}
+\PYG{l+s+sd}{        Since parent player class expects position and next piece to be}
+\PYG{l+s+sd}{        returned by separate functions, next piece is stored in a variable in order to be called by `choose\PYGZus{}piece`}
+\PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+        \PYG{n}{board} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}game}\PYG{p}{()}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{()}
+        \PYG{n}{selected\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}game}\PYG{p}{()}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{()}
+        \PYG{n}{curr\PYGZus{}player} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}game}\PYG{p}{()}\PYG{o}{.}\PYG{n}{get\PYGZus{}current\PYGZus{}player}\PYG{p}{()}
+        \PYG{n}{current\PYGZus{}board} \PYG{o}{=} \PYG{n}{Quarto}\PYG{p}{(}
+            \PYG{n}{board}\PYG{o}{=}\PYG{n}{board}\PYG{p}{,} \PYG{n}{selected\PYGZus{}piece}\PYG{o}{=}\PYG{n}{selected\PYGZus{}piece}\PYG{p}{,} \PYG{n}{curr\PYGZus{}player}\PYG{o}{=}\PYG{n}{curr\PYGZus{}player}\PYG{p}{)}
+        \PYG{n}{root} \PYG{o}{=} \PYG{n}{Node}\PYG{p}{(}\PYG{n}{current\PYGZus{}board}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}player\PYGZus{}id} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}game}\PYG{p}{()}\PYG{o}{.}\PYG{n}{get\PYGZus{}current\PYGZus{}player}\PYG{p}{()}
+        \PYG{k}{for} \PYG{n}{\PYGZus{}} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{30}\PYG{p}{):}
+            \PYG{n}{best\PYGZus{}child} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{do\PYGZus{}rollout}\PYG{p}{(}\PYG{n}{root}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{mcts\PYGZus{}last\PYGZus{}board} \PYG{o}{=} \PYG{n}{best\PYGZus{}child}
+        \PYG{k}{return} \PYG{n}{best\PYGZus{}child}\PYG{o}{.}\PYG{n}{place\PYGZus{}current\PYGZus{}move}
+\end{Verbatim}
