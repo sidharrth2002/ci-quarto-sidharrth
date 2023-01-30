@@ -260,7 +260,7 @@ class QLearningPlayer(Player):
             if best_action is None or expected_score == 0:
                 logging.debug(
                     'No suitable action found in Q table, going to Monte Carlo Tree Search')
-                for i in range(5):
+                for i in range(20):
                     print('doing rollout')
                     self.tree.do_rollout(state)
                 best_action = self.tree.place_piece()

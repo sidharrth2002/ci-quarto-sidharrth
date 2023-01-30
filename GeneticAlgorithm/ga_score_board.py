@@ -56,9 +56,9 @@ class FinalPlayer(Player):
         self.GENOME_VAL_UPPER_BOUND = 16
         self.GENOME_VAL_LOWER_BOUND = 0
         self.thresholds = {
-            'random': 1.090773081612301,
-            'hardcoded': 2.790328881747581,
-            'ql-mcts': 8.251997327518943
+            'random': 1000,
+            'hardcoded': 1000,
+            'ql-mcts': 10.251997327518943
         }
         self.ql_mcts_next_piece = -1
 
@@ -368,8 +368,8 @@ class FinalPlayer(Player):
                 return action[0], action[1]
 
     def test_thresholds(self):
-        thresholds = {'random': 10000,
-                      'hardcoded': 3, 'ql-mcts': 1000}
+        thresholds = {'random': 1000,
+                      'hardcoded': 1000, 'ql-mcts': 3}
         win_rate = self.play_game(self.thresholds, num_games=10)
         return win_rate
 

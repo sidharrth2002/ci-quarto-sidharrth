@@ -1,9 +1,12 @@
 """
 In this file, I use Monte Carlo Tree Search to solve Quarto.
 """
+import sys
+sys.path.insert(0, '..')
 
 from collections import defaultdict
 import copy
+import datetime
 import json
 import logging
 import math
@@ -204,8 +207,6 @@ class MonteCarloTreeSearch(Player):
                 return float('-inf')
             return self.Q[n] / self.N[n]
 
-        # print("In place piece")
-        # print(max(self.children[node], key=score).move)
         return max(self.children[node], key=score).move[1:]
 
     def do_rollout(self, board):
@@ -372,8 +373,10 @@ class MonteCarloTreeSearch(Player):
                 # monte carlo tree search moves
 
                 # make move with monte carlo tree search
+                print("starting rollout")
                 for _ in range(20):
                     self.do_rollout(board)
+                print("finished rollout")
                 board = self.choose(board)
 
                 if board.check_is_game_over():

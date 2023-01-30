@@ -106,7 +106,7 @@ class Node:
         logging.debug(f"Current state: {self.board.state_as_array()}")
 
         new_stuff = {
-            create_node(self.board.make_move(self.board.get_selected_piece(), x, y, next_piece, newboard=True, return_move=True)) for x in range(self.BOARD_SIDE) for y in range(self.BOARD_SIDE) for next_piece in range(self.MAX_PIECES) if self.board.check_if_move_valid(self.board.get_selected_piece(), x, y, next_piece)
+            create_node(self.board.make_move(self.board.get_selected_piece(), x, y, next_piece, newboard=True, return_move=True)) for x in range(self.BOARD_SIDE) for y in range(self.BOARD_SIDE) for next_piece in range(16) if self.board.check_if_move_valid(self.board.get_selected_piece(), x, y, next_piece)
         }
 
         # only take max children

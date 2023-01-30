@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 import numpy as np
 from abc import abstractmethod
@@ -315,6 +316,7 @@ class Quarto(QuartoParent):
         if piece in self._board.flatten():
             logging.debug("piece already in the board")
             return False
+        time_end = datetime.now()
 
         # TODO: Put this back
         # if piece < 0 or piece >= self.MAX_PIECES:
@@ -329,7 +331,7 @@ class Quarto(QuartoParent):
 
         if self._board[y, x] > -1:
             logging.debug(f"position y, x: , {y}, {x} already occupied")
-            logging.debug(self._board)
+            # logging.debug(self._board)
             logging.debug("move to position already occupied")
             logging.debug(f"Index of -1: {np.where(self._board == -1)}")
             return False
