@@ -58,7 +58,7 @@ class FinalPlayer(Player):
         self.thresholds = {
             'random': 1.090773081612301,
             'hardcoded': 2.790328881747581,
-            'ql-mcts': 7.251997327518943
+            'ql-mcts': 6.251997327518943
         }
         self.ql_mcts_next_piece = -1
 
