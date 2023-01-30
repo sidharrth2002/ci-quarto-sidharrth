@@ -6,10 +6,15 @@ from quarto.objects import Quarto
 
 
 def main():
-    game = Quarto()
-    game.set_players((FinalPlayer(game), RandomPlayer(game)))
-    winner = game.run()
-    print(f"main: Winner: player {winner}")
+    wins = 0
+    for game in range(5):
+        game = Quarto()
+        game.set_players((FinalPlayer(game), RandomPlayer(game)))
+        winner = game.run()
+        print(f"main: Winner: player {winner}")
+        if winner == 0:
+            wins += 1
+    print(f"main: Wins: {wins}/5")
 
 if __name__ == "__main__":
     main()

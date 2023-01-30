@@ -8,8 +8,9 @@ import os
 import random
 import time
 
-from MCTS import MonteCarloTreeSearch
+# from MCTS import MonteCarloTreeSearch
 from MCTS.mcts import decode_tree
+from MCTS2.mcts import MCTS
 from quarto.objects import Quarto
 from lib.players import Player, RandomPlayer
 from lib.isomorphic import BoardTransforms
@@ -19,7 +20,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class QLearningPlayer(Player):
-    def __init__(self, board: Quarto = Quarto(), epsilon=0.1, alpha=0.5, gamma=0.9, tree: MonteCarloTreeSearch = None):
+    def __init__(self, board: Quarto = Quarto(), epsilon=0.1, alpha=0.5, gamma=0.9, tree: MCTS = None):
         self.epsilon = epsilon
         self.alpha = alpha
         self.gamma = gamma
@@ -35,13 +36,13 @@ class QLearningPlayer(Player):
 
         else:
             # load new tree
-            self.tree = MonteCarloTreeSearch(board=board)
+            self.tree = MCTS(board=board)
 
         super().__init__(board)
 
     def clear_and_set_current_state(self, state: Quarto):
         self.current_state = state
-        self.tree = MonteCarloTreeSearch(board=state)
+        self.tree = MCTS(board=state)
 
     def reduce_normal_form(self, state: Quarto):
         '''
@@ -223,8 +224,8 @@ class QLearningPlayer(Player):
             # exploration through epsilon greedy
             # look for good moves through Monte Carlo Tree Search
             if random.random() < self.epsilon:
-                for i in range(10):
-                    self.tree.do_rollout(state)
+                # for i in range(10):
+                #     self.tree.do_rollout(state)
                 best_action = self.tree.place_piece()
                 return best_action
             else:
@@ -260,9 +261,9 @@ class QLearningPlayer(Player):
             if best_action is None or expected_score == 0:
                 logging.debug(
                     'No suitable action found in Q table, going to Monte Carlo Tree Search')
-                for i in range(20):
-                    print('doing rollout')
-                    self.tree.do_rollout(state)
+                # for i in range(20):
+                #     print('doing rollout')
+                #     self.tree.do_rollout(state)
                 best_action = self.tree.place_piece()
             return best_action
 
@@ -372,7 +373,7 @@ class QLearningPlayer(Player):
                 tries = 0
 
             # OPTION 1: clear the tree every time
-            self.tree = MonteCarloTreeSearch(board=self.board)
+            self.tree = MCTS(board=self.board)
 
             # OPTION 2: if average agent decision time is too long, clear the MCTS tree
             # if sum(agent_decision_times) / len(agent_decision_times) > 5:

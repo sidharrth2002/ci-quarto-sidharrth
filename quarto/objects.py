@@ -4,7 +4,7 @@ import numpy as np
 from abc import abstractmethod
 import copy
 
-from quarto.objects import *
+# from quarto.objects import *
 
 # uncomment to see debug messages (e.g. why a move is invalid)
 # logging.basicConfig(level=logging.DEBUG)

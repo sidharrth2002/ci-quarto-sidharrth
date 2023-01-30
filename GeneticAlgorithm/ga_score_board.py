@@ -56,9 +56,9 @@ class FinalPlayer(Player):
         self.GENOME_VAL_UPPER_BOUND = 16
         self.GENOME_VAL_LOWER_BOUND = 0
         self.thresholds = {
-            'random': 1000,
-            'hardcoded': 1000,
-            'ql-mcts': 10.251997327518943
+            'random': 1.090773081612301,
+            'hardcoded': 2.790328881747581,
+            'ql-mcts': 7.251997327518943
         }
         self.ql_mcts_next_piece = -1
 
@@ -273,7 +273,7 @@ class FinalPlayer(Player):
         # python passes by reference
         # agent will use the state, etc. to update the Q-table
         # this function also wipes the MCTS tree
-        self.ql_mcts.clear_and_set_current_state(self.current_state)
+        # self.ql_mcts.clear_and_set_current_state(self.current_state)
         self.hardcoded = HardcodedPlayer(self.current_state)
 
         if self.ql_mcts_next_piece != -1:
@@ -322,6 +322,7 @@ class FinalPlayer(Player):
         # agent will use the state, etc. to update the Q-table
         # this function also wipes the MCTS tree
         # self.ql_mcts.clear_and_set_current_state(self.current_state)
+
         self.hardcoded = HardcodedPlayer(self.current_state)
 
         while True:
@@ -359,12 +360,14 @@ class FinalPlayer(Player):
             else:
                 # play using QL-MCTS
                 print('ql-mcts place')
+                print(f"Selected piece: {self.current_state.get_selected_piece()}")
                 self.ql_mcts.previous_state = deepcopy(
                     self.current_state)
                 action = self.ql_mcts.get_action(self.current_state)
                 self.ql_mcts.previous_action = action
                 # store the next piece for when choose is called
-                self.ql_mcts_next_piece = action[-1]
+                # self.ql_mcts_next_piece = self.ql_mcts.tree.choose_piece()
+                self.ql_mcts_next_piece = self.ql_mcts.tree.choose_piece()
                 return action[0], action[1]
 
     def test_thresholds(self):
