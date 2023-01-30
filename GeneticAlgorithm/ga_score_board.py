@@ -60,6 +60,7 @@ class FinalPlayer(Player):
             'hardcoded': 2.790328881747581,
             'ql-mcts': 8.251997327518943
         }
+        self.ql_mcts_next_piece = -1
 
     def generate_population(self, population_size):
         population = []
@@ -275,11 +276,17 @@ class FinalPlayer(Player):
         self.ql_mcts.clear_and_set_current_state(self.current_state)
         self.hardcoded = HardcodedPlayer(self.current_state)
 
+        if self.ql_mcts_next_piece != -1:
+            if self.ql_mcts_next_piece not in list(itertools.chain(*self.current_state.state_as_array())):
+                print('ql-mcts choose')
+                return self.ql_mcts_next_piece
+
         if key == 'random':
             # play randomly
             next_piece = self.random_player.choose_piece()
             while next_piece in list(itertools.chain(*self.current_state.state_as_array())):
                 next_piece = self.random_player.choose_piece()
+            self.ql_mcts_next_piece = -1
             return next_piece
 
         # elif key == 'hardcoded':
@@ -288,6 +295,7 @@ class FinalPlayer(Player):
             print('hardcoded')
             self.previous_state = deepcopy(self.current_state)
             next_piece = self.hardcoded.hardcoded_strategy_get_piece()
+            self.ql_mcts_next_piece = -1
             return next_piece
 
         # else:

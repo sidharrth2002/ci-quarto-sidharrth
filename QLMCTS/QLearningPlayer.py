@@ -215,7 +215,7 @@ class QLearningPlayer(Player):
 
         return random.choice(possible_pieces)
 
-    def get_action(self, state, mode='training'):
+    def get_action(self, state, mode='testing'):
         '''
         If state, action pair not in Q, go to Monte Carlo Tree Search to find best action
         '''
@@ -223,7 +223,7 @@ class QLearningPlayer(Player):
             # exploration through epsilon greedy
             # look for good moves through Monte Carlo Tree Search
             if random.random() < self.epsilon:
-                for i in range(5):
+                for i in range(10):
                     self.tree.do_rollout(state)
                 best_action = self.tree.place_piece()
                 return best_action
@@ -240,7 +240,7 @@ class QLearningPlayer(Player):
                 if best_action is None or expected_score == 0:
                     logging.debug(
                         'No suitable action found in Q table, going to Monte Carlo Tree Search')
-                    for i in range(5):
+                    for i in range(10):
                         self.tree.do_rollout(state)
                     best_action = self.tree.place_piece()
                 else:
@@ -260,7 +260,8 @@ class QLearningPlayer(Player):
             if best_action is None or expected_score == 0:
                 logging.debug(
                     'No suitable action found in Q table, going to Monte Carlo Tree Search')
-                for i in range(20):
+                for i in range(5):
+                    print('doing rollout')
                     self.tree.do_rollout(state)
                 best_action = self.tree.place_piece()
             return best_action
