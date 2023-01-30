@@ -9,7 +9,7 @@ def main():
     wins = 0
     for game in range(10):
         game = Quarto()
-        game.set_players((FinalPlayer(game), RandomPlayer(game)))
+        game.set_players((HardcodedPlayer(game), RandomPlayer(game)))
         winner = game.run()
         print(f"main: Winner: player {winner}")
         if winner == 0:

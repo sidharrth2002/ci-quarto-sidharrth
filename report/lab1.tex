@@ -393,6 +393,120 @@ We can also immediately return a very large heuristic value such as 100 in the c
 
 \subsection{Results}
 
+Results are shown in Tables \ref{tab:smartgreedy}, \ref{tab:astar}, \ref{tab:astaruniform} and \ref{tab:astarfullyconnected}.
+
+% ### Smart Greedy (With Heuristic Guessing)
+
+% | N | w | bloat | visited nodes |
+% |---|---|-------|---------------|
+% | 5 | 5 | 0% | 3 |
+% | 10 | 11 | 10% | 3 |
+% | 50 | 99 | 98% | 5 |
+% | 100 | 192 | 92% | 5 |
+% | 500 | 1313 | 163% | 7 |
+% | 1000 | 3092 | 209% | 8 |
+
+% #### A* Traversal
+% | N | w | bloat | visited nodes | visited states |
+% |---|---|-------|---------------|----------------|
+% | 5 | 5 | 0% | 4 | 59 |
+% | 10 | 10 | 0% | 5 | 191
+% | 20 | 23 | 15% | 934 | 40216 |
+% | 50 | (blow up) | (blow up) | (blow up) | (blow up) |
+
+% ### A* Traversal Using Uniform Cost of 1 (Not affected by subset length)
+
+% | N | w | bloat | visited nodes | visited states |
+% |---|---|-------|---------------|----------------|
+% | 5 | 5 | 0% | 3 | 34 |
+% | 10 | 14 | 40% | 4 | 141 |
+% | 20 | 35 | 75% | 5 | 134 |
+% | 50 | 85 | 70% | 5 | 134 |
+% | 100 | 203 | 103% | 6 | 2127 |
+% | 500 | 1430 | 186% | 8 | 12652 |
+% | 1000 | 3268 | 227% | 9 | 28941 |
+
+% ### A* Traversal Using a Fully Connected Graph (Possibly Overcomplicating Things)
+
+% | N | w | bloat |
+% |---|---|-------|
+% | 5 | 5 | 0% |
+% | 10 | 10 | 10% |
+% | 20 | 33 | 65% |
+% | 50 | 157 | 214% |
+% | 100 | 297 | 197% |
+
+
+\begin{table}
+    \centering
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        N & w & bloat & visited nodes \\
+        \hline
+        5 & 5 & 0\% & 3 \\
+        10 & 11 & 10\% & 3 \\
+        50 & 99 & 98\% & 5 \\
+        100 & 192 & 92\% & 5 \\
+        500 & 1313 & 163\% & 7 \\
+        1000 & 3092 & 209\% & 8 \\
+        \hline
+    \end{tabular}
+    \caption{Smart Greedy (With Heuristic Guessing)}
+    \label{tab:smartgreedy}
+\end{table}
+
+\begin{table}
+    \centering
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        N & w & bloat & visited nodes & visited states \\
+        \hline
+        5 & 5 & 0\% & 4 & 59 \\
+        10 & 10 & 0\% & 5 & 191 \\
+        20 & 23 & 15\% & 934 & 40216 \\
+        50 & (blow up) & (blow up) & (blow up) & (blow up) \\
+        \hline
+    \end{tabular}
+    \caption{A* Traversal}
+    \label{tab:astar}
+\end{table}
+
+\begin{table}
+    \centering
+    \begin{tabular}{|c|c|c|c|c|}
+        \hline
+        N & w & bloat & visited nodes & visited states \\
+        \hline
+        5 & 5 & 0\% & 3 & 34 \\
+        10 & 14 & 40\% & 4 & 141 \\
+        20 & 35 & 75\% & 5 & 134 \\
+        50 & 85 & 70\% & 5 & 134 \\
+        100 & 203 & 103\% & 6 & 2127 \\
+        500 & 1430 & 186\% & 8 & 12652 \\
+        1000 & 3268 & 227\% & 9 & 28941 \\
+        \hline
+    \end{tabular}
+    \caption{A* Traversal Using Uniform Cost of 1 (Not affected by subset length)}
+    \label{tab:astaruniform}
+\end{table}
+
+\begin{table}
+    \centering
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        N & w & bloat \\
+        \hline
+        5 & 5 & 0\% \\
+        10 & 10 & 0\% \\
+        20 & 33 & 65\% \\
+        50 & 157 & 214\% \\
+        100 & 297 & 197\% \\
+        \hline
+    \end{tabular}
+    \caption{A* Traversal Using a Fully Connected Graph (Possibly Overcomplicating Things)}
+    \label{tab:astarfullyconnected}
+\end{table}
+
 \subsection{Received Reviews}
 
 \begin{tcolorbox}[colback=green!5!white,colframe=green!75!black,code={\singlespacing}]

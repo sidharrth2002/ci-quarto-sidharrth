@@ -12,8 +12,7 @@ Throughout this project, I have discussed with Diego Gasco (s296762). We started
     \item After I tried to get a working Deep Q-Network and realised that it wasn't converging in reasonable time, we discussed the possibility of using some tree search algorithm. It was Diego who suggested MCTS.
     \item When realising that MCTS can be quite slow towards the end of the game, I suggested building a hybrid QL-MCTS player that would use a base Q-table to remember the best moves so the quadratically complex tree wouldn't need to store so many nodes.
     \item We later built a hardcoded agent using different rules and realised that it performed very well, and was quick to make a move.
-    \item We then decided to combine everything we did into a hybrid agent that would switch between strategies depending on the board score.
-    \item Diego suggested a good scoring function. He also suggested that a genetic algorithm could be used for this.
+    \item We then decided to combine everything we did into a hybrid agent that would switch between strategies depending on the board score. He also suggested that a genetic algorithm could be used for this. Diego suggested a good scoring function that could switch between the boards.
     \item I suggested finding score thresholds to switch between strategies using a genetic algorithm.
 \end{itemize}
 
@@ -29,11 +28,30 @@ The following algorithms are implemented and the \textbf{best performing ones ar
 
 \begin{itemize}
     \item \textbf{Random}: This agent randomly selects positions and pieces on the board. In the spirit of true randomness, it does not take into account the current state of the board.
-    \item \textbf{Parameterized Hardcoded Play}: This agent has a set of fixed rules, where it attempts to build a line of like pieces. Where it cannot, it attempts
-    \item \textbf{Deep Q-Learning}: This agent uses a deep neural network to approximate the Q-function. It uses a replay buffer to store the experience tuples and uses a target network to stabilize the training process. The agent uses an epsilon-greedy policy to balance exploration and exploitation. The input to the linear network is a flatten list of 1x16 pieces based on the current board composition, while the input to the convolutional neural network is a 4x4x4 board composition.
-    \item \textbf{Q-Learning (Temporal Difference Learning)}: This agent uses a Q-table to store the Q-values. It uses a replay buffer to store the experience tuples and uses a target network to stabilize the training process. The agent uses an epsilon-greedy policy to balance exploration and exploitation. A custom OpenAI Gym environment is created to make training easier.
-    \item \textbf{Monte Carlo Tree Search}: This agent uses a Monte Carlo Tree Search algorithm to select the best move. It uses a UCB1 formula to select the best child node at each iteration.
-    \item \textbf{QL-MCTS}: This algorithm uses a Q-table as it's base and uses a rolled out Monte Carlo Search Tree for a more efficient search. When a state cannot be found in the Q-table, the agent once again goes to the Monte Carlo Tree Search algorithm to find the best move.
+    \item \textbf{Parameterized Hardcoded Play}: This agent has a set of fixed rules, where it attempts to build a line of like pieces. The risky strategy is as follows (from Peter Rowlett's \href{https://scholarworks.umt.edu/cgi/viewcontent.cgi?article=1334&context=tme}{paper}).
+    \begin{enumerate}
+        \item  Play the piece handed over by the opponent:  (a) play a winning position if handed a winning piece; (b) otherwise, play to build a line of like pieces if possible;  (c) otherwise, play randomly.
+        \item 2. Hand a piece to the opponent: (a) avoid handing over a winning piece for your opponent to play; (b) otherwise, choose randomly.
+    \end{enumerate}
+
+    \item \textbf{Deep Q-Learning}: This agent uses a deep neural network to approximate the Q-function. It uses a replay buffer to store the experience tuples and uses a target network to stabilize the training process. The agent uses an epsilon-greedy policy to balance exploration and exploitation. I build two variations of Deep Q-networks linear DQN (made up of Dense layers) and Convolutional DQNs (made up of Conv2D layers).
+    \begin{itemize}
+        \item The input to the linear network is a flattened list of 1x17 pieces based on the current board composition, and the selected piece.
+        \item The input to the convolutional neural network is a 5x5x4 board composition, made up of the 3D characteristics of each piece and the selected piece for the player to play.
+    \end{itemize}
+    A custom OpenAI Gym environment is created to make training, game steps and rewards easier to manage.
+
+    \item \textbf{Q-Learning (Temporal Difference Learning)}: This agent uses a Q-table to store the Q-values. It uses a replay buffer to store the experience tuples and uses a target network to stabilize the training process. The agent uses an epsilon-greedy policy to balance exploration and exploitation.
+
+    \item \textbf{Monte Carlo Tree Search}: This agent uses a Monte Carlo Tree Search algorithm to select the best move. It uses a UCB1 formula to select the best child node at each iteration. The algorithm from \href{https://www.geeksforgeeks.org/ml-monte-carlo-tree-search-mcts/}{Geeks for Geeks} is shown in Figure \ref{fig:mcts}.
+    \begin{figure}
+        \centering
+        \includegraphics[width=0.5\textwidth]{images/mcts.png}
+        \caption{MCTS Algorithm}
+        \label{fig:mcts}
+    \end{figure}
+
+    \item \textbf{QL-MCTS}: This algorithm uses a Q-table as it's base and uses a rolled out Monte Carlo Search Tree for a more efficient search during the training phase. In testing, when a state cannot be found in the Q-table, the agent once again goes to the Monte Carlo Tree Search algorithm to find the best move.
 \end{itemize}
 
 The following algorithms failed, producing only a near-random win rate after several hours of training:
@@ -530,6 +548,88 @@ if __name__ == "__main__":
 
 \subsubsection{Faster Version of MCTS}
 
+The implementation of MCTS and the rollout strategy is based on the minimal implementation \href{https://gist.github.com/qpwo/c538c6f73727e254fdc7fab81024f6e1}{here}.
+
+\begin{mintedbox}{python}
+from copy import deepcopy
+import hashlib
+import itertools
+import os
+import random
+import numpy as np
+from lib.isomorphic import BoardTransforms
+from quarto.objects import Quarto
+
+class Node:
+    def __init__(self, state: Quarto = Quarto(), place_current_move=None, final_point=False):
+        self._state = state
+        self.place_current_move = place_current_move
+        self.final_point = final_point
+        self.wins = 0
+        self.visits = 0
+
+    def __hash__(self):
+        string = str(self._state.get_selected_piece()) + np.array2string(self._state.state_as_array())
+        return int(hashlib.sha1(string.encode('utf-8')).hexdigest(), 32)
+
+    def __eq__(self, other):
+        if not isinstance(other, Node):
+            return False
+        return np.array_equal(self._state.state_as_array(), other._state.state_as_array()) and self._state.get_selected_piece() == other._state.get_selected_piece()
+
+    def child_already_exists(self, new_state: Quarto):
+        board_new_state = new_state.state_as_array()
+        for child in self._children:
+            if BoardTransforms.compare_boards(board_new_state, child._state.state_as_array()):
+                return True
+
+        return False
+
+    def update(self, reward: int):
+        self.visits += 1
+        self.wins += reward
+
+    def reward(self, player_id):
+        player_last_moved = 1 - self._state.get_current_player()
+
+        player_who_last_moved = 1 - self._state.get_current_player()
+
+        # 0 if plays first, 1 if plays second
+        agent_position = player_id
+
+        if player_who_last_moved == agent_position and 1 - self._state.check_winner() == agent_position:
+            # MCTS won
+            return 1
+        elif player_who_last_moved == 1 - agent_position and 1 - self._state.check_winner() == 1 - agent_position:
+            # MCTS lost
+            return 0
+        elif self._state.check_winner() == -1:
+            # Draw game
+            return 0.5
+
+    def find_random_child(self):
+        free_positions = []
+        board = self._state.state_as_array()
+        for i in range(4):
+            for j in range(4):
+                if board[i][j] == -1:
+                    free_positions.append((i, j))
+        place = random.choice(free_positions)
+        new_quarto = deepcopy(self._state)
+        # new_quarto = Quarto(board=self._state.state_as_array(), selected_piece=self._state.get_selected_piece(), curr_player=self._state.get_current_player())
+        new_quarto.place(place[1], place[0])
+        if new_quarto.check_finished() or new_quarto.check_winner() != -1:
+            final_point = True
+        else:
+            new_board = list(itertools.chain.from_iterable(new_quarto.state_as_array()))
+            free_pieces = [piece for piece in range(0, 16) if piece not in new_board]
+            piece = random.choice(free_pieces)
+            new_quarto.select(piece)
+            final_point = False
+        new_quarto._current_player = 1 - new_quarto._current_player
+        return Node(new_quarto, place, final_point)
+\end{mintedbox}
+
 \begin{mintedbox}{python}
 '''
 In this file, we build an MCTS player using a different, simpler node structure.
@@ -543,7 +643,6 @@ import random
 from lib.players import Player
 from quarto.objects import Quarto
 from .node import Node
-
 
 class MCTS(Player):
     def __init__(self, board, player_id = 0):
@@ -941,6 +1040,9 @@ class HardcodedPlayer(Player):
 Here, I combine plain Q-Learning with an MCTS fallback, calling MCTS in the exploration hase and resorting to it in testing when a "state + action" pair cannot be found in the table.
 
 \begin{mintedbox}{python}
+import sys
+sys.path.insert(0, '..')
+
 from collections import defaultdict
 from copy import deepcopy
 import itertools
@@ -951,8 +1053,9 @@ import os
 import random
 import time
 
-from MCTS import MonteCarloTreeSearch
+# from MCTS import MonteCarloTreeSearch
 from MCTS.mcts import decode_tree
+from MCTS2.mcts import MCTS
 from quarto.objects import Quarto
 from lib.players import Player, RandomPlayer
 from lib.isomorphic import BoardTransforms
@@ -962,7 +1065,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 class QLearningPlayer(Player):
-    def __init__(self, board: Quarto = Quarto(), epsilon=0.1, alpha=0.5, gamma=0.9, tree: MonteCarloTreeSearch = None):
+    def __init__(self, board: Quarto = Quarto(), epsilon=0.1, alpha=0.5, gamma=0.9, tree: MCTS = None):
         self.epsilon = epsilon
         self.alpha = alpha
         self.gamma = gamma
@@ -978,13 +1081,13 @@ class QLearningPlayer(Player):
 
         else:
             # load new tree
-            self.tree = MonteCarloTreeSearch(board=board)
+            self.tree = MCTS(board=board)
 
         super().__init__(board)
 
     def clear_and_set_current_state(self, state: Quarto):
         self.current_state = state
-        self.tree = MonteCarloTreeSearch(board=state)
+        self.tree = MCTS(board=state)
 
     def reduce_normal_form(self, state: Quarto):
         '''
@@ -1036,129 +1139,7 @@ class QLearningPlayer(Player):
                 max_Q = max(max_Q, self.get_Q(state, action))
         return max_Q
 
-    def check_if_winning_piece(self, state, piece):
-        for i in range(self.BOARD_SIDE):
-            for j in range(self.BOARD_SIDE):
-                if state.check_if_move_valid(piece, i, j, piece):
-                    cloned_state = deepcopy(state)
-                    cloned_state.select(piece)
-                    cloned_state.place(i, j)
-
-                    if cloned_state.check_is_game_over():
-                        print('WINNING PIECE FOUND')
-                        return True, [i, j]
-        return False, None
-
-    def hardcoded_strategy_get_move(self, state):
-        #  1. Play the piece handed over by the opponent:
-        # (a) play a winning position if handed a winning piece;
-        # (b) otherwise, play to build a line of like pieces if possible;
-        # (c) otherwise, play randomly.
-        # 2. Hand a piece to the opponent:
-        # (a) avoid handing over a winning piece for your opponent to play;
-        # (b) otherwise, choose randomly.
-
-        board = state.state_as_array()
-        selected_piece = state.get_selected_piece()
-        # check if the selected piece is a winning piece
-        winning_piece, position = self.check_if_winning_piece(
-            state, selected_piece)
-        if winning_piece:
-            return selected_piece, position
-
-        # check if the selected piece can be used to build a line of like pieces
-
-        row_1 = [[0, 0], [0, 1], [0, 2], [0, 3]]
-        # pieces in row 2
-        row_2 = [[1, 0], [1, 1], [1, 2], [1, 3]]
-        # pieces in row 3
-        row_3 = [[2, 0], [2, 1], [2, 2], [2, 3]]
-        # pieces in row 4
-        row_4 = [[3, 0], [3, 1], [3, 2], [3, 3]]
-
-        # pieces in column 1
-        col_1 = [[0, 0], [1, 0], [2, 0], [3, 0]]
-        # pieces in column 2
-        col_2 = [[0, 1], [1, 1], [2, 1], [3, 1]]
-        # pieces in column 3
-        col_3 = [[0, 2], [1, 2], [2, 2], [3, 2]]
-        # pieces in column 4
-        col_4 = [[0, 3], [1, 3], [2, 3], [3, 3]]
-
-        # pieces in diagonal 1
-        diag_1 = [[0, 0], [1, 1], [2, 2], [3, 3]]
-        # pieces in diagonal 2
-        diag_2 = [[0, 3], [1, 2], [2, 1], [3, 0]]
-
-        for line in [row_1, row_2, row_3, row_4, col_1, col_2, col_3, col_4, diag_1, diag_2]:
-            # check if the selected piece can be used to build a line of like pieces
-            characteristics = []
-            empty_rows = []
-            for el in line:
-                x, y = el
-                if board[x, y] != -1:
-                    piece = board[x][y]
-                    piece_char = state.get_piece_charachteristics(piece)
-                    characteristics.append(
-                        [piece_char.HIGH, piece_char.COLOURED, piece_char.SOLID, piece_char.SQUARE])
-                else:
-                    empty_rows.append(el)
-                    characteristics.append([-1, -1, -1, -1])
-
-            selected_piece_char = state.get_piece_charachteristics(
-                selected_piece)
-            selected_piece_char = [selected_piece_char.HIGH, selected_piece_char.COLOURED,
-                                    selected_piece_char.SOLID, selected_piece_char.SQUARE]
-
-            # check if characteristics has an empty row
-            if [-1, -1, -1, -1] in characteristics:
-                # insert the selected piece in the empty row
-                empty_piece_index = characteristics.index(
-                    [-1, -1, -1, -1])
-                characteristics[empty_piece_index] = selected_piece_char
-
-                # check if any column has the same characteristics
-                col1 = [characteristics[0][0], characteristics[1][0],
-                        characteristics[2][0], characteristics[3][0]]
-                col2 = [characteristics[0][1], characteristics[1][1],
-                        characteristics[2][1], characteristics[3][1]]
-                col3 = [characteristics[0][2], characteristics[1][2],
-                        characteristics[2][2], characteristics[3][2]]
-                col4 = [characteristics[0][3], characteristics[1][3],
-                        characteristics[2][3], characteristics[3][3]]
-
-                col1 = [int(i) for i in col1]
-                col2 = [int(i) for i in col2]
-                col3 = [int(i) for i in col3]
-                col4 = [int(i) for i in col4]
-
-                if len(set(col1)) == 1 or len(set(col2)) == 1 or len(set(col3)) == 1 or len(set(col4)) == 1:
-                    # this piece can be used to build a line of like pieces
-                    logging.debug('playing to build a line of like pieces')
-                    return True, list(reversed(empty_rows[-1]))
-
-        # play randomly
-        for i in range(self.BOARD_SIDE):
-            for j in range(self.BOARD_SIDE):
-                for next_piece in range(16):
-                    if state.check_if_move_valid(selected_piece, i, j, next_piece):
-                        return False, [i, j]
-
-        print('returning nothing')
-        print(state.state_as_array())
-        print(state.get_selected_piece())
-
-    def hardcoded_strategy_get_piece(self, state):
-        possible_pieces = []
-        for i in range(16):
-            # check if the piece is a winning piece
-            winning_piece, _ = self.check_if_winning_piece(state, i)
-            if (not winning_piece) and (i not in list(itertools.chain.from_iterable(state.state_as_array()))) and (i != state.get_selected_piece()):
-                possible_pieces.append(i)
-
-        return random.choice(possible_pieces)
-
-    def get_action(self, state, mode='training'):
+    def get_action(self, state, mode='testing'):
         '''
         If state, action pair not in Q, go to Monte Carlo Tree Search to find best action
         '''
@@ -1166,8 +1147,8 @@ class QLearningPlayer(Player):
             # exploration through epsilon greedy
             # look for good moves through Monte Carlo Tree Search
             if random.random() < self.epsilon:
-                for i in range(20):
-                    self.tree.do_rollout(state)
+                # for i in range(10):
+                #     self.tree.do_rollout(state)
                 best_action = self.tree.place_piece()
                 return best_action
             else:
@@ -1183,7 +1164,7 @@ class QLearningPlayer(Player):
                 if best_action is None or expected_score == 0:
                     logging.debug(
                         'No suitable action found in Q table, going to Monte Carlo Tree Search')
-                    for i in range(20):
+                    for i in range(10):
                         self.tree.do_rollout(state)
                     best_action = self.tree.place_piece()
                 else:
@@ -1203,8 +1184,9 @@ class QLearningPlayer(Player):
             if best_action is None or expected_score == 0:
                 logging.debug(
                     'No suitable action found in Q table, going to Monte Carlo Tree Search')
-                for i in range(50):
-                    self.tree.do_rollout(state)
+                # for i in range(20):
+                #     print('doing rollout')
+                #     self.tree.do_rollout(state)
                 best_action = self.tree.place_piece()
             return best_action
 
@@ -1241,6 +1223,7 @@ class QLearningPlayer(Player):
                 reward = 0
                 if player == 0:
                     # QL-MCTS moves here
+                    print('QL-MCTS moves here')
                     self.previous_state = deepcopy(self.current_state)
                     logging.debug("Piece to place: ",
                                     self.current_state.get_selected_piece())
@@ -1248,12 +1231,13 @@ class QLearningPlayer(Player):
                     logging.debug(self.current_state.state_as_array())
                     time_start = time.time()
                     action = self.get_action(self.current_state)
-                    self.previous_action = action
+                    next_piece = self.tree.choose_piece()
+                    self.previous_action = (action[0], action[1], next_piece)
                     time_end = time.time()
                     agent_decision_times.append(time_end - time_start)
                     self.current_state.select(selected_piece)
                     self.current_state.place(action[0], action[1])
-                    self.current_state.set_selected_piece(action[2])
+                    self.current_state.set_selected_piece(next_piece)
                     self.current_state.switch_player()
                     player = 1 - player
 
@@ -1297,7 +1281,7 @@ class QLearningPlayer(Player):
                 tries = 0
 
             # OPTION 1: clear the tree every time
-            self.tree = MonteCarloTreeSearch(board=self.board)
+            self.tree = MCTS(board=self.board)
 
             # OPTION 2: if average agent decision time is too long, clear the MCTS tree
             # if sum(agent_decision_times) / len(agent_decision_times) > 5:
@@ -1309,8 +1293,8 @@ class QLearningPlayer(Player):
 
 if __name__ == '__main__':
     # load tree with MonteCarloSearchDecoder
-    with open('progress.json', 'r') as f:
-        tree = decode_tree(json.load(f))
+    # with open('progress.json', 'r') as f:
+    #     tree = decode_tree(json.load(f))
     qplayer = QLearningPlayer()
     qplayer.train(10)
 
@@ -1318,432 +1302,55 @@ if __name__ == '__main__':
 
 \subsection{Utility Functions}
 
+\subsubsection{OpenAI Gym Environment for Quarto}
+
+Though the DQN is abandoned, I leave this here for posterity.
+
 \begin{mintedbox}{python}
-def score_board(state: Quarto):
-    positions = {
-        'couples': 0,
-        'triplets': 0,
-    }
+class QuartoScapeNew(gym.Env):
+'''Custom gym environment for Quarto'''
+    def __init__(self):
+        self.game = Quarto()
+        self.action_space = spaces.MultiDiscrete([16, 16, 16])
+        self.observation_space = spaces.MultiDiscrete([17] * 17)
+        self.reward_range = (-1, 1)
+        self.main_player = None
 
-    board = state.state_as_array()
+    def set_main_player(self, player):
+        self.main_player = player
+        self.game.set_players((player, RandomPlayer(self.game)))
+        return True
 
-    # Array for checking if a certain row already contains a triplet
-    row_done = [False, False, False, False]
+    def step(self, action, chosen_piece):
+        # position is the position the previous piece should be moved to
+        # chosen next piece is the piece the agent chooses for the next player to move
+        x, y, chosen_next_piece = action
+        self.next_piece = chosen_next_piece
+        if self.game.check_if_move_valid(chosen_piece, x, y, chosen_next_piece):
+            # print(f"Valid move, piece {chosen_piece} placed at {x}, {y}")
+            self.game.select(chosen_piece)
+            self.game.place(x, y)
+            # self.game.print()
+            if self.game.check_is_game_over():
+                # just playing with itself
+                logging.info("Giving reward of 1 for completing the game")
+                reward = 1
+                return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
+            else:
+                logging.info("Giving reward of 0 for making a move that didn't end the game")
+                reward = 0
+                return self.game.state_as_array(), self.game.check_winner(), self.game.check_finished(), {}
 
-    # Check all the rows
+        else:
+            reward = -1
 
-    for i in range(state.BOARD_SIDE):
-        if board[i, 0] != -1 and board[i, 1] != -1 and board[i, 2] != -1 and board[i, 3] == -1:
-            piece_1 = state.get_piece_charachteristics(board[i, 0])
-            piece_2 = state.get_piece_charachteristics(board[i, 1])
-            piece_3 = state.get_piece_charachteristics(board[i, 2])
-            if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-                positions['triplets'] += 1
-                row_done[i] = True
-            if piece_1.HIGH == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-                positions['triplets'] += 1
-                row_done[i] = True
-            if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-                positions['triplets'] += 1
-                row_done[i] = True
-            if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-                positions['triplets'] += 1
-                row_done[i] = True
-        if board[i, 0] == -1 and board[i, 1] != -1 and board[i, 2] != -1 and board[i, 3] != -1:
-            piece_1 = state.get_piece_charachteristics(board[i, 1])
-            piece_2 = state.get_piece_charachteristics(board[i, 2])
-            piece_3 = state.get_piece_charachteristics(board[i, 3])
-            if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-                positions['triplets'] += 1
-                row_done[i] = True
-            if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-                positions['triplets'] += 1
-                row_done[i] = True
-            if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-                positions['triplets'] += 1
-                row_done[i] = True
-            if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-                positions['triplets'] += 1
-                row_done[i] = True
-        if board[i, 0] != -1 and board[i, 1] != -1 and board[i, 2] == -1 and board[i, 3] != -1:
-            piece_1 = state.get_piece_charachteristics(board[i, 0])
-            piece_2 = state.get_piece_charachteristics(board[i, 1])
-            piece_3 = state.get_piece_charachteristics(board[i, 3])
-            if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-                positions['triplets'] += 1
-                row_done[i] = True
-            if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-                positions['triplets'] += 1
-                row_done[i] = True
-            if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-                positions['triplets'] += 1
-                row_done[i] = True
-            if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-                positions['triplets'] += 1
-                row_done[i] = True
-        if board[i, 0] != -1 and board[i, 1] == -1 and board[i, 2] != -1 and board[i, 3] != -1:
-            piece_1 = state.get_piece_charachteristics(board[i, 0])
-            piece_2 = state.get_piece_charachteristics(board[i, 2])
-            piece_3 = state.get_piece_charachteristics(board[i, 3])
-            if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-                positions['triplets'] += 1
-                row_done[i] = True
-            if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-                positions['triplets'] += 1
-                row_done[i] = True
-            if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-                positions['triplets'] += 1
-                row_done[i] = True
-            if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-                positions['triplets'] += 1
-                row_done[i] = True
-        # Before checking a row for couples, control the boolean flag
-        if not row_done[i] and board[i, 0] != -1 and board[i, 1] != -1 and board[i, 2] == -1 and board[i, 3] == -1:
-            piece_1 = state.get_piece_charachteristics(board[i, 0])
-            piece_2 = state.get_piece_charachteristics(board[i, 1])
-            if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-                positions['couples'] += 1
-            if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-                positions['couples'] += 1
-            if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-                positions['couples'] += 1
-            if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-                positions['couples'] += 1
-        if not row_done[i] and board[i, 0] == -1 and board[i, 1] != -1 and board[i, 2] != -1 and board[i, 3] == -1:
-            piece_1 = state.get_piece_charachteristics(board[i, 1])
-            piece_2 = state.get_piece_charachteristics(board[i, 2])
-            if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-                positions['couples'] += 1
-            if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-                positions['couples'] += 1
-            if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-                positions['couples'] += 1
-            if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-                positions['couples'] += 1
-        if not row_done[i] and board[i, 0] == -1 and board[i, 1] == -1 and board[i, 2] != -1 and board[i, 3] != -1:
-            piece_1 = state.get_piece_charachteristics(board[i, 2])
-            piece_2 = state.get_piece_charachteristics(board[i, 3])
-            if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-                positions['couples'] += 1
-            if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-                positions['couples'] += 1
-            if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-                positions['couples'] += 1
-            if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-                positions['couples'] += 1
+        return self.game.state_as_array(), reward, self.game.check_finished(), {}
 
-    # Array for checking if a certain column already contains a triplet
-    column_done = [False, False, False, False]
-
-    # Check all the columns
-
-    for i in range(state.BOARD_SIDE):
-        if board[0, i] != -1 and board[1, i] != -1 and board[2, i] != -1 and board[3, i] == -1:
-            piece_1 = state.get_piece_charachteristics(board[0, i])
-            piece_2 = state.get_piece_charachteristics(board[1, i])
-            piece_3 = state.get_piece_charachteristics(board[2, i])
-            if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-                positions['triplets'] += 1
-                column_done[i] = True
-            if piece_1.HIGH == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-                positions['triplets'] += 1
-                column_done[i] = True
-            if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-                positions['triplets'] += 1
-                column_done[i] = True
-            if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-                positions['triplets'] += 1
-                column_done[i] = True
-        if board[0, i] == -1 and board[1, i] != -1 and board[2, i] != -1 and board[3, i] != -1:
-            piece_1 = state.get_piece_charachteristics(board[1, i])
-            piece_2 = state.get_piece_charachteristics(board[2, i])
-            piece_3 = state.get_piece_charachteristics(board[3, i])
-            if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-                positions['triplets'] += 1
-                column_done[i] = True
-            if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-                positions['triplets'] += 1
-                column_done[i] = True
-            if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-                positions['triplets'] += 1
-                column_done[i] = True
-            if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-                positions['triplets'] += 1
-                column_done[i] = True
-        if board[0, i] != -1 and board[1, i] == -1 and board[2, i] != -1 and board[3, i] != -1:
-            piece_1 = state.get_piece_charachteristics(board[0, i])
-            piece_2 = state.get_piece_charachteristics(board[2, i])
-            piece_3 = state.get_piece_charachteristics(board[3, i])
-            if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-                positions['triplets'] += 1
-                column_done[i] = True
-            if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-                positions['triplets'] += 1
-                column_done[i] = True
-            if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-                positions['triplets'] += 1
-                column_done[i] = True
-            if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-                positions['triplets'] += 1
-                column_done[i] = True
-        if board[0, i] != -1 and board[1, i] != -1 and board[2, i] == -1 and board[3, i] != -1:
-            piece_1 = state.get_piece_charachteristics(board[0, i])
-            piece_2 = state.get_piece_charachteristics(board[1, i])
-            piece_3 = state.get_piece_charachteristics(board[3, i])
-            if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-                positions['triplets'] += 1
-                column_done[i] = True
-            if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-                positions['triplets'] += 1
-                column_done[i] = True
-            if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-                positions['triplets'] += 1
-                column_done[i] = True
-            if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-                positions['triplets'] += 1
-                column_done[i] = True
-        # Before checking a column for couples, control the boolean flag
-        if not column_done[i] and board[0, i] != -1 and board[1, i] != -1 and board[2, i] == -1 and board[3, i] == -1:
-            piece_1 = state.get_piece_charachteristics(board[0, i])
-            piece_2 = state.get_piece_charachteristics(board[1, i])
-            if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-                positions['couples'] += 1
-            if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-                positions['couples'] += 1
-            if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-                positions['couples'] += 1
-            if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-                positions['couples'] += 1
-        if not column_done[i] and board[0, i] == -1 and board[1, i] != -1 and board[2, i] != -1 and board[3, i] == -1:
-            piece_1 = state.get_piece_charachteristics(board[1, i])
-            piece_2 = state.get_piece_charachteristics(board[2, i])
-            if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-                positions['couples'] += 1
-            if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-                positions['couples'] += 1
-            if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-                positions['couples'] += 1
-            if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-                positions['couples'] += 1
-        if not column_done[i] and board[0, i] == -1 and board[1, i] == -1 and board[2, i] != -1 and board[3, i] != -1:
-            piece_1 = state.get_piece_charachteristics(board[2, i])
-            piece_2 = state.get_piece_charachteristics(board[3, i])
-            if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-                positions['couples'] += 1
-            if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-                positions['couples'] += 1
-            if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-                positions['couples'] += 1
-            if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-                positions['couples'] += 1
-
-    # Array for checking if a certain diagonal already contains a triplet
-    diagonal_done = [False, False]
-
-    # Check first diagonal
-
-    if board[0, 0] != -1 and board[1, 1] != -1 and board[2, 2] != -1 and board[3, 3] == -1:
-        piece_1 = state.get_piece_charachteristics(board[0, 0])
-        piece_2 = state.get_piece_charachteristics(board[1, 1])
-        piece_3 = state.get_piece_charachteristics(board[2, 2])
-        if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-            positions['triplets'] += 1
-            diagonal_done[0] = True
-        if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-            positions['triplets'] += 1
-            diagonal_done[0] = True
-        if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-            positions['triplets'] += 1
-            diagonal_done[0] = True
-        if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-            positions['triplets'] += 1
-            diagonal_done[0] = True
-    if board[0, 0] == -1 and board[1, 1] != -1 and board[2, 2] != -1 and board[3, 3] != -1:
-        piece_1 = state.get_piece_charachteristics(board[1, 1])
-        piece_2 = state.get_piece_charachteristics(board[2, 2])
-        piece_3 = state.get_piece_charachteristics(board[3, 3])
-        if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-            positions['triplets'] += 1
-            diagonal_done[0] = True
-        if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-            positions['triplets'] += 1
-            diagonal_done[0] = True
-        if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-            positions['triplets'] += 1
-            diagonal_done[0] = True
-        if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-            positions['triplets'] += 1
-            diagonal_done[0] = True
-    if board[0, 0] != -1 and board[1, 1] == -1 and board[2, 2] != -1 and board[3, 3] != -1:
-        piece_1 = state.get_piece_charachteristics(board[0, 0])
-        piece_2 = state.get_piece_charachteristics(board[2, 2])
-        piece_3 = state.get_piece_charachteristics(board[3, 3])
-        if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-            positions['triplets'] += 1
-            diagonal_done[0] = True
-        if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-            positions['triplets'] += 1
-            diagonal_done[0] = True
-        if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-            positions['triplets'] += 1
-            diagonal_done[0] = True
-        if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-            positions['triplets'] += 1
-            diagonal_done[0] = True
-    if board[0, 0] != -1 and board[1, 1] != -1 and board[2, 2] == -1 and board[3, 3] != -1:
-        piece_1 = state.get_piece_charachteristics(board[0, 0])
-        piece_2 = state.get_piece_charachteristics(board[1, 1])
-        piece_3 = state.get_piece_charachteristics(board[3, 3])
-        if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-            positions['triplets'] += 1
-            diagonal_done[0] = True
-        if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-            positions['triplets'] += 1
-            diagonal_done[0] = True
-        if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-            positions['triplets'] += 1
-            diagonal_done[0] = True
-        if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-            positions['triplets'] += 1
-            diagonal_done[0] = True
-    # Before checking a diagonal for couples, control the boolean flag
-    if not diagonal_done[0] and board[0, 0] != -1 and board[1, 1] != -1 and board[2, 2] == -1 and board[3, 3] == -1:
-        piece_1 = state.get_piece_charachteristics(board[0, 0])
-        piece_2 = state.get_piece_charachteristics(board[1, 1])
-        if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-            positions['couples'] += 1
-        if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-            positions['couples'] += 1
-        if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-            positions['couples'] += 1
-        if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-            positions['couples'] += 1
-    if not diagonal_done[0] and board[0, 0] == -1 and board[1, 1] != -1 and board[2, 2] != -1 and board[3, 3] == -1:
-        piece_1 = state.get_piece_charachteristics(board[1, 1])
-        piece_2 = state.get_piece_charachteristics(board[2, 2])
-        if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-            positions['couples'] += 1
-        if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-            positions['couples'] += 1
-        if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-            positions['couples'] += 1
-        if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-            positions['couples'] += 1
-    if not diagonal_done[0] and board[0, 0] == -1 and board[1, 1] == -1 and board[2, 2] != -1 and board[3, 3] != -1:
-        piece_1 = state.get_piece_charachteristics(board[2, 2])
-        piece_2 = state.get_piece_charachteristics(board[3, 3])
-        if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-            positions['couples'] += 1
-        if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-            positions['couples'] += 1
-        if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-            positions['couples'] += 1
-        if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-            positions['couples'] += 1
-
-    # Check second diagonal
-
-    if board[0, 3] != -1 and board[1, 2] != -1 and board[2, 1] != -1 and board[3, 0] == -1:
-        piece_1 = state.get_piece_charachteristics(board[0, 3])
-        piece_2 = state.get_piece_charachteristics(board[1, 2])
-        piece_3 = state.get_piece_charachteristics(board[2, 1])
-        if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-            positions['triplets'] += 1
-            diagonal_done[1] = True
-        if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-            positions['triplets'] += 1
-            diagonal_done[1] = True
-        if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-            positions['triplets'] += 1
-            diagonal_done[1] = True
-        if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-            positions['triplets'] += 1
-            diagonal_done[1] = True
-    if board[0, 3] == -1 and board[1, 2] != -1 and board[2, 1] != -1 and board[3, 0] != -1:
-        piece_1 = state.get_piece_charachteristics(board[1, 2])
-        piece_2 = state.get_piece_charachteristics(board[2, 1])
-        piece_3 = state.get_piece_charachteristics(board[3, 0])
-        if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-            positions['triplets'] += 1
-            diagonal_done[1] = True
-        if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-            positions['triplets'] += 1
-            diagonal_done[1] = True
-        if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-            positions['triplets'] += 1
-            diagonal_done[1] = True
-        if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-            positions['triplets'] += 1
-            diagonal_done[1] = True
-    if board[0, 3] != -1 and board[1, 2] != -1 and board[2, 1] == -1 and board[3, 0] != -1:
-        piece_1 = state.get_piece_charachteristics(board[0, 3])
-        piece_2 = state.get_piece_charachteristics(board[1, 2])
-        piece_3 = state.get_piece_charachteristics(board[3, 0])
-        if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-            positions['triplets'] += 1
-            diagonal_done[1] = True
-        if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-            positions['triplets'] += 1
-            diagonal_done[1] = True
-        if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-            positions['triplets'] += 1
-            diagonal_done[1] = True
-        if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-            positions['triplets'] += 1
-            diagonal_done[1] = True
-    if board[0, 3] != -1 and board[1, 2] == -1 and board[2, 1] != -1 and board[3, 0] != -1:
-        piece_1 = state.get_piece_charachteristics(board[0, 3])
-        piece_2 = state.get_piece_charachteristics(board[2, 1])
-        piece_3 = state.get_piece_charachteristics(board[3, 0])
-        if piece_1.HIGH == piece_2.HIGH and piece_3.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-            positions['triplets'] += 1
-            diagonal_done[1] = True
-        if piece_1.COLOURED == piece_2.COLOURED and piece_3.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-            positions['triplets'] += 1
-            diagonal_done[1] = True
-        if piece_1.SQUARE == piece_2.SQUARE and piece_3.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-            positions['triplets'] += 1
-            diagonal_done[1] = True
-        if piece_1.SOLID == piece_2.SOLID and piece_3.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-            positions['triplets'] += 1
-            diagonal_done[1] = True
-    # Before checking a diagonal for couples, control the boolean flag
-    if not diagonal_done[1] and board[0, 3] != -1 and board[1, 2] != -1 and board[2, 1] == -1 and board[3, 0] == -1:
-        piece_1 = state.get_piece_charachteristics(board[0, 3])
-        piece_2 = state.get_piece_charachteristics(board[1, 2])
-        if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-            positions['couples'] += 1
-        if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-            positions['couples'] += 1
-        if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-            positions['couples'] += 1
-        if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-            positions['couples'] += 1
-    if not diagonal_done[1] and board[0, 3] == -1 and board[1, 2] != -1 and board[2, 1] != -1 and board[3, 0] == -1:
-        piece_1 = state.get_piece_charachteristics(board[1, 2])
-        piece_2 = state.get_piece_charachteristics(board[2, 1])
-        if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-            positions['couples'] += 1
-        if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-            positions['couples'] += 1
-        if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-            positions['couples'] += 1
-        if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-            positions['couples'] += 1
-    if not diagonal_done[1] and board[0, 0] == -1 and board[1, 2] == -1 and board[2, 1] != -1 and board[3, 0] != -1:
-        piece_1 = state.get_piece_charachteristics(board[2, 1])
-        piece_2 = state.get_piece_charachteristics(board[3, 0])
-        if piece_1.HIGH == piece_2.HIGH and piece_1.HIGH == True:
-            positions['couples'] += 1
-        if piece_1.COLOURED == piece_2.COLOURED and piece_1.COLOURED == True:
-            positions['couples'] += 1
-        if piece_1.SQUARE == piece_2.SQUARE and piece_1.SQUARE == True:
-            positions['couples'] += 1
-        if piece_1.SOLID == piece_2.SOLID and piece_1.SOLID == True:
-            positions['couples'] += 1
-
-    return positions['couples']+2*positions['triplets']
-
+    def reset(self):
+        self.game = Quarto()
+        self.game.set_players((self.main_player, RandomPlayer(self.game)))
+        # print(self.game.state_as_array())
+        return self.game.state_as_array()
 \end{mintedbox}
 
 \subsection{Code for Unsuccessful Players}
@@ -1751,7 +1358,7 @@ def score_board(state: Quarto):
 
 \subsubsection{Slower MCTS With Different Node Structure}
 
-The implementation of MCTS and the rollout strategy is based on the minimal implementation \href{https://gist.github.com/qpwo/c538c6f73727e254fdc7fab81024f6e1}{here}.
+The implementation of MCTS and the rollout strategy is based on the minimal implementation \href{https://gist.github.com/qpwo/c538c6f73727e254fdc7fab81024f6e1}{here}. It is slower but performs better than the MCTS strategy in the previous section due to a higher expansion factor, since it also takes into account every possible next piece that can be chosen for the next player when finding children.
 
 \begin{mintedbox}{python}
 from collections import defaultdict

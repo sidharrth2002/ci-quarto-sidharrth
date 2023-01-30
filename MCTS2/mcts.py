@@ -24,6 +24,9 @@ class MCTS(Player):
         self._player_id = player_id
         super().__init__(board)
 
+    def set_board(self, board):
+        self._board = board
+
     def uct(self, node, child):
         '''
         Apply UCT formula to select best child

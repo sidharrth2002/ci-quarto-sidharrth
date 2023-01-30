@@ -1,4 +1,7 @@
 \begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{import} \PYG{n+nn}{sys}
+\PYG{n}{sys}\PYG{o}{.}\PYG{n}{path}\PYG{o}{.}\PYG{n}{insert}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}..\PYGZsq{}}\PYG{p}{)}
+
 \PYG{k+kn}{from} \PYG{n+nn}{collections} \PYG{k+kn}{import} \PYG{n}{defaultdict}
 \PYG{k+kn}{from} \PYG{n+nn}{copy} \PYG{k+kn}{import} \PYG{n}{deepcopy}
 \PYG{k+kn}{import} \PYG{n+nn}{itertools}
@@ -9,8 +12,9 @@
 \PYG{k+kn}{import} \PYG{n+nn}{random}
 \PYG{k+kn}{import} \PYG{n+nn}{time}
 
-\PYG{k+kn}{from} \PYG{n+nn}{MCTS} \PYG{k+kn}{import} \PYG{n}{MonteCarloTreeSearch}
+\PYG{c+c1}{\PYGZsh{} from MCTS import MonteCarloTreeSearch}
 \PYG{k+kn}{from} \PYG{n+nn}{MCTS.mcts} \PYG{k+kn}{import} \PYG{n}{decode\PYGZus{}tree}
+\PYG{k+kn}{from} \PYG{n+nn}{MCTS2.mcts} \PYG{k+kn}{import} \PYG{n}{MCTS}
 \PYG{k+kn}{from} \PYG{n+nn}{quarto.objects} \PYG{k+kn}{import} \PYG{n}{Quarto}
 \PYG{k+kn}{from} \PYG{n+nn}{lib.players} \PYG{k+kn}{import} \PYG{n}{Player}\PYG{p}{,} \PYG{n}{RandomPlayer}
 \PYG{k+kn}{from} \PYG{n+nn}{lib.isomorphic} \PYG{k+kn}{import} \PYG{n}{BoardTransforms}
@@ -20,7 +24,7 @@
 
 
 \PYG{k}{class} \PYG{n+nc}{QLearningPlayer}\PYG{p}{(}\PYG{n}{Player}\PYG{p}{):}
-    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{board}\PYG{p}{:} \PYG{n}{Quarto} \PYG{o}{=} \PYG{n}{Quarto}\PYG{p}{(),} \PYG{n}{epsilon}\PYG{o}{=}\PYG{l+m+mf}{0.1}\PYG{p}{,} \PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.5}\PYG{p}{,} \PYG{n}{gamma}\PYG{o}{=}\PYG{l+m+mf}{0.9}\PYG{p}{,} \PYG{n}{tree}\PYG{p}{:} \PYG{n}{MonteCarloTreeSearch} \PYG{o}{=} \PYG{k+kc}{None}\PYG{p}{):}
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{board}\PYG{p}{:} \PYG{n}{Quarto} \PYG{o}{=} \PYG{n}{Quarto}\PYG{p}{(),} \PYG{n}{epsilon}\PYG{o}{=}\PYG{l+m+mf}{0.1}\PYG{p}{,} \PYG{n}{alpha}\PYG{o}{=}\PYG{l+m+mf}{0.5}\PYG{p}{,} \PYG{n}{gamma}\PYG{o}{=}\PYG{l+m+mf}{0.9}\PYG{p}{,} \PYG{n}{tree}\PYG{p}{:} \PYG{n}{MCTS} \PYG{o}{=} \PYG{k+kc}{None}\PYG{p}{):}
         \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{epsilon} \PYG{o}{=} \PYG{n}{epsilon}
         \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{alpha} \PYG{o}{=} \PYG{n}{alpha}
         \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{gamma} \PYG{o}{=} \PYG{n}{gamma}
@@ -36,13 +40,13 @@
 
         \PYG{k}{else}\PYG{p}{:}
             \PYG{c+c1}{\PYGZsh{} load new tree}
-            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{tree} \PYG{o}{=} \PYG{n}{MonteCarloTreeSearch}\PYG{p}{(}\PYG{n}{board}\PYG{o}{=}\PYG{n}{board}\PYG{p}{)}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{tree} \PYG{o}{=} \PYG{n}{MCTS}\PYG{p}{(}\PYG{n}{board}\PYG{o}{=}\PYG{n}{board}\PYG{p}{)}
 
         \PYG{n+nb}{super}\PYG{p}{()}\PYG{o}{.}\PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n}{board}\PYG{p}{)}
 
     \PYG{k}{def} \PYG{n+nf}{clear\PYGZus{}and\PYGZus{}set\PYGZus{}current\PYGZus{}state}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{state}\PYG{p}{:} \PYG{n}{Quarto}\PYG{p}{):}
         \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state} \PYG{o}{=} \PYG{n}{state}
-        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{tree} \PYG{o}{=} \PYG{n}{MonteCarloTreeSearch}\PYG{p}{(}\PYG{n}{board}\PYG{o}{=}\PYG{n}{state}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{tree} \PYG{o}{=} \PYG{n}{MCTS}\PYG{p}{(}\PYG{n}{board}\PYG{o}{=}\PYG{n}{state}\PYG{p}{)}
 
     \PYG{k}{def} \PYG{n+nf}{reduce\PYGZus{}normal\PYGZus{}form}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{state}\PYG{p}{:} \PYG{n}{Quarto}\PYG{p}{):}
         \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
@@ -94,129 +98,7 @@
                 \PYG{n}{max\PYGZus{}Q} \PYG{o}{=} \PYG{n+nb}{max}\PYG{p}{(}\PYG{n}{max\PYGZus{}Q}\PYG{p}{,} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}Q}\PYG{p}{(}\PYG{n}{state}\PYG{p}{,} \PYG{n}{action}\PYG{p}{))}
         \PYG{k}{return} \PYG{n}{max\PYGZus{}Q}
 
-    \PYG{k}{def} \PYG{n+nf}{check\PYGZus{}if\PYGZus{}winning\PYGZus{}piece}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{state}\PYG{p}{,} \PYG{n}{piece}\PYG{p}{):}
-        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{BOARD\PYGZus{}SIDE}\PYG{p}{):}
-            \PYG{k}{for} \PYG{n}{j} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{BOARD\PYGZus{}SIDE}\PYG{p}{):}
-                \PYG{k}{if} \PYG{n}{state}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}move\PYGZus{}valid}\PYG{p}{(}\PYG{n}{piece}\PYG{p}{,} \PYG{n}{i}\PYG{p}{,} \PYG{n}{j}\PYG{p}{,} \PYG{n}{piece}\PYG{p}{):}
-                    \PYG{n}{cloned\PYGZus{}state} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
-                    \PYG{n}{cloned\PYGZus{}state}\PYG{o}{.}\PYG{n}{select}\PYG{p}{(}\PYG{n}{piece}\PYG{p}{)}
-                    \PYG{n}{cloned\PYGZus{}state}\PYG{o}{.}\PYG{n}{place}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,} \PYG{n}{j}\PYG{p}{)}
-
-                    \PYG{k}{if} \PYG{n}{cloned\PYGZus{}state}\PYG{o}{.}\PYG{n}{check\PYGZus{}is\PYGZus{}game\PYGZus{}over}\PYG{p}{():}
-                        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}WINNING PIECE FOUND\PYGZsq{}}\PYG{p}{)}
-                        \PYG{k}{return} \PYG{k+kc}{True}\PYG{p}{,} \PYG{p}{[}\PYG{n}{i}\PYG{p}{,} \PYG{n}{j}\PYG{p}{]}
-        \PYG{k}{return} \PYG{k+kc}{False}\PYG{p}{,} \PYG{k+kc}{None}
-
-    \PYG{k}{def} \PYG{n+nf}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}move}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{state}\PYG{p}{):}
-        \PYG{c+c1}{\PYGZsh{}  1. Play the piece handed over by the opponent:}
-        \PYG{c+c1}{\PYGZsh{} (a) play a winning position if handed a winning piece;}
-        \PYG{c+c1}{\PYGZsh{} (b) otherwise, play to build a line of like pieces if possible;}
-        \PYG{c+c1}{\PYGZsh{} (c) otherwise, play randomly.}
-        \PYG{c+c1}{\PYGZsh{} 2. Hand a piece to the opponent:}
-        \PYG{c+c1}{\PYGZsh{} (a) avoid handing over a winning piece for your opponent to play;}
-        \PYG{c+c1}{\PYGZsh{} (b) otherwise, choose randomly.}
-
-        \PYG{n}{board} \PYG{o}{=} \PYG{n}{state}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{()}
-        \PYG{n}{selected\PYGZus{}piece} \PYG{o}{=} \PYG{n}{state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{()}
-        \PYG{c+c1}{\PYGZsh{} check if the selected piece is a winning piece}
-        \PYG{n}{winning\PYGZus{}piece}\PYG{p}{,} \PYG{n}{position} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}winning\PYGZus{}piece}\PYG{p}{(}
-            \PYG{n}{state}\PYG{p}{,} \PYG{n}{selected\PYGZus{}piece}\PYG{p}{)}
-        \PYG{k}{if} \PYG{n}{winning\PYGZus{}piece}\PYG{p}{:}
-            \PYG{k}{return} \PYG{n}{selected\PYGZus{}piece}\PYG{p}{,} \PYG{n}{position}
-
-        \PYG{c+c1}{\PYGZsh{} check if the selected piece can be used to build a line of like pieces}
-
-        \PYG{n}{row\PYGZus{}1} \PYG{o}{=} \PYG{p}{[[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{]]}
-        \PYG{c+c1}{\PYGZsh{} pieces in row 2}
-        \PYG{n}{row\PYGZus{}2} \PYG{o}{=} \PYG{p}{[[}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{]]}
-        \PYG{c+c1}{\PYGZsh{} pieces in row 3}
-        \PYG{n}{row\PYGZus{}3} \PYG{o}{=} \PYG{p}{[[}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{]]}
-        \PYG{c+c1}{\PYGZsh{} pieces in row 4}
-        \PYG{n}{row\PYGZus{}4} \PYG{o}{=} \PYG{p}{[[}\PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{]]}
-
-        \PYG{c+c1}{\PYGZsh{} pieces in column 1}
-        \PYG{n}{col\PYGZus{}1} \PYG{o}{=} \PYG{p}{[[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{]]}
-        \PYG{c+c1}{\PYGZsh{} pieces in column 2}
-        \PYG{n}{col\PYGZus{}2} \PYG{o}{=} \PYG{p}{[[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{]]}
-        \PYG{c+c1}{\PYGZsh{} pieces in column 3}
-        \PYG{n}{col\PYGZus{}3} \PYG{o}{=} \PYG{p}{[[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{]]}
-        \PYG{c+c1}{\PYGZsh{} pieces in column 4}
-        \PYG{n}{col\PYGZus{}4} \PYG{o}{=} \PYG{p}{[[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{]]}
-
-        \PYG{c+c1}{\PYGZsh{} pieces in diagonal 1}
-        \PYG{n}{diag\PYGZus{}1} \PYG{o}{=} \PYG{p}{[[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{]]}
-        \PYG{c+c1}{\PYGZsh{} pieces in diagonal 2}
-        \PYG{n}{diag\PYGZus{}2} \PYG{o}{=} \PYG{p}{[[}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{3}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{2}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{],} \PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+m+mi}{0}\PYG{p}{]]}
-
-        \PYG{k}{for} \PYG{n}{line} \PYG{o+ow}{in} \PYG{p}{[}\PYG{n}{row\PYGZus{}1}\PYG{p}{,} \PYG{n}{row\PYGZus{}2}\PYG{p}{,} \PYG{n}{row\PYGZus{}3}\PYG{p}{,} \PYG{n}{row\PYGZus{}4}\PYG{p}{,} \PYG{n}{col\PYGZus{}1}\PYG{p}{,} \PYG{n}{col\PYGZus{}2}\PYG{p}{,} \PYG{n}{col\PYGZus{}3}\PYG{p}{,} \PYG{n}{col\PYGZus{}4}\PYG{p}{,} \PYG{n}{diag\PYGZus{}1}\PYG{p}{,} \PYG{n}{diag\PYGZus{}2}\PYG{p}{]:}
-            \PYG{c+c1}{\PYGZsh{} check if the selected piece can be used to build a line of like pieces}
-            \PYG{n}{characteristics} \PYG{o}{=} \PYG{p}{[]}
-            \PYG{n}{empty\PYGZus{}rows} \PYG{o}{=} \PYG{p}{[]}
-            \PYG{k}{for} \PYG{n}{el} \PYG{o+ow}{in} \PYG{n}{line}\PYG{p}{:}
-                \PYG{n}{x}\PYG{p}{,} \PYG{n}{y} \PYG{o}{=} \PYG{n}{el}
-                \PYG{k}{if} \PYG{n}{board}\PYG{p}{[}\PYG{n}{x}\PYG{p}{,} \PYG{n}{y}\PYG{p}{]} \PYG{o}{!=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{:}
-                    \PYG{n}{piece} \PYG{o}{=} \PYG{n}{board}\PYG{p}{[}\PYG{n}{x}\PYG{p}{][}\PYG{n}{y}\PYG{p}{]}
-                    \PYG{n}{piece\PYGZus{}char} \PYG{o}{=} \PYG{n}{state}\PYG{o}{.}\PYG{n}{get\PYGZus{}piece\PYGZus{}charachteristics}\PYG{p}{(}\PYG{n}{piece}\PYG{p}{)}
-                    \PYG{n}{characteristics}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}
-                        \PYG{p}{[}\PYG{n}{piece\PYGZus{}char}\PYG{o}{.}\PYG{n}{HIGH}\PYG{p}{,} \PYG{n}{piece\PYGZus{}char}\PYG{o}{.}\PYG{n}{COLOURED}\PYG{p}{,} \PYG{n}{piece\PYGZus{}char}\PYG{o}{.}\PYG{n}{SOLID}\PYG{p}{,} \PYG{n}{piece\PYGZus{}char}\PYG{o}{.}\PYG{n}{SQUARE}\PYG{p}{])}
-                \PYG{k}{else}\PYG{p}{:}
-                    \PYG{n}{empty\PYGZus{}rows}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{el}\PYG{p}{)}
-                    \PYG{n}{characteristics}\PYG{o}{.}\PYG{n}{append}\PYG{p}{([}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{])}
-
-            \PYG{n}{selected\PYGZus{}piece\PYGZus{}char} \PYG{o}{=} \PYG{n}{state}\PYG{o}{.}\PYG{n}{get\PYGZus{}piece\PYGZus{}charachteristics}\PYG{p}{(}
-                \PYG{n}{selected\PYGZus{}piece}\PYG{p}{)}
-            \PYG{n}{selected\PYGZus{}piece\PYGZus{}char} \PYG{o}{=} \PYG{p}{[}\PYG{n}{selected\PYGZus{}piece\PYGZus{}char}\PYG{o}{.}\PYG{n}{HIGH}\PYG{p}{,} \PYG{n}{selected\PYGZus{}piece\PYGZus{}char}\PYG{o}{.}\PYG{n}{COLOURED}\PYG{p}{,}
-                                    \PYG{n}{selected\PYGZus{}piece\PYGZus{}char}\PYG{o}{.}\PYG{n}{SOLID}\PYG{p}{,} \PYG{n}{selected\PYGZus{}piece\PYGZus{}char}\PYG{o}{.}\PYG{n}{SQUARE}\PYG{p}{]}
-
-            \PYG{c+c1}{\PYGZsh{} check if characteristics has an empty row}
-            \PYG{k}{if} \PYG{p}{[}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]} \PYG{o+ow}{in} \PYG{n}{characteristics}\PYG{p}{:}
-                \PYG{c+c1}{\PYGZsh{} insert the selected piece in the empty row}
-                \PYG{n}{empty\PYGZus{}piece\PYGZus{}index} \PYG{o}{=} \PYG{n}{characteristics}\PYG{o}{.}\PYG{n}{index}\PYG{p}{(}
-                    \PYG{p}{[}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{])}
-                \PYG{n}{characteristics}\PYG{p}{[}\PYG{n}{empty\PYGZus{}piece\PYGZus{}index}\PYG{p}{]} \PYG{o}{=} \PYG{n}{selected\PYGZus{}piece\PYGZus{}char}
-
-                \PYG{c+c1}{\PYGZsh{} check if any column has the same characteristics}
-                \PYG{n}{col1} \PYG{o}{=} \PYG{p}{[}\PYG{n}{characteristics}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{][}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{characteristics}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{][}\PYG{l+m+mi}{0}\PYG{p}{],}
-                        \PYG{n}{characteristics}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{][}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{characteristics}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{][}\PYG{l+m+mi}{0}\PYG{p}{]]}
-                \PYG{n}{col2} \PYG{o}{=} \PYG{p}{[}\PYG{n}{characteristics}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{][}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{characteristics}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{][}\PYG{l+m+mi}{1}\PYG{p}{],}
-                        \PYG{n}{characteristics}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{][}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{characteristics}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{][}\PYG{l+m+mi}{1}\PYG{p}{]]}
-                \PYG{n}{col3} \PYG{o}{=} \PYG{p}{[}\PYG{n}{characteristics}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{][}\PYG{l+m+mi}{2}\PYG{p}{],} \PYG{n}{characteristics}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{][}\PYG{l+m+mi}{2}\PYG{p}{],}
-                        \PYG{n}{characteristics}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{][}\PYG{l+m+mi}{2}\PYG{p}{],} \PYG{n}{characteristics}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{][}\PYG{l+m+mi}{2}\PYG{p}{]]}
-                \PYG{n}{col4} \PYG{o}{=} \PYG{p}{[}\PYG{n}{characteristics}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{][}\PYG{l+m+mi}{3}\PYG{p}{],} \PYG{n}{characteristics}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{][}\PYG{l+m+mi}{3}\PYG{p}{],}
-                        \PYG{n}{characteristics}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{][}\PYG{l+m+mi}{3}\PYG{p}{],} \PYG{n}{characteristics}\PYG{p}{[}\PYG{l+m+mi}{3}\PYG{p}{][}\PYG{l+m+mi}{3}\PYG{p}{]]}
-
-                \PYG{n}{col1} \PYG{o}{=} \PYG{p}{[}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n}{col1}\PYG{p}{]}
-                \PYG{n}{col2} \PYG{o}{=} \PYG{p}{[}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n}{col2}\PYG{p}{]}
-                \PYG{n}{col3} \PYG{o}{=} \PYG{p}{[}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n}{col3}\PYG{p}{]}
-                \PYG{n}{col4} \PYG{o}{=} \PYG{p}{[}\PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)} \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n}{col4}\PYG{p}{]}
-
-                \PYG{k}{if} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb}{set}\PYG{p}{(}\PYG{n}{col1}\PYG{p}{))} \PYG{o}{==} \PYG{l+m+mi}{1} \PYG{o+ow}{or} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb}{set}\PYG{p}{(}\PYG{n}{col2}\PYG{p}{))} \PYG{o}{==} \PYG{l+m+mi}{1} \PYG{o+ow}{or} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb}{set}\PYG{p}{(}\PYG{n}{col3}\PYG{p}{))} \PYG{o}{==} \PYG{l+m+mi}{1} \PYG{o+ow}{or} \PYG{n+nb}{len}\PYG{p}{(}\PYG{n+nb}{set}\PYG{p}{(}\PYG{n}{col4}\PYG{p}{))} \PYG{o}{==} \PYG{l+m+mi}{1}\PYG{p}{:}
-                    \PYG{c+c1}{\PYGZsh{} this piece can be used to build a line of like pieces}
-                    \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}playing to build a line of like pieces\PYGZsq{}}\PYG{p}{)}
-                    \PYG{k}{return} \PYG{k+kc}{True}\PYG{p}{,} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n+nb}{reversed}\PYG{p}{(}\PYG{n}{empty\PYGZus{}rows}\PYG{p}{[}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{]))}
-
-        \PYG{c+c1}{\PYGZsh{} play randomly}
-        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{BOARD\PYGZus{}SIDE}\PYG{p}{):}
-            \PYG{k}{for} \PYG{n}{j} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{BOARD\PYGZus{}SIDE}\PYG{p}{):}
-                \PYG{k}{for} \PYG{n}{next\PYGZus{}piece} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{16}\PYG{p}{):}
-                    \PYG{k}{if} \PYG{n}{state}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}move\PYGZus{}valid}\PYG{p}{(}\PYG{n}{selected\PYGZus{}piece}\PYG{p}{,} \PYG{n}{i}\PYG{p}{,} \PYG{n}{j}\PYG{p}{,} \PYG{n}{next\PYGZus{}piece}\PYG{p}{):}
-                        \PYG{k}{return} \PYG{k+kc}{False}\PYG{p}{,} \PYG{p}{[}\PYG{n}{i}\PYG{p}{,} \PYG{n}{j}\PYG{p}{]}
-
-        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}returning nothing\PYGZsq{}}\PYG{p}{)}
-        \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{state}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{())}
-        \PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())}
-
-    \PYG{k}{def} \PYG{n+nf}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}piece}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{state}\PYG{p}{):}
-        \PYG{n}{possible\PYGZus{}pieces} \PYG{o}{=} \PYG{p}{[]}
-        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{16}\PYG{p}{):}
-            \PYG{c+c1}{\PYGZsh{} check if the piece is a winning piece}
-            \PYG{n}{winning\PYGZus{}piece}\PYG{p}{,} \PYG{n}{\PYGZus{}} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}winning\PYGZus{}piece}\PYG{p}{(}\PYG{n}{state}\PYG{p}{,} \PYG{n}{i}\PYG{p}{)}
-            \PYG{k}{if} \PYG{p}{(}\PYG{o+ow}{not} \PYG{n}{winning\PYGZus{}piece}\PYG{p}{)} \PYG{o+ow}{and} \PYG{p}{(}\PYG{n}{i} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{itertools}\PYG{o}{.}\PYG{n}{chain}\PYG{o}{.}\PYG{n}{from\PYGZus{}iterable}\PYG{p}{(}\PYG{n}{state}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{())))} \PYG{o+ow}{and} \PYG{p}{(}\PYG{n}{i} \PYG{o}{!=} \PYG{n}{state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{()):}
-                \PYG{n}{possible\PYGZus{}pieces}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{i}\PYG{p}{)}
-
-        \PYG{k}{return} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{possible\PYGZus{}pieces}\PYG{p}{)}
-
-    \PYG{k}{def} \PYG{n+nf}{get\PYGZus{}action}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{state}\PYG{p}{,} \PYG{n}{mode}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}training\PYGZsq{}}\PYG{p}{):}
+    \PYG{k}{def} \PYG{n+nf}{get\PYGZus{}action}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{state}\PYG{p}{,} \PYG{n}{mode}\PYG{o}{=}\PYG{l+s+s1}{\PYGZsq{}testing\PYGZsq{}}\PYG{p}{):}
         \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
 \PYG{l+s+sd}{        If state, action pair not in Q, go to Monte Carlo Tree Search to find best action}
 \PYG{l+s+sd}{        \PYGZsq{}\PYGZsq{}\PYGZsq{}}
@@ -224,8 +106,8 @@
             \PYG{c+c1}{\PYGZsh{} exploration through epsilon greedy}
             \PYG{c+c1}{\PYGZsh{} look for good moves through Monte Carlo Tree Search}
             \PYG{k}{if} \PYG{n}{random}\PYG{o}{.}\PYG{n}{random}\PYG{p}{()} \PYG{o}{\PYGZlt{}} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{epsilon}\PYG{p}{:}
-                \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{20}\PYG{p}{):}
-                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{tree}\PYG{o}{.}\PYG{n}{do\PYGZus{}rollout}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
+                \PYG{c+c1}{\PYGZsh{} for i in range(10):}
+                \PYG{c+c1}{\PYGZsh{}     self.tree.do\PYGZus{}rollout(state)}
                 \PYG{n}{best\PYGZus{}action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{tree}\PYG{o}{.}\PYG{n}{place\PYGZus{}piece}\PYG{p}{()}
                 \PYG{k}{return} \PYG{n}{best\PYGZus{}action}
             \PYG{k}{else}\PYG{p}{:}
@@ -241,7 +123,7 @@
                 \PYG{k}{if} \PYG{n}{best\PYGZus{}action} \PYG{o+ow}{is} \PYG{k+kc}{None} \PYG{o+ow}{or} \PYG{n}{expected\PYGZus{}score} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
                     \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}
                         \PYG{l+s+s1}{\PYGZsq{}No suitable action found in Q table, going to Monte Carlo Tree Search\PYGZsq{}}\PYG{p}{)}
-                    \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{20}\PYG{p}{):}
+                    \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{10}\PYG{p}{):}
                         \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{tree}\PYG{o}{.}\PYG{n}{do\PYGZus{}rollout}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
                     \PYG{n}{best\PYGZus{}action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{tree}\PYG{o}{.}\PYG{n}{place\PYGZus{}piece}\PYG{p}{()}
                 \PYG{k}{else}\PYG{p}{:}
@@ -261,8 +143,9 @@
             \PYG{k}{if} \PYG{n}{best\PYGZus{}action} \PYG{o+ow}{is} \PYG{k+kc}{None} \PYG{o+ow}{or} \PYG{n}{expected\PYGZus{}score} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
                 \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}
                     \PYG{l+s+s1}{\PYGZsq{}No suitable action found in Q table, going to Monte Carlo Tree Search\PYGZsq{}}\PYG{p}{)}
-                \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{50}\PYG{p}{):}
-                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{tree}\PYG{o}{.}\PYG{n}{do\PYGZus{}rollout}\PYG{p}{(}\PYG{n}{state}\PYG{p}{)}
+                \PYG{c+c1}{\PYGZsh{} for i in range(20):}
+                \PYG{c+c1}{\PYGZsh{}     print(\PYGZsq{}doing rollout\PYGZsq{})}
+                \PYG{c+c1}{\PYGZsh{}     self.tree.do\PYGZus{}rollout(state)}
                 \PYG{n}{best\PYGZus{}action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{tree}\PYG{o}{.}\PYG{n}{place\PYGZus{}piece}\PYG{p}{()}
             \PYG{k}{return} \PYG{n}{best\PYGZus{}action}
 
@@ -299,6 +182,7 @@
                 \PYG{n}{reward} \PYG{o}{=} \PYG{l+m+mi}{0}
                 \PYG{k}{if} \PYG{n}{player} \PYG{o}{==} \PYG{l+m+mi}{0}\PYG{p}{:}
                     \PYG{c+c1}{\PYGZsh{} QL\PYGZhy{}MCTS moves here}
+                    \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}QL\PYGZhy{}MCTS moves here\PYGZsq{}}\PYG{p}{)}
                     \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{previous\PYGZus{}state} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
                     \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Piece to place: \PYGZdq{}}\PYG{p}{,}
                                     \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())}
@@ -306,12 +190,13 @@
                     \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{())}
                     \PYG{n}{time\PYGZus{}start} \PYG{o}{=} \PYG{n}{time}\PYG{o}{.}\PYG{n}{time}\PYG{p}{()}
                     \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{get\PYGZus{}action}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
-                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{previous\PYGZus{}action} \PYG{o}{=} \PYG{n}{action}
+                    \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{tree}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{()}
+                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{previous\PYGZus{}action} \PYG{o}{=} \PYG{p}{(}\PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{next\PYGZus{}piece}\PYG{p}{)}
                     \PYG{n}{time\PYGZus{}end} \PYG{o}{=} \PYG{n}{time}\PYG{o}{.}\PYG{n}{time}\PYG{p}{()}
                     \PYG{n}{agent\PYGZus{}decision\PYGZus{}times}\PYG{o}{.}\PYG{n}{append}\PYG{p}{(}\PYG{n}{time\PYGZus{}end} \PYG{o}{\PYGZhy{}} \PYG{n}{time\PYGZus{}start}\PYG{p}{)}
                     \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{select}\PYG{p}{(}\PYG{n}{selected\PYGZus{}piece}\PYG{p}{)}
                     \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{place}\PYG{p}{(}\PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])}
-                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{set\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(}\PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{])}
+                    \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{set\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(}\PYG{n}{next\PYGZus{}piece}\PYG{p}{)}
                     \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{switch\PYGZus{}player}\PYG{p}{()}
                     \PYG{n}{player} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{player}
 
@@ -355,7 +240,7 @@
                 \PYG{n}{tries} \PYG{o}{=} \PYG{l+m+mi}{0}
 
             \PYG{c+c1}{\PYGZsh{} OPTION 1: clear the tree every time}
-            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{tree} \PYG{o}{=} \PYG{n}{MonteCarloTreeSearch}\PYG{p}{(}\PYG{n}{board}\PYG{o}{=}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{board}\PYG{p}{)}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{tree} \PYG{o}{=} \PYG{n}{MCTS}\PYG{p}{(}\PYG{n}{board}\PYG{o}{=}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{board}\PYG{p}{)}
 
             \PYG{c+c1}{\PYGZsh{} OPTION 2: if average agent decision time is too long, clear the MCTS tree}
             \PYG{c+c1}{\PYGZsh{} if sum(agent\PYGZus{}decision\PYGZus{}times) / len(agent\PYGZus{}decision\PYGZus{}times) \PYGZgt{} 5:}
@@ -367,8 +252,8 @@
 
 \PYG{k}{if} \PYG{n+nv+vm}{\PYGZus{}\PYGZus{}name\PYGZus{}\PYGZus{}} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}\PYGZus{}\PYGZus{}main\PYGZus{}\PYGZus{}\PYGZsq{}}\PYG{p}{:}
     \PYG{c+c1}{\PYGZsh{} load tree with MonteCarloSearchDecoder}
-    \PYG{k}{with} \PYG{n+nb}{open}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}progress.json\PYGZsq{}}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}r\PYGZsq{}}\PYG{p}{)} \PYG{k}{as} \PYG{n}{f}\PYG{p}{:}
-        \PYG{n}{tree} \PYG{o}{=} \PYG{n}{decode\PYGZus{}tree}\PYG{p}{(}\PYG{n}{json}\PYG{o}{.}\PYG{n}{load}\PYG{p}{(}\PYG{n}{f}\PYG{p}{))}
+    \PYG{c+c1}{\PYGZsh{} with open(\PYGZsq{}progress.json\PYGZsq{}, \PYGZsq{}r\PYGZsq{}) as f:}
+    \PYG{c+c1}{\PYGZsh{}     tree = decode\PYGZus{}tree(json.load(f))}
     \PYG{n}{qplayer} \PYG{o}{=} \PYG{n}{QLearningPlayer}\PYG{p}{()}
     \PYG{n}{qplayer}\PYG{o}{.}\PYG{n}{train}\PYG{p}{(}\PYG{l+m+mi}{10}\PYG{p}{)}
 \end{Verbatim}

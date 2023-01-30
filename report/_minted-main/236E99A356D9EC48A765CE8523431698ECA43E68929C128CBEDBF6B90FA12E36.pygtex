@@ -1,0 +1,46 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{class} \PYG{n+nc}{QuartoScapeNew}\PYG{p}{(}\PYG{n}{gym}\PYG{o}{.}\PYG{n}{Env}\PYG{p}{):}
+\PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}Custom gym environment for Quarto\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game} \PYG{o}{=} \PYG{n}{Quarto}\PYG{p}{()}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{action\PYGZus{}space} \PYG{o}{=} \PYG{n}{spaces}\PYG{o}{.}\PYG{n}{MultiDiscrete}\PYG{p}{([}\PYG{l+m+mi}{16}\PYG{p}{,} \PYG{l+m+mi}{16}\PYG{p}{,} \PYG{l+m+mi}{16}\PYG{p}{])}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{observation\PYGZus{}space} \PYG{o}{=} \PYG{n}{spaces}\PYG{o}{.}\PYG{n}{MultiDiscrete}\PYG{p}{([}\PYG{l+m+mi}{17}\PYG{p}{]} \PYG{o}{*} \PYG{l+m+mi}{17}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{reward\PYGZus{}range} \PYG{o}{=} \PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{,} \PYG{l+m+mi}{1}\PYG{p}{)}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{main\PYGZus{}player} \PYG{o}{=} \PYG{k+kc}{None}
+
+    \PYG{k}{def} \PYG{n+nf}{set\PYGZus{}main\PYGZus{}player}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{player}\PYG{p}{):}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{main\PYGZus{}player} \PYG{o}{=} \PYG{n}{player}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{set\PYGZus{}players}\PYG{p}{((}\PYG{n}{player}\PYG{p}{,} \PYG{n}{RandomPlayer}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game}\PYG{p}{)))}
+        \PYG{k}{return} \PYG{k+kc}{True}
+
+    \PYG{k}{def} \PYG{n+nf}{step}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{action}\PYG{p}{,} \PYG{n}{chosen\PYGZus{}piece}\PYG{p}{):}
+        \PYG{c+c1}{\PYGZsh{} position is the position the previous piece should be moved to}
+        \PYG{c+c1}{\PYGZsh{} chosen next piece is the piece the agent chooses for the next player to move}
+        \PYG{n}{x}\PYG{p}{,} \PYG{n}{y}\PYG{p}{,} \PYG{n}{chosen\PYGZus{}next\PYGZus{}piece} \PYG{o}{=} \PYG{n}{action}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n}{chosen\PYGZus{}next\PYGZus{}piece}
+        \PYG{k}{if} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}move\PYGZus{}valid}\PYG{p}{(}\PYG{n}{chosen\PYGZus{}piece}\PYG{p}{,} \PYG{n}{x}\PYG{p}{,} \PYG{n}{y}\PYG{p}{,} \PYG{n}{chosen\PYGZus{}next\PYGZus{}piece}\PYG{p}{):}
+            \PYG{c+c1}{\PYGZsh{} print(f\PYGZdq{}Valid move, piece \PYGZob{}chosen\PYGZus{}piece\PYGZcb{} placed at \PYGZob{}x\PYGZcb{}, \PYGZob{}y\PYGZcb{}\PYGZdq{})}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{select}\PYG{p}{(}\PYG{n}{chosen\PYGZus{}piece}\PYG{p}{)}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{place}\PYG{p}{(}\PYG{n}{x}\PYG{p}{,} \PYG{n}{y}\PYG{p}{)}
+            \PYG{c+c1}{\PYGZsh{} self.game.print()}
+            \PYG{k}{if} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{check\PYGZus{}is\PYGZus{}game\PYGZus{}over}\PYG{p}{():}
+                \PYG{c+c1}{\PYGZsh{} just playing with itself}
+                \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Giving reward of 1 for completing the game\PYGZdq{}}\PYG{p}{)}
+                \PYG{n}{reward} \PYG{o}{=} \PYG{l+m+mi}{1}
+                \PYG{k}{return} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{(),} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{check\PYGZus{}winner}\PYG{p}{(),} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{check\PYGZus{}finished}\PYG{p}{(),} \PYG{p}{\PYGZob{}\PYGZcb{}}
+            \PYG{k}{else}\PYG{p}{:}
+                \PYG{n}{logging}\PYG{o}{.}\PYG{n}{info}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}Giving reward of 0 for making a move that didn\PYGZsq{}t end the game\PYGZdq{}}\PYG{p}{)}
+                \PYG{n}{reward} \PYG{o}{=} \PYG{l+m+mi}{0}
+                \PYG{k}{return} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{(),} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{check\PYGZus{}winner}\PYG{p}{(),} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{check\PYGZus{}finished}\PYG{p}{(),} \PYG{p}{\PYGZob{}\PYGZcb{}}
+
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n}{reward} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}
+
+        \PYG{k}{return} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{(),} \PYG{n}{reward}\PYG{p}{,} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{check\PYGZus{}finished}\PYG{p}{(),} \PYG{p}{\PYGZob{}\PYGZcb{}}
+
+    \PYG{k}{def} \PYG{n+nf}{reset}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game} \PYG{o}{=} \PYG{n}{Quarto}\PYG{p}{()}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{set\PYGZus{}players}\PYG{p}{((}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{main\PYGZus{}player}\PYG{p}{,} \PYG{n}{RandomPlayer}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game}\PYG{p}{)))}
+        \PYG{c+c1}{\PYGZsh{} print(self.game.state\PYGZus{}as\PYGZus{}array())}
+        \PYG{k}{return} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{game}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{()}
+\end{Verbatim}

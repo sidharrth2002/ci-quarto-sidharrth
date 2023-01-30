@@ -4,6 +4,7 @@ import itertools
 import os
 import random
 import numpy as np
+from lib.isomorphic import BoardTransforms
 from quarto.objects import Quarto
 
 
@@ -16,8 +17,6 @@ class Node:
         self.visits = 0
 
     def __hash__(self):
-        # if self._state.get_selected_piece() is None:
-        #     os.exit(1)
         string = str(self._state.get_selected_piece()) + np.array2string(self._state.state_as_array())
         return int(hashlib.sha1(string.encode('utf-8')).hexdigest(), 32)
 
@@ -28,16 +27,9 @@ class Node:
 
     def child_already_exists(self, new_state: Quarto):
         board_new_state = new_state.state_as_array()
-        rotate_90_clockwise, rotate_90_counter_clockwise, reflect_horizontal, reflect_vertical = self._functions.symmetries(
-            board_new_state)
         for child in self._children:
-            board_already_present = child.state.get_board_status()
-            if (np.array_equal(board_new_state, board_already_present) or
-                np.array_equal(rotate_90_clockwise, board_already_present) or
-                np.array_equal(rotate_90_counter_clockwise, board_already_present) or
-                np.array_equal(reflect_horizontal, board_already_present) or
-                np.array_equal(reflect_vertical, board_already_present)):
-                    return True
+            if BoardTransforms.compare_boards(board_new_state, child._state.state_as_array()):
+                return True
 
         return False
 

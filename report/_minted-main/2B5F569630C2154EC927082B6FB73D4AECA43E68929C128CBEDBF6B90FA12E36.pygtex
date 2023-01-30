@@ -1,0 +1,79 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{from} \PYG{n+nn}{copy} \PYG{k+kn}{import} \PYG{n}{deepcopy}
+\PYG{k+kn}{import} \PYG{n+nn}{hashlib}
+\PYG{k+kn}{import} \PYG{n+nn}{itertools}
+\PYG{k+kn}{import} \PYG{n+nn}{os}
+\PYG{k+kn}{import} \PYG{n+nn}{random}
+\PYG{k+kn}{import} \PYG{n+nn}{numpy} \PYG{k}{as} \PYG{n+nn}{np}
+\PYG{k+kn}{from} \PYG{n+nn}{lib.isomorphic} \PYG{k+kn}{import} \PYG{n}{BoardTransforms}
+\PYG{k+kn}{from} \PYG{n+nn}{quarto.objects} \PYG{k+kn}{import} \PYG{n}{Quarto}
+
+\PYG{k}{class} \PYG{n+nc}{Node}\PYG{p}{:}
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}init\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{state}\PYG{p}{:} \PYG{n}{Quarto} \PYG{o}{=} \PYG{n}{Quarto}\PYG{p}{(),} \PYG{n}{place\PYGZus{}current\PYGZus{}move}\PYG{o}{=}\PYG{k+kc}{None}\PYG{p}{,} \PYG{n}{final\PYGZus{}point}\PYG{o}{=}\PYG{k+kc}{False}\PYG{p}{):}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}state} \PYG{o}{=} \PYG{n}{state}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{place\PYGZus{}current\PYGZus{}move} \PYG{o}{=} \PYG{n}{place\PYGZus{}current\PYGZus{}move}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{final\PYGZus{}point} \PYG{o}{=} \PYG{n}{final\PYGZus{}point}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{wins} \PYG{o}{=} \PYG{l+m+mi}{0}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{visits} \PYG{o}{=} \PYG{l+m+mi}{0}
+
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}hash\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{n}{string} \PYG{o}{=} \PYG{n+nb}{str}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())} \PYG{o}{+} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array2string}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}state}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{())}
+        \PYG{k}{return} \PYG{n+nb}{int}\PYG{p}{(}\PYG{n}{hashlib}\PYG{o}{.}\PYG{n}{sha1}\PYG{p}{(}\PYG{n}{string}\PYG{o}{.}\PYG{n}{encode}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}utf\PYGZhy{}8\PYGZsq{}}\PYG{p}{))}\PYG{o}{.}\PYG{n}{hexdigest}\PYG{p}{(),} \PYG{l+m+mi}{32}\PYG{p}{)}
+
+    \PYG{k}{def} \PYG{n+nf+fm}{\PYGZus{}\PYGZus{}eq\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{other}\PYG{p}{):}
+        \PYG{k}{if} \PYG{o+ow}{not} \PYG{n+nb}{isinstance}\PYG{p}{(}\PYG{n}{other}\PYG{p}{,} \PYG{n}{Node}\PYG{p}{):}
+            \PYG{k}{return} \PYG{k+kc}{False}
+        \PYG{k}{return} \PYG{n}{np}\PYG{o}{.}\PYG{n}{array\PYGZus{}equal}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}state}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{(),} \PYG{n}{other}\PYG{o}{.}\PYG{n}{\PYGZus{}state}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{())} \PYG{o+ow}{and} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{()} \PYG{o}{==} \PYG{n}{other}\PYG{o}{.}\PYG{n}{\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{()}
+
+    \PYG{k}{def} \PYG{n+nf}{child\PYGZus{}already\PYGZus{}exists}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{new\PYGZus{}state}\PYG{p}{:} \PYG{n}{Quarto}\PYG{p}{):}
+        \PYG{n}{board\PYGZus{}new\PYGZus{}state} \PYG{o}{=} \PYG{n}{new\PYGZus{}state}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{()}
+        \PYG{k}{for} \PYG{n}{child} \PYG{o+ow}{in} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}children}\PYG{p}{:}
+            \PYG{k}{if} \PYG{n}{BoardTransforms}\PYG{o}{.}\PYG{n}{compare\PYGZus{}boards}\PYG{p}{(}\PYG{n}{board\PYGZus{}new\PYGZus{}state}\PYG{p}{,} \PYG{n}{child}\PYG{o}{.}\PYG{n}{\PYGZus{}state}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{()):}
+                \PYG{k}{return} \PYG{k+kc}{True}
+
+        \PYG{k}{return} \PYG{k+kc}{False}
+
+    \PYG{k}{def} \PYG{n+nf}{update}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{reward}\PYG{p}{:} \PYG{n+nb}{int}\PYG{p}{):}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{visits} \PYG{o}{+=} \PYG{l+m+mi}{1}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{wins} \PYG{o}{+=} \PYG{n}{reward}
+
+    \PYG{k}{def} \PYG{n+nf}{reward}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{player\PYGZus{}id}\PYG{p}{):}
+        \PYG{n}{player\PYGZus{}last\PYGZus{}moved} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}current\PYGZus{}player}\PYG{p}{()}
+
+        \PYG{n}{player\PYGZus{}who\PYGZus{}last\PYGZus{}moved} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}current\PYGZus{}player}\PYG{p}{()}
+
+        \PYG{c+c1}{\PYGZsh{} 0 if plays first, 1 if plays second}
+        \PYG{n}{agent\PYGZus{}position} \PYG{o}{=} \PYG{n}{player\PYGZus{}id}
+
+        \PYG{k}{if} \PYG{n}{player\PYGZus{}who\PYGZus{}last\PYGZus{}moved} \PYG{o}{==} \PYG{n}{agent\PYGZus{}position} \PYG{o+ow}{and} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}state}\PYG{o}{.}\PYG{n}{check\PYGZus{}winner}\PYG{p}{()} \PYG{o}{==} \PYG{n}{agent\PYGZus{}position}\PYG{p}{:}
+            \PYG{c+c1}{\PYGZsh{} MCTS won}
+            \PYG{k}{return} \PYG{l+m+mi}{1}
+        \PYG{k}{elif} \PYG{n}{player\PYGZus{}who\PYGZus{}last\PYGZus{}moved} \PYG{o}{==} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{agent\PYGZus{}position} \PYG{o+ow}{and} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}state}\PYG{o}{.}\PYG{n}{check\PYGZus{}winner}\PYG{p}{()} \PYG{o}{==} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{agent\PYGZus{}position}\PYG{p}{:}
+            \PYG{c+c1}{\PYGZsh{} MCTS lost}
+            \PYG{k}{return} \PYG{l+m+mi}{0}
+        \PYG{k}{elif} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}state}\PYG{o}{.}\PYG{n}{check\PYGZus{}winner}\PYG{p}{()} \PYG{o}{==} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{:}
+            \PYG{c+c1}{\PYGZsh{} Draw game}
+            \PYG{k}{return} \PYG{l+m+mf}{0.5}
+
+    \PYG{k}{def} \PYG{n+nf}{find\PYGZus{}random\PYGZus{}child}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
+        \PYG{n}{free\PYGZus{}positions} \PYG{o}{=} \PYG{p}{[]}
+        \PYG{n}{board} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}state}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{()}
+        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{4}\PYG{p}{):}
+            \PYG{k}{for} \PYG{n}{j} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{4}\PYG{p}{):}
+                \PYG{k}{if} \PYG{n}{board}\PYG{p}{[}\PYG{n}{i}\PYG{p}{][}\PYG{n}{j}\PYG{p}{]} \PYG{o}{==} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{:}
+                    \PYG{n}{free\PYGZus{}positions}\PYG{o}{.}\PYG{n}{append}\PYG{p}{((}\PYG{n}{i}\PYG{p}{,} \PYG{n}{j}\PYG{p}{))}
+        \PYG{n}{place} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{free\PYGZus{}positions}\PYG{p}{)}
+        \PYG{n}{new\PYGZus{}quarto} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{\PYGZus{}state}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{} new\PYGZus{}quarto = Quarto(board=self.\PYGZus{}state.state\PYGZus{}as\PYGZus{}array(), selected\PYGZus{}piece=self.\PYGZus{}state.get\PYGZus{}selected\PYGZus{}piece(), curr\PYGZus{}player=self.\PYGZus{}state.get\PYGZus{}current\PYGZus{}player())}
+        \PYG{n}{new\PYGZus{}quarto}\PYG{o}{.}\PYG{n}{place}\PYG{p}{(}\PYG{n}{place}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{place}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{])}
+        \PYG{k}{if} \PYG{n}{new\PYGZus{}quarto}\PYG{o}{.}\PYG{n}{check\PYGZus{}finished}\PYG{p}{()} \PYG{o+ow}{or} \PYG{n}{new\PYGZus{}quarto}\PYG{o}{.}\PYG{n}{check\PYGZus{}winner}\PYG{p}{()} \PYG{o}{!=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{:}
+            \PYG{n}{final\PYGZus{}point} \PYG{o}{=} \PYG{k+kc}{True}
+        \PYG{k}{else}\PYG{p}{:}
+            \PYG{n}{new\PYGZus{}board} \PYG{o}{=} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{itertools}\PYG{o}{.}\PYG{n}{chain}\PYG{o}{.}\PYG{n}{from\PYGZus{}iterable}\PYG{p}{(}\PYG{n}{new\PYGZus{}quarto}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{()))}
+            \PYG{n}{free\PYGZus{}pieces} \PYG{o}{=} \PYG{p}{[}\PYG{n}{piece} \PYG{k}{for} \PYG{n}{piece} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mi}{16}\PYG{p}{)} \PYG{k}{if} \PYG{n}{piece} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n}{new\PYGZus{}board}\PYG{p}{]}
+            \PYG{n}{piece} \PYG{o}{=} \PYG{n}{random}\PYG{o}{.}\PYG{n}{choice}\PYG{p}{(}\PYG{n}{free\PYGZus{}pieces}\PYG{p}{)}
+            \PYG{n}{new\PYGZus{}quarto}\PYG{o}{.}\PYG{n}{select}\PYG{p}{(}\PYG{n}{piece}\PYG{p}{)}
+            \PYG{n}{final\PYGZus{}point} \PYG{o}{=} \PYG{k+kc}{False}
+        \PYG{n}{new\PYGZus{}quarto}\PYG{o}{.}\PYG{n}{\PYGZus{}current\PYGZus{}player} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{new\PYGZus{}quarto}\PYG{o}{.}\PYG{n}{\PYGZus{}current\PYGZus{}player}
+        \PYG{k}{return} \PYG{n}{Node}\PYG{p}{(}\PYG{n}{new\PYGZus{}quarto}\PYG{p}{,} \PYG{n}{place}\PYG{p}{,} \PYG{n}{final\PYGZus{}point}\PYG{p}{)}
+\end{Verbatim}
