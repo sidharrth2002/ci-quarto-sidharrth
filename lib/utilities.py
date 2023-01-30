@@ -101,6 +101,10 @@ class Node:
         if self.board.check_is_game_over():
             return set()
 
+        logging.debug("Before finding children")
+        logging.debug(f"Selected piece: {self.board.get_selected_piece()}")
+        logging.debug(f"Current state: {self.board.state_as_array()}")
+
         new_stuff = {
             create_node(self.board.make_move(self.board.get_selected_piece(), x, y, next_piece, newboard=True, return_move=True)) for x in range(self.BOARD_SIDE) for y in range(self.BOARD_SIDE) for next_piece in range(self.MAX_PIECES) if self.board.check_if_move_valid(self.board.get_selected_piece(), x, y, next_piece)
         }
@@ -124,7 +128,7 @@ class Node:
         player_who_last_moved = 1 - board.get_current_player()
 
         # 1 if plays second, 0 if plays first
-        agent_position = 0
+        agent_position = 1
 
         if player_who_last_moved == agent_position and 1 - board.check_winner() == agent_position:
             # agent won
@@ -151,6 +155,8 @@ class Node:
         board = self.board
         if board.check_is_game_over():
             return None
+        logging.debug("selected piece: ", board.get_selected_piece())
+        logging.debug("board", board.state_as_array())
         pa = [[board.get_selected_piece(), x, y, next_piece] for x in range(self.BOARD_SIDE) for y in range(self.BOARD_SIDE)
               for next_piece in range(self.MAX_PIECES) if board.check_if_move_valid(board.get_selected_piece(), x, y, next_piece)]
         pa = random.choice(pa)

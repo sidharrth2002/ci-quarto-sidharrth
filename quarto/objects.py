@@ -182,29 +182,51 @@ class QuartoParent(object):
                     return False
         return True
 
+    # def run(self) -> int:
+    #     '''
+    #     Run the game (with output for every move)
+    #     '''
+    #     winner = -1
+    #     while winner < 0 and not self.check_finished():
+    #         logging.info(f"Player {self._current_player} turn")
+    #         # self.print()
+    #         piece_ok = False
+    #         while not piece_ok:
+    #             piece_ok = self.select(self.__players[self._current_player].choose_piece(
+    #                 self._board, self.__selected_piece_index))
+    #         piece_ok = False
+    #         self._current_player = (
+    #             self._current_player + 1) % self.MAX_PLAYERS
+    #         # self.print()
+    #         while not piece_ok:
+    #             x, y = self.__players[self._current_player].place_piece(
+    #                 self._board, self.__selected_piece_index)
+    #             piece_ok = self.place(x, y)
+    #         # print(self.state())
+    #         winner = self.check_winner()
+    #     # self.print()
+    #     return winner
     def run(self) -> int:
         '''
         Run the game (with output for every move)
         '''
         winner = -1
         while winner < 0 and not self.check_finished():
-            logging.info(f"Player {self._current_player} turn")
-            # self.print()
+            print(f"Player {self._current_player} turn")
+            self.print()
             piece_ok = False
             while not piece_ok:
-                piece_ok = self.select(self.__players[self._current_player].choose_piece(
-                    self._board, self.__selected_piece_index))
+                piece_ok = self.select(
+                    self.__players[self._current_player].choose_piece())
             piece_ok = False
             self._current_player = (
                 self._current_player + 1) % self.MAX_PLAYERS
-            # self.print()
+            self.print()
             while not piece_ok:
-                x, y = self.__players[self._current_player].place_piece(
-                    self._board, self.__selected_piece_index)
+                x, y = self.__players[self._current_player].place_piece()
                 piece_ok = self.place(x, y)
-            # print(self.state())
             winner = self.check_winner()
-        # self.print()
+        self.print()
         return winner
 
 

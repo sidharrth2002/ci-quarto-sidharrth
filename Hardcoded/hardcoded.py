@@ -73,7 +73,7 @@ class HardcodedPlayer(Player):
         '''
         return self.hardcoded_strategy_get_piece()
 
-    def hardcoded_strategy_get_move(self, return_winning_piece_boolean=True):
+    def hardcoded_strategy_get_move(self, return_winning_piece_boolean=True, return_as_tuple=False):
         #  1. Play the piece handed over by the opponent:
         # (a) play a winning position if handed a winning piece;
         # (b) otherwise, play to build a line of like pieces if possible;
@@ -90,7 +90,10 @@ class HardcodedPlayer(Player):
         winning_piece, position = self.check_if_winning_piece(
             state, selected_piece)
         if winning_piece:
-            return selected_piece, position
+            if return_as_tuple:
+                return position[0], position[1]
+            else:
+                return selected_piece, position
 
         # check if the selected piece can be used to build a line of like pieces
 
@@ -217,5 +220,6 @@ class HardcodedPlayer(Player):
         Above function sometimes necessary to return additional information
         In game, first return value is not necessary
         '''
-        return self.hardcoded_strategy_get_move(return_winning_piece_boolean=False)
+        print('playing to build a line of like pieces')
+        return self.hardcoded_strategy_get_move(return_winning_piece_boolean=False, return_as_tuple=True)
 
