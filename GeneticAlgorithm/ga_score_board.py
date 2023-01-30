@@ -217,11 +217,14 @@ class FinalPlayer(Player):
                             self.current_state)
                         action = self.ql_mcts.get_action(self.current_state)
                         self.ql_mcts.previous_action = action
+                        # store the next piece for when choose is called
+                        # self.ql_mcts_next_piece = self.ql_mcts.tree.choose_piece()
+                        self.ql_mcts_next_piece = self.ql_mcts.tree.choose_piece()
                         self.ql_mcts.current_state.select(
                             self.current_state.get_selected_piece())
                         self.ql_mcts.current_state.place(action[0], action[1])
                         self.ql_mcts.current_state.set_selected_piece(
-                            action[2])
+                            self.ql_mcts_next_piece)
                         self.ql_mcts.current_state.switch_player()
                         player = 1 - player
 
@@ -298,19 +301,6 @@ class FinalPlayer(Player):
             self.ql_mcts_next_piece = -1
             return next_piece
 
-        # else:
-        #     # play using QL-MCTS
-        #     print('ql-mcts choose')
-        #     print(f"Selected piece: {self.current_state.get_selected_piece()}")
-        #     print(f"Current state: {self.current_state.state_as_array()}")
-        #     self.ql_mcts.previous_state = deepcopy(
-        #         self.current_state)
-        #     action = self.ql_mcts.get_action(self.current_state)
-        #     # self.ql_mcts.previous_action = action
-        #     # self.ql_mcts.current_state.select(
-        #     #     self.current_state.get_selected_piece())
-        #     return action[2]
-
     def place_piece(self):
         # python passes by reference
         # agent will use the state, etc. to update the Q-table
@@ -359,7 +349,7 @@ class FinalPlayer(Player):
 
             else:
                 # play using QL-MCTS
-                print('ql-mcts place')
+                logging.debug('ql-mcts')
                 print(f"Selected piece: {self.current_state.get_selected_piece()}")
                 self.ql_mcts.previous_state = deepcopy(
                     self.current_state)
@@ -371,16 +361,12 @@ class FinalPlayer(Player):
                 return action[0], action[1]
 
     def test_thresholds(self):
-        thresholds = {'random': 1000,
-                      'hardcoded': 1000, 'ql-mcts': 3}
-        win_rate = self.play_game(self.thresholds, num_games=10)
+        win_rate = self.play_game(self.thresholds, num_games=5)
+        print(f"Win rate: {win_rate}")
         return win_rate
 
 if __name__ == "__main__":
     final_player = FinalPlayer()
-    # best_thresholds = final_player.evolve()
-    # print(best_thresholds)
-
     average_win_rate = 0
     for i in range(10):
         win_rate = final_player.test_thresholds()

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2022/dev) (preloaded format=pdflatex 2021.11.1)  30 JAN 2023 00:25
+This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2022/dev) (preloaded format=pdflatex 2021.11.1)  30 JAN 2023 22:22
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -1191,38 +1191,28 @@ LaTeX Warning: `h' float specifier changed to `ht'.
 [98]
 \openout10 = `main.listing'.
 
- (./_minted-main/32ABB6C7D7A0DCC3F38C173993F504D3ECA43E68929C128CBEDBF6B90FA12E36.pygtex
-Overfull \hbox (146.74883pt too wide) in paragraph at lines 188--188
+ (./_minted-main/AF95237770DA017C313D5910487B3AF4ECA43E68929C128CBEDBF6B90FA12E36.pygtex
+Overfull \hbox (146.74883pt too wide) in paragraph at lines 190--190
 []\T1/cmtt/m/n/10.95 self[][].[]current_state[].[]check_if_move_valid([]self[][].[]current_state[].[]get_selected_piece(), 
  []
 
 
-Overfull \hbox (146.74883pt too wide) in paragraph at lines 203--203
+Overfull \hbox (146.74883pt too wide) in paragraph at lines 205--205
 []\T1/cmtt/m/n/10.95 self[][].[]current_state[].[]check_if_move_valid([]self[][].[]current_state[].[]get_selected_piece(), 
  []
 
 
-Overfull \hbox (124.11534pt too wide) in paragraph at lines 233--233
+Overfull \hbox (124.11534pt too wide) in paragraph at lines 236--236
 []\T1/cmtt/m/n/10.95 self[][].[]current_state[].[]check_if_move_valid([]self[][].[]current_state[].[]get_selected_piece(), 
  []
 
 
-Overfull \hbox (78.84837pt too wide) in paragraph at lines 285--285
+Overfull \hbox (101.48186pt too wide) in paragraph at lines 335--335
 []\T1/cmtt/m/n/10.95 self[][].[]current_state[].[]check_if_move_valid([]self[][].[]current_state[].[]get_selected_piece(), 
  []
 
 
-Overfull \hbox (78.84837pt too wide) in paragraph at lines 296--296
-\T1/cmtt/m/it/10.95 self.current_state.check_if_move_valid(self.current_state.get_selected_piece(), 
- []
-
-
-Overfull \hbox (101.48186pt too wide) in paragraph at lines 341--341
-[]\T1/cmtt/m/n/10.95 self[][].[]current_state[].[]check_if_move_valid([]self[][].[]current_state[].[]get_selected_piece(), 
- []
-
-
-Overfull \hbox (101.48186pt too wide) in paragraph at lines 352--352
+Overfull \hbox (101.48186pt too wide) in paragraph at lines 346--346
 \T1/cmtt/m/it/10.95 self.current_state.check_if_move_valid(self.current_state.get_selected_piece(), 
  []
 
@@ -1232,18 +1222,18 @@ Overfull \hbox (101.48186pt too wide) in paragraph at lines 352--352
  (./_minted-main/BF44E4661ECA12C711F45879D5FD0161ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [107] [108] [109] [110] [111]
 \openout10 = `main.listing'.
 
- (./_minted-main/9C69E1D5D6220A4F3B2DEF6AF162CE70ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [112] [113] [114] [115] [116] [117] [118] [119] [120] [121]
-\openout10 = `main.listing'.
-
  (./_minted-main/E38D269B6C2BF68AE2C45C19681FDCA9ECA43E68929C128CBEDBF6B90FA12E36.pygtex
 Overfull \hbox (33.5814pt too wide) in paragraph at lines 322--322
 []\T1/cmtt/m/n/10.95 self[][].[]board[].[]check_if_move_valid([]self[][].[]board[].[]get_selected_piece(), 
  []
 
-) [122] [123] [124] [125] [126] [127] [128] [129]
+) [112] [113] [114] [115] [116] [117] [118] [119]
 \openout10 = `main.listing'.
 
- (./_minted-main/A7F24F88430D04E456184B042856F3FCECA43E68929C128CBEDBF6B90FA12E36.pygtex) [130] [131] [132] [133] [134] [135] [136] [137] [138] [139]
+ (./_minted-main/A7F24F88430D04E456184B042856F3FCECA43E68929C128CBEDBF6B90FA12E36.pygtex) [120] [121] [122] [123] [124] [125] [126] [127] [128] [129]
+\openout10 = `main.listing'.
+
+ (./_minted-main/9C69E1D5D6220A4F3B2DEF6AF162CE70ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [130] [131] [132] [133] [134] [135] [136] [137] [138] [139]
 \openout10 = `main.listing'.
 
  (./_minted-main/420173D8269AC905D2D08016A1B543B7ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [140] [141] [142] [143] [144] [145] [146]) [147] [148
@@ -1251,20 +1241,20 @@ Overfull \hbox (33.5814pt too wide) in paragraph at lines 322--322
 
 ] (./main.aux (./lab1.aux) (./lab2.aux) (./lab3.aux) (./final-project.aux))
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 3740043A5537DFEF619989E091F7832E;8924.
+(rerunfilecheck)             Checksum: FB705A56C62574FED4964FB48D3613E2;9020.
 runsystem(rm main.pyg)...executed.
 
  ) 
 Here is how much of TeX's memory you used:
- 34767 strings out of 478579
- 687162 string characters out of 5853443
- 1280973 words of memory out of 5000000
- 51594 multiletter control sequences out of 15000+600000
+ 34766 strings out of 478579
+ 687145 string characters out of 5853443
+ 1284549 words of memory out of 5000000
+ 51593 multiletter control sequences out of 15000+600000
  426752 words of font info for 85 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  99i,13n,117p,1025b,1514s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}{/usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}</usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1728.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx2488.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfcc1728.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfcc2074.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfit1095.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm0600.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1440.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfti1440.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sftt1095.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sftt1200.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sftt1440.pfb>
-Output written on main.pdf (149 pages, 930228 bytes).
+Output written on main.pdf (149 pages, 929827 bytes).
 PDF statistics:
  1201 PDF objects out of 1440 (max. 8388607)
  982 compressed objects within 10 object streams

@@ -2,6 +2,7 @@
 \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
 \PYG{l+s+sd}{Genetic Algorithm for Quarto}
 \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{k+kn}{import} \PYG{n+nn}{os}
 \PYG{k+kn}{import} \PYG{n+nn}{sys}
 \PYG{n}{sys}\PYG{o}{.}\PYG{n}{path}\PYG{o}{.}\PYG{n}{insert}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}..\PYGZsq{}}\PYG{p}{)}
 
@@ -58,8 +59,9 @@
         \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{thresholds} \PYG{o}{=} \PYG{p}{\PYGZob{}}
             \PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{:} \PYG{l+m+mf}{1.090773081612301}\PYG{p}{,}
             \PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{:} \PYG{l+m+mf}{2.790328881747581}\PYG{p}{,}
-            \PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{:} \PYG{l+m+mf}{8.251997327518943}
+            \PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{:} \PYG{l+m+mf}{6.251997327518943}
         \PYG{p}{\PYGZcb{}}
+        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts\PYGZus{}next\PYGZus{}piece} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}
 
     \PYG{k}{def} \PYG{n+nf}{generate\PYGZus{}population}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{,} \PYG{n}{population\PYGZus{}size}\PYG{p}{):}
         \PYG{n}{population} \PYG{o}{=} \PYG{p}{[]}
@@ -201,10 +203,8 @@
                         \PYG{n}{winning\PYGZus{}piece}\PYG{p}{,} \PYG{n}{position} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}move}\PYG{p}{()}
                         \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}piece}\PYG{p}{()}
                         \PYG{k}{while} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}move\PYGZus{}valid}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(),} \PYG{n}{position}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{position}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{next\PYGZus{}piece}\PYG{p}{)} \PYG{o+ow}{is} \PYG{k+kc}{False}\PYG{p}{:}
-                            \PYG{n}{winning\PYGZus{}piece}\PYG{p}{,} \PYG{n}{position} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}move}\PYG{p}{(}
-                                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
-                            \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}piece}\PYG{p}{(}
-                                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+                            \PYG{n}{winning\PYGZus{}piece}\PYG{p}{,} \PYG{n}{position} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}move}\PYG{p}{()}
+                            \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}piece}\PYG{p}{()}
                         \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{select}\PYG{p}{(}\PYG{n}{state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())}
                         \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{place}\PYG{p}{(}\PYG{n}{position}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{position}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])}
                         \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{set\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(}\PYG{n}{next\PYGZus{}piece}\PYG{p}{)}
@@ -213,16 +213,19 @@
 
                     \PYG{k}{else}\PYG{p}{:}
                         \PYG{c+c1}{\PYGZsh{} play using QL\PYGZhy{}MCTS}
-                        \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{)}
+                        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{)}
                         \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{previous\PYGZus{}state} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}
                             \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
                         \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{get\PYGZus{}action}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
                         \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{previous\PYGZus{}action} \PYG{o}{=} \PYG{n}{action}
+                        \PYG{c+c1}{\PYGZsh{} store the next piece for when choose is called}
+                        \PYG{c+c1}{\PYGZsh{} self.ql\PYGZus{}mcts\PYGZus{}next\PYGZus{}piece = self.ql\PYGZus{}mcts.tree.choose\PYGZus{}piece()}
+                        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts\PYGZus{}next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{tree}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{()}
                         \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{select}\PYG{p}{(}
                             \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())}
                         \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{place}\PYG{p}{(}\PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{])}
                         \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{set\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(}
-                            \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{])}
+                            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts\PYGZus{}next\PYGZus{}piece}\PYG{p}{)}
                         \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{switch\PYGZus{}player}\PYG{p}{()}
                         \PYG{n}{player} \PYG{o}{=} \PYG{l+m+mi}{1} \PYG{o}{\PYGZhy{}} \PYG{n}{player}
 
@@ -274,40 +277,30 @@
         \PYG{c+c1}{\PYGZsh{} python passes by reference}
         \PYG{c+c1}{\PYGZsh{} agent will use the state, etc. to update the Q\PYGZhy{}table}
         \PYG{c+c1}{\PYGZsh{} this function also wipes the MCTS tree}
-        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{clear\PYGZus{}and\PYGZus{}set\PYGZus{}current\PYGZus{}state}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{} self.ql\PYGZus{}mcts.clear\PYGZus{}and\PYGZus{}set\PYGZus{}current\PYGZus{}state(self.current\PYGZus{}state)}
         \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded} \PYG{o}{=} \PYG{n}{HardcodedPlayer}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
 
+        \PYG{k}{if} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts\PYGZus{}next\PYGZus{}piece} \PYG{o}{!=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}\PYG{p}{:}
+            \PYG{k}{if} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts\PYGZus{}next\PYGZus{}piece} \PYG{o+ow}{not} \PYG{o+ow}{in} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{itertools}\PYG{o}{.}\PYG{n}{chain}\PYG{p}{(}\PYG{o}{*}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{())):}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts choose\PYGZsq{}}\PYG{p}{)}
+                \PYG{k}{return} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts\PYGZus{}next\PYGZus{}piece}
+
         \PYG{k}{if} \PYG{n}{key} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{:}
-            \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{)}
             \PYG{c+c1}{\PYGZsh{} play randomly}
-            \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{place\PYGZus{}piece}\PYG{p}{()}
             \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{()}
-            \PYG{k}{while} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{check\PYGZus{}if\PYGZus{}move\PYGZus{}valid}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{(),} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],} \PYG{n}{next\PYGZus{}piece}\PYG{p}{)} \PYG{o+ow}{is} \PYG{k+kc}{False}\PYG{p}{:}
-                \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{place\PYGZus{}piece}\PYG{p}{()}
+            \PYG{k}{while} \PYG{n}{next\PYGZus{}piece} \PYG{o+ow}{in} \PYG{n+nb}{list}\PYG{p}{(}\PYG{n}{itertools}\PYG{o}{.}\PYG{n}{chain}\PYG{p}{(}\PYG{o}{*}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{state\PYGZus{}as\PYGZus{}array}\PYG{p}{())):}
                 \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{random\PYGZus{}player}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{()}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts\PYGZus{}next\PYGZus{}piece} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}
             \PYG{k}{return} \PYG{n}{next\PYGZus{}piece}
 
-        \PYG{k}{elif} \PYG{n}{key} \PYG{o}{==} \PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{:}
-            \PYG{c+c1}{\PYGZsh{} play using hardcoded strategy}
-            \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{)}
-            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{previous\PYGZus{}state} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
-            \PYG{c+c1}{\PYGZsh{} winning\PYGZus{}piece, position = self.hardcoded.hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}move()}
-            \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}piece}\PYG{p}{()}
-            \PYG{c+c1}{\PYGZsh{} while self.current\PYGZus{}state.check\PYGZus{}if\PYGZus{}move\PYGZus{}valid(self.current\PYGZus{}state.get\PYGZus{}selected\PYGZus{}piece(), position[0], position[1], next\PYGZus{}piece) is False:}
-            \PYG{c+c1}{\PYGZsh{}     winning\PYGZus{}piece, position = self.hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}move()}
-            \PYG{c+c1}{\PYGZsh{}     next\PYGZus{}piece = self.hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}piece()}
-            \PYG{k}{return} \PYG{n}{next\PYGZus{}piece}
-
+        \PYG{c+c1}{\PYGZsh{} elif key == \PYGZsq{}hardcoded\PYGZsq{}:}
         \PYG{k}{else}\PYG{p}{:}
-            \PYG{c+c1}{\PYGZsh{} play using QL\PYGZhy{}MCTS}
-            \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{)}
-            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{previous\PYGZus{}state} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}
-                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
-            \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{get\PYGZus{}action}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
-            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{previous\PYGZus{}action} \PYG{o}{=} \PYG{n}{action}
-            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{select}\PYG{p}{(}
-                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{())}
-            \PYG{k}{return} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{2}\PYG{p}{]}
+            \PYG{c+c1}{\PYGZsh{} play using hardcoded strategy}
+            \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{)}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{previous\PYGZus{}state} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+            \PYG{n}{next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}piece}\PYG{p}{()}
+            \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts\PYGZus{}next\PYGZus{}piece} \PYG{o}{=} \PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{1}
+            \PYG{k}{return} \PYG{n}{next\PYGZus{}piece}
 
     \PYG{k}{def} \PYG{n+nf}{place\PYGZus{}piece}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
         \PYG{c+c1}{\PYGZsh{} python passes by reference}
@@ -319,7 +312,8 @@
         \PYG{c+c1}{\PYGZsh{} python passes by reference}
         \PYG{c+c1}{\PYGZsh{} agent will use the state, etc. to update the Q\PYGZhy{}table}
         \PYG{c+c1}{\PYGZsh{} this function also wipes the MCTS tree}
-        \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{clear\PYGZus{}and\PYGZus{}set\PYGZus{}current\PYGZus{}state}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
+        \PYG{c+c1}{\PYGZsh{} self.ql\PYGZus{}mcts.clear\PYGZus{}and\PYGZus{}set\PYGZus{}current\PYGZus{}state(self.current\PYGZus{}state)}
+
         \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded} \PYG{o}{=} \PYG{n}{HardcodedPlayer}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
 
         \PYG{k}{while} \PYG{k+kc}{True}\PYG{p}{:}
@@ -347,7 +341,7 @@
                 \PYG{c+c1}{\PYGZsh{} play using hardcoded strategy}
                 \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{)}
                 \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{previous\PYGZus{}state} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
-                \PYG{n}{winning\PYGZus{}piece}\PYG{p}{,} \PYG{n}{position} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}move}\PYG{p}{()}
+                \PYG{n}{winning\PYGZus{}piece}\PYG{p}{,} \PYG{n}{position} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{hardcoded}\PYG{o}{.}\PYG{n}{hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}move}\PYG{p}{()}
                 \PYG{c+c1}{\PYGZsh{} next\PYGZus{}piece = self.hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}piece()}
                 \PYG{c+c1}{\PYGZsh{} while self.current\PYGZus{}state.check\PYGZus{}if\PYGZus{}move\PYGZus{}valid(self.current\PYGZus{}state.get\PYGZus{}selected\PYGZus{}piece(), position[0], position[1], next\PYGZus{}piece) is False:}
                 \PYG{c+c1}{\PYGZsh{}     winning\PYGZus{}piece, position = self.hardcoded\PYGZus{}strategy\PYGZus{}get\PYGZus{}move()}
@@ -357,23 +351,23 @@
             \PYG{k}{else}\PYG{p}{:}
                 \PYG{c+c1}{\PYGZsh{} play using QL\PYGZhy{}MCTS}
                 \PYG{n}{logging}\PYG{o}{.}\PYG{n}{debug}\PYG{p}{(}\PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{)}
+                \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Selected piece: }\PYG{l+s+si}{\PYGZob{}}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{o}{.}\PYG{n}{get\PYGZus{}selected\PYGZus{}piece}\PYG{p}{()}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
                 \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{previous\PYGZus{}state} \PYG{o}{=} \PYG{n}{deepcopy}\PYG{p}{(}
                     \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
                 \PYG{n}{action} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{get\PYGZus{}action}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{current\PYGZus{}state}\PYG{p}{)}
                 \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{previous\PYGZus{}action} \PYG{o}{=} \PYG{n}{action}
+                \PYG{c+c1}{\PYGZsh{} store the next piece for when choose is called}
+                \PYG{c+c1}{\PYGZsh{} self.ql\PYGZus{}mcts\PYGZus{}next\PYGZus{}piece = self.ql\PYGZus{}mcts.tree.choose\PYGZus{}piece()}
+                \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts\PYGZus{}next\PYGZus{}piece} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{ql\PYGZus{}mcts}\PYG{o}{.}\PYG{n}{tree}\PYG{o}{.}\PYG{n}{choose\PYGZus{}piece}\PYG{p}{()}
                 \PYG{k}{return} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{],} \PYG{n}{action}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]}
 
     \PYG{k}{def} \PYG{n+nf}{test\PYGZus{}thresholds}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{p}{):}
-        \PYG{n}{thresholds} \PYG{o}{=} \PYG{p}{\PYGZob{}}\PYG{l+s+s1}{\PYGZsq{}random\PYGZsq{}}\PYG{p}{:} \PYG{l+m+mi}{10000}\PYG{p}{,}
-                        \PYG{l+s+s1}{\PYGZsq{}hardcoded\PYGZsq{}}\PYG{p}{:} \PYG{l+m+mi}{3}\PYG{p}{,} \PYG{l+s+s1}{\PYGZsq{}ql\PYGZhy{}mcts\PYGZsq{}}\PYG{p}{:} \PYG{l+m+mi}{1000}\PYG{p}{\PYGZcb{}}
-        \PYG{n}{win\PYGZus{}rate} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{play\PYGZus{}game}\PYG{p}{(}\PYG{n}{thresholds}\PYG{p}{,} \PYG{n}{num\PYGZus{}games}\PYG{o}{=}\PYG{l+m+mi}{10}\PYG{p}{)}
+        \PYG{n}{win\PYGZus{}rate} \PYG{o}{=} \PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{play\PYGZus{}game}\PYG{p}{(}\PYG{n+nb+bp}{self}\PYG{o}{.}\PYG{n}{thresholds}\PYG{p}{,} \PYG{n}{num\PYGZus{}games}\PYG{o}{=}\PYG{l+m+mi}{5}\PYG{p}{)}
+        \PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+sa}{f}\PYG{l+s+s2}{\PYGZdq{}Win rate: }\PYG{l+s+si}{\PYGZob{}}\PYG{n}{win\PYGZus{}rate}\PYG{l+s+si}{\PYGZcb{}}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
         \PYG{k}{return} \PYG{n}{win\PYGZus{}rate}
 
 \PYG{k}{if} \PYG{n+nv+vm}{\PYGZus{}\PYGZus{}name\PYGZus{}\PYGZus{}} \PYG{o}{==} \PYG{l+s+s2}{\PYGZdq{}\PYGZus{}\PYGZus{}main\PYGZus{}\PYGZus{}\PYGZdq{}}\PYG{p}{:}
     \PYG{n}{final\PYGZus{}player} \PYG{o}{=} \PYG{n}{FinalPlayer}\PYG{p}{()}
-    \PYG{c+c1}{\PYGZsh{} best\PYGZus{}thresholds = final\PYGZus{}player.evolve()}
-    \PYG{c+c1}{\PYGZsh{} print(best\PYGZus{}thresholds)}
-
     \PYG{n}{average\PYGZus{}win\PYGZus{}rate} \PYG{o}{=} \PYG{l+m+mi}{0}
     \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n+nb}{range}\PYG{p}{(}\PYG{l+m+mi}{10}\PYG{p}{):}
         \PYG{n}{win\PYGZus{}rate} \PYG{o}{=} \PYG{n}{final\PYGZus{}player}\PYG{o}{.}\PYG{n}{test\PYGZus{}thresholds}\PYG{p}{()}
