@@ -211,6 +211,7 @@ class FinalPlayer(Player):
 
                     else:
                         # play using QL-MCTS
+                        print('ql-mcts')
                         self.ql_mcts.previous_state = deepcopy(
                             self.current_state)
                         action = self.ql_mcts.get_action(self.current_state)
