@@ -237,8 +237,14 @@ class Quarto(QuartoParent):
     BOARD_SIDE = 4
     MAX_PIECES = 16
 
-    def __init__(self, pieces=None) -> None:
+    def __init__(self, pieces=None, board=None, selected_piece=None, curr_player=None) -> None:
         super().__init__(pieces)
+        if selected_piece is not None:
+            self.set_selected_piece(selected_piece)
+        if curr_player is not None:
+            self._current_player = curr_player
+        if board is not None:
+            self.set_board(board)
 
     def set_board(self, board):
         self._board = board
