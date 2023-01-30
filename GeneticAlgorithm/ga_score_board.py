@@ -312,7 +312,7 @@ class FinalPlayer(Player):
         # python passes by reference
         # agent will use the state, etc. to update the Q-table
         # this function also wipes the MCTS tree
-        self.ql_mcts.clear_and_set_current_state(self.current_state)
+        # self.ql_mcts.clear_and_set_current_state(self.current_state)
         self.hardcoded = HardcodedPlayer(self.current_state)
 
         while True:
@@ -354,6 +354,8 @@ class FinalPlayer(Player):
                     self.current_state)
                 action = self.ql_mcts.get_action(self.current_state)
                 self.ql_mcts.previous_action = action
+                # store the next piece for when choose is called
+                self.ql_mcts_next_piece = action[-1]
                 return action[0], action[1]
 
     def test_thresholds(self):
