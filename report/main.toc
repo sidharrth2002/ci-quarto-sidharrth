@@ -7,10 +7,11 @@
 \contentsline {subsubsection}{\numberline {2.1.3}A* Search Using a Priority Queue}{5}{subsubsection.2.1.3}%
 \contentsline {subsubsection}{\numberline {2.1.4}A* Search with Fully Connected Graph (Failed Idea)}{8}{subsubsection.2.1.4}%
 \contentsline {subsection}{\numberline {2.2}Results}{13}{subsection.2.2}%
-\contentsline {subsection}{\numberline {2.3}Received Reviews}{15}{subsection.2.3}%
-\contentsline {subsection}{\numberline {2.4}Given Reviews}{17}{subsection.2.4}%
-\contentsline {subsubsection}{\numberline {2.4.1}Shayan}{17}{subsubsection.2.4.1}%
-\contentsline {subsubsection}{\numberline {2.4.2}Arman}{18}{subsubsection.2.4.2}%
+\contentsline {subsection}{\numberline {2.3}Acknowledgements}{13}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Received Reviews}{15}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}Given Reviews}{17}{subsection.2.5}%
+\contentsline {subsubsection}{\numberline {2.5.1}Shayan}{17}{subsubsection.2.5.1}%
+\contentsline {subsubsection}{\numberline {2.5.2}Arman}{18}{subsubsection.2.5.2}%
 \contentsline {section}{\numberline {3}Lab 2}{21}{section.3}%
 \contentsline {subsection}{\numberline {3.1}Solution}{21}{subsection.3.1}%
 \contentsline {subsubsection}{\numberline {3.1.1}Representing the problem}{21}{subsubsection.3.1.1}%
@@ -24,12 +25,13 @@
 \contentsline {subsubsection}{\numberline {3.3.3}Swap Mutation}{24}{subsubsection.3.3.3}%
 \contentsline {subsubsection}{\numberline {3.3.4}Inversion Mutation}{24}{subsubsection.3.3.4}%
 \contentsline {subsection}{\numberline {3.4}Full Code}{25}{subsection.3.4}%
-\contentsline {subsection}{\numberline {3.5}Received Reviews}{31}{subsection.3.5}%
-\contentsline {subsection}{\numberline {3.6}Given Reviews}{33}{subsection.3.6}%
-\contentsline {subsubsection}{\numberline {3.6.1}Erik}{33}{subsubsection.3.6.1}%
-\contentsline {subsubsection}{\numberline {3.6.2}Karl}{37}{subsubsection.3.6.2}%
-\contentsline {subsubsection}{\numberline {3.6.3}Ricardo}{42}{subsubsection.3.6.3}%
-\contentsline {subsubsection}{\numberline {3.6.4}Francesco}{47}{subsubsection.3.6.4}%
+\contentsline {subsection}{\numberline {3.5}Acknowledgements}{31}{subsection.3.5}%
+\contentsline {subsection}{\numberline {3.6}Received Reviews}{31}{subsection.3.6}%
+\contentsline {subsection}{\numberline {3.7}Given Reviews}{33}{subsection.3.7}%
+\contentsline {subsubsection}{\numberline {3.7.1}Erik}{33}{subsubsection.3.7.1}%
+\contentsline {subsubsection}{\numberline {3.7.2}Karl}{37}{subsubsection.3.7.2}%
+\contentsline {subsubsection}{\numberline {3.7.3}Ricardo}{42}{subsubsection.3.7.3}%
+\contentsline {subsubsection}{\numberline {3.7.4}Francesco}{47}{subsubsection.3.7.4}%
 \contentsline {section}{\numberline {4}Lab 3}{51}{section.4}%
 \contentsline {subsection}{\numberline {4.1}Solution}{51}{subsection.4.1}%
 \contentsline {subsubsection}{\numberline {4.1.1}Fixed Rules}{51}{subsubsection.4.1.1}%
@@ -50,21 +52,21 @@
 \contentsline {paragraph}{Minimax}{94}{section*.17}%
 \contentsline {paragraph}{Reinforcement Learning}{94}{section*.18}%
 \contentsline {subsubsection}{\numberline {4.4.2}Jaco}{95}{subsubsection.4.4.2}%
-\contentsline {section}{\numberline {5}Final Project}{96}{section.5}%
-\contentsline {subsection}{\numberline {5.1}Acknowledgements}{96}{subsection.5.1}%
-\contentsline {subsection}{\numberline {5.2}My Strategy For Solving the Problem}{96}{subsection.5.2}%
-\contentsline {subsubsection}{\numberline {5.2.1}Step 1: Implement and Tune Multiple Search Algorithms}{96}{subsubsection.5.2.1}%
-\contentsline {subsubsection}{\numberline {5.2.2}Step 2: Analysing the Algorithms}{99}{subsubsection.5.2.2}%
-\contentsline {subsubsection}{\numberline {5.2.3}Step 3: Implementing the Hybrid Agent}{99}{subsubsection.5.2.3}%
-\contentsline {subsection}{\numberline {5.3}Results}{101}{subsection.5.3}%
-\contentsline {subsection}{\numberline {5.4}Code of Hybrid Agent and Sub Players}{101}{subsection.5.4}%
-\contentsline {subsubsection}{\numberline {5.4.1}Final Hybrid Player}{101}{subsubsection.5.4.1}%
-\contentsline {subsubsection}{\numberline {5.4.2}Faster Version of MCTS}{110}{subsubsection.5.4.2}%
-\contentsline {subsubsection}{\numberline {5.4.3}Hardcoded Strategy}{115}{subsubsection.5.4.3}%
-\contentsline {subsubsection}{\numberline {5.4.4}Q-Learning + MCTS}{120}{subsubsection.5.4.4}%
-\contentsline {subsection}{\numberline {5.5}Utility Functions}{126}{subsection.5.5}%
-\contentsline {subsubsection}{\numberline {5.5.1}OpenAI Gym Environment for Quarto}{126}{subsubsection.5.5.1}%
-\contentsline {subsection}{\numberline {5.6}Code for Unsuccessful Players}{127}{subsection.5.6}%
-\contentsline {subsubsection}{\numberline {5.6.1}Slower MCTS With Different Node Structure}{127}{subsubsection.5.6.1}%
-\contentsline {subsubsection}{\numberline {5.6.2}Deep Q-Network}{137}{subsubsection.5.6.2}%
-\contentsline {section}{\numberline {6}Conclusion and Final Considerations}{144}{section.6}%
+\contentsline {section}{\numberline {5}Final Project}{98}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Acknowledgements}{98}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Strategy For Solving the Problem}{98}{subsection.5.2}%
+\contentsline {subsubsection}{\numberline {5.2.1}Step 1: Implement and Tune Multiple Search Algorithms}{98}{subsubsection.5.2.1}%
+\contentsline {subsubsection}{\numberline {5.2.2}Step 2: Analysing the Algorithms}{101}{subsubsection.5.2.2}%
+\contentsline {subsubsection}{\numberline {5.2.3}Step 3: Implementing the Hybrid Agent}{101}{subsubsection.5.2.3}%
+\contentsline {subsection}{\numberline {5.3}Results}{103}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Code of Hybrid Agent and Sub Players}{103}{subsection.5.4}%
+\contentsline {subsubsection}{\numberline {5.4.1}Hybrid Player}{103}{subsubsection.5.4.1}%
+\contentsline {subsubsection}{\numberline {5.4.2}Faster Version of MCTS}{112}{subsubsection.5.4.2}%
+\contentsline {subsubsection}{\numberline {5.4.3}Hardcoded Strategy}{117}{subsubsection.5.4.3}%
+\contentsline {subsubsection}{\numberline {5.4.4}Q-Learning + MCTS}{122}{subsubsection.5.4.4}%
+\contentsline {subsection}{\numberline {5.5}Utility Functions}{128}{subsection.5.5}%
+\contentsline {subsubsection}{\numberline {5.5.1}OpenAI Gym Environment for Quarto}{128}{subsubsection.5.5.1}%
+\contentsline {subsection}{\numberline {5.6}Code for Unsuccessful Players}{129}{subsection.5.6}%
+\contentsline {subsubsection}{\numberline {5.6.1}Slower MCTS With Different Node Structure}{129}{subsubsection.5.6.1}%
+\contentsline {subsubsection}{\numberline {5.6.2}Deep Q-Network}{139}{subsubsection.5.6.2}%
+\contentsline {section}{\numberline {6}Conclusion and Final Considerations}{146}{section.6}%

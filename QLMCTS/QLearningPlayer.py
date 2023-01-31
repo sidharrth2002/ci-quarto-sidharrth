@@ -1,29 +1,29 @@
+import tqdm
+from lib.isomorphic import BoardTransforms
+from lib.players import Player, RandomPlayer
+from quarto.objects import Quarto
+from MCTS2.mcts import MCTS
+from MCTS.mcts import decode_tree
+import time
+import random
+import os
+import math
+import logging
+import json
+import itertools
+from copy import deepcopy
+from collections import defaultdict
 import sys
 sys.path.insert(0, '..')
 
-from collections import defaultdict
-from copy import deepcopy
-import itertools
-import json
-import logging
-import math
-import os
-import random
-import time
 
 # from MCTS import MonteCarloTreeSearch
-from MCTS.mcts import decode_tree
-from MCTS2.mcts import MCTS
-from quarto.objects import Quarto
-from lib.players import Player, RandomPlayer
-from lib.isomorphic import BoardTransforms
 
-import tqdm
 logging.basicConfig(level=logging.DEBUG)
 
 
 class QLearningPlayer(Player):
-    def __init__(self, board: Quarto = Quarto(), epsilon=0.1, alpha=0.5, gamma=0.9, tree: MCTS = None):
+    def __init__(self, board: Quarto = Quarto(), epsilon=0.1, alpha=0.5, gamma=0.9, tree: MCTS = None, agent_position=0):
         self.epsilon = epsilon
         self.alpha = alpha
         self.gamma = gamma
@@ -39,7 +39,7 @@ class QLearningPlayer(Player):
 
         else:
             # load new tree
-            self.tree = MCTS(board=board)
+            self.tree = MCTS(board=board, player_id=agent_position)
 
         super().__init__(board)
 

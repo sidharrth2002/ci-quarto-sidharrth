@@ -20,7 +20,7 @@ While we follow the same hybrid strategy, our code is quite different, apart fro
 
 The code for this project is available on \href{https://github.com/sidharrth2002/ci-quarto-sidharrth}{Github}.
 
-\subsection{My Strategy For Solving the Problem}
+\subsection{Strategy For Solving the Problem}
 
 \subsubsection{Step 1: Implement and Tune Multiple Search Algorithms}
 
@@ -37,8 +37,9 @@ The following algorithms are implemented and the \textbf{best performing ones ar
     \item \textbf{Deep Q-Learning}: This agent uses a deep neural network to approximate the Q-function. It uses a replay buffer to store the experience tuples and uses a target network to stabilize the training process. The agent uses an epsilon-greedy policy to balance exploration and exploitation. I build two variations of Deep Q-networks linear DQN (made up of Dense layers) and Convolutional DQNs (made up of Conv2D layers).
     \begin{itemize}
         \item The input to the linear network is a flattened list of 1x17 pieces based on the current board composition, and the selected piece.
-        \item The input to the convolutional neural network is a 5x5x4 board composition, made up of the 3D characteristics of each piece and the selected piece for the player to play.
+        \item The input to the convolutional neural network is a 5x5x4 board composition, made up of the 3D characteristics of each piece and the selected piece for the player to play. The 5th row and column are appended and replicated with the selected piece for the player to play.
     \end{itemize}
+    The output of both models is a softmax vector of possible actions (x, y, next\_piece).
     A custom OpenAI Gym environment is created to make training, game steps and rewards easier to manage.
 
     \item \textbf{Q-Learning (Temporal Difference Learning)}: This agent uses a Q-table to store the Q-values. It uses a replay buffer to store the experience tuples and uses a target network to stabilize the training process. The agent uses an epsilon-greedy policy to balance exploration and exploitation.
@@ -91,7 +92,7 @@ Solution: Instead of keeping an extremely large tree, we record the result of ea
 
 \subsubsection{Step 3: Implementing the Hybrid Agent}
 
-Using the best performing algorithms, I created a hybrid agent that works in 3 phases. First, to get the game started, it will make random moves. After this, it will switch to a hardcoded strategy where it will attempt to computationally build lines of similar pieces. Finally, it will leverage the QL-MCTS algorithm to find the best moves and win the game. Since QL-MCTS is slow, it is kept as the final phase. This approach is shown in Figure \ref{fig:hybrid-agent}, and is a balance between speed and efficiency.
+Using the best performing algorithms, we created a hybrid agent that works in 3 phases. First, to get the game started, it will make random moves. After this, it will switch to a hardcoded strategy where it will attempt to computationally build lines of similar pieces. Finally, it will leverage the QL-MCTS algorithm to find the best moves and win the game. Since QL-MCTS is slow, it is kept as the final phase. This approach is shown in Figure \ref{fig:hybrid-agent}, and is a balance between speed and efficiency.
 
 \begin{figure}
     \centering
@@ -163,7 +164,7 @@ Tournament results are shown in Table \ref{results}, where each player is played
 
 This subsection covers the code of the final hybrid agent and the sub players it calls periodically.
 
-\subsubsection{Final Hybrid Player}
+\subsubsection{Hybrid Player}
 
 The final hybrid player's driver code is below. It uses a genetic algorithm to find the best thresholds for switching between the 3 strategies. It uses crossover and conditional mutations to find the best genome from a limited population size.
 

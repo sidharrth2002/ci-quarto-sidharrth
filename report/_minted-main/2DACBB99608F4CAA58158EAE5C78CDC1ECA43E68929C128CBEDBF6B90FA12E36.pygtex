@@ -1,0 +1,67 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n}{tree}\PYG{o}{=}\PYG{k+kc}{None}
+
+\PYG{k}{def} \PYG{n+nf}{minmax\PYGZus{}agent}\PYG{p}{(}\PYG{n}{state}\PYG{p}{:} \PYG{n}{Nim}\PYG{p}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{Nimply}\PYG{p}{:}
+
+    \PYG{k}{global} \PYG{n}{tree}
+    \PYG{n}{nodes}\PYG{o}{=}\PYG{p}{[[}\PYG{n}{node} \PYG{k}{for} \PYG{n}{node} \PYG{o+ow}{in} \PYG{n}{children}\PYG{p}{]} \PYG{k}{for} \PYG{n}{children} \PYG{o+ow}{in} \PYG{n}{LevelOrderGroupIter}\PYG{p}{(}\PYG{n}{tree}\PYG{p}{,}\PYG{n}{maxlevel}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{p}{)]}
+
+    \PYG{c+c1}{\PYGZsh{}CHECK IF TREE IS UP TO DATE}
+
+    \PYG{n}{root}\PYG{o}{=}\PYG{n}{nodes}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{][}\PYG{l+m+mi}{0}\PYG{p}{]}
+    \PYG{n}{root\PYGZus{}name}\PYG{o}{=}\PYG{n}{root}\PYG{o}{.}\PYG{n}{name}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}
+    \PYG{n}{nim\PYGZus{}root}\PYG{o}{=}\PYG{n}{Nim}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)}
+    \PYG{n}{nim\PYGZus{}root}\PYG{o}{.}\PYG{n}{fromString}\PYG{p}{(}\PYG{n}{root\PYGZus{}name}\PYG{p}{)}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{state}\PYG{o}{.}\PYG{n+nf+fm}{\PYGZus{}\PYGZus{}eq\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n}{nim\PYGZus{}root}\PYG{p}{)):}
+        \PYG{k}{pass}
+    \PYG{k}{else}\PYG{p}{:}
+        \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n}{nodes}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]:}
+            \PYG{n}{F}\PYG{o}{=}\PYG{n}{Nim}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)}
+            \PYG{n}{F}\PYG{o}{.}\PYG{n}{fromString}\PYG{p}{(}\PYG{n}{i}\PYG{o}{.}\PYG{n}{name}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{])}
+            \PYG{k}{if}\PYG{p}{(}\PYG{n}{state}\PYG{o}{.}\PYG{n+nf+fm}{\PYGZus{}\PYGZus{}eq\PYGZus{}\PYGZus{}}\PYG{p}{(}\PYG{n}{F}\PYG{p}{)):}
+                \PYG{n}{i}\PYG{o}{.}\PYG{n}{parent}\PYG{o}{=}\PYG{k+kc}{None}
+                \PYG{n}{tree}\PYG{o}{=}\PYG{n}{i}
+                \PYG{k}{break}
+
+
+    \PYG{c+c1}{\PYGZsh{}CHECK BEST MOVE}
+    \PYG{n}{nodes}\PYG{o}{=}\PYG{p}{[[}\PYG{n}{node} \PYG{k}{for} \PYG{n}{node} \PYG{o+ow}{in} \PYG{n}{children}\PYG{p}{]} \PYG{k}{for} \PYG{n}{children} \PYG{o+ow}{in} \PYG{n}{LevelOrderGroupIter}\PYG{p}{(}\PYG{n}{tree}\PYG{p}{,}\PYG{n}{maxlevel}\PYG{o}{=}\PYG{l+m+mi}{2}\PYG{p}{)]}
+
+    \PYG{c+c1}{\PYGZsh{}Final\PYGZhy{}move check}
+
+    \PYG{n}{root}\PYG{o}{=}\PYG{n}{nodes}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{][}\PYG{l+m+mi}{0}\PYG{p}{]}
+    \PYG{n}{root\PYGZus{}name}\PYG{o}{=}\PYG{n}{root}\PYG{o}{.}\PYG{n}{name}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]}
+    \PYG{n}{nim\PYGZus{}root}\PYG{o}{=}\PYG{n}{Nim}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)}
+    \PYG{n}{nim\PYGZus{}root}\PYG{o}{.}\PYG{n}{fromString}\PYG{p}{(}\PYG{n}{root\PYGZus{}name}\PYG{p}{)}
+    \PYG{k}{if}\PYG{p}{(}\PYG{n}{nim\PYGZus{}root}\PYG{o}{.}\PYG{n}{last\PYGZus{}move}\PYG{p}{()):}
+        \PYG{k}{for} \PYG{n}{i}\PYG{p}{,}\PYG{n}{j} \PYG{o+ow}{in} \PYG{n+nb}{enumerate}\PYG{p}{(}\PYG{n}{nim\PYGZus{}root}\PYG{o}{.}\PYG{n}{rows}\PYG{p}{):}
+            \PYG{k}{if} \PYG{n}{j}\PYG{o}{\PYGZgt{}}\PYG{l+m+mi}{0}\PYG{p}{:}
+                \PYG{k}{return} \PYG{n}{Nimply}\PYG{p}{(}\PYG{n}{i}\PYG{p}{,}\PYG{n}{j}\PYG{p}{)}
+
+
+    \PYG{n}{lower}\PYG{o}{=}\PYG{n}{np}\PYG{o}{.}\PYG{n}{inf}
+    \PYG{n}{lowerNode}\PYG{o}{=}\PYG{k+kc}{None}
+
+    \PYG{k}{for} \PYG{n}{i} \PYG{o+ow}{in} \PYG{n}{nodes}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]:}
+        \PYG{k}{if}\PYG{p}{(}\PYG{n}{i}\PYG{o}{.}\PYG{n}{name}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]}\PYG{o}{\PYGZlt{}}\PYG{n}{lower}\PYG{p}{):}
+            \PYG{n}{lowerNode}\PYG{o}{=}\PYG{n}{i}
+            \PYG{n}{lower}\PYG{o}{=}\PYG{n}{i}\PYG{o}{.}\PYG{n}{name}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{]}
+
+    \PYG{n}{nim\PYGZus{}temp}\PYG{o}{=}\PYG{n}{Nim}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{)}
+
+    \PYG{n}{nim\PYGZus{}temp}\PYG{o}{.}\PYG{n}{fromString}\PYG{p}{(}\PYG{n}{lowerNode}\PYG{o}{.}\PYG{n}{name}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{])}
+
+    \PYG{n}{move}\PYG{o}{=}\PYG{n}{state}\PYG{o}{.}\PYG{n}{moveFromOtherNim}\PYG{p}{(}\PYG{n}{nim\PYGZus{}temp}\PYG{p}{)}
+
+    \PYG{c+c1}{\PYGZsh{}update tree}
+
+    \PYG{n}{tree}\PYG{o}{=}\PYG{n}{make\PYGZus{}tree}\PYG{p}{(}\PYG{n}{nim\PYGZus{}temp}\PYG{p}{)}
+
+    \PYG{l+s+sd}{\PYGZsq{}\PYGZsq{}\PYGZsq{}}
+\PYG{l+s+sd}{    print(\PYGZdq{}tree2=\PYGZdq{})}
+\PYG{l+s+sd}{    print(RenderTree(tree, style=DoubleStyle))}
+\PYG{l+s+sd}{    print(\PYGZdq{}\PYGZbs{}n\PYGZbs{}n\PYGZdq{})}
+\PYG{l+s+sd}{    print(\PYGZdq{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZdq{})}
+\PYG{l+s+sd}{    \PYGZsq{}\PYGZsq{}\PYGZsq{}}
+    \PYG{k}{return} \PYG{n}{move}
+\end{Verbatim}

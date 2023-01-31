@@ -22,6 +22,7 @@ class MCTS(Player):
         # by default MCTS is player 0
         self.children = dict()
         self._player_id = player_id
+        print(f"Player {self._player_id} initialised")
         super().__init__(board)
 
     def set_board(self, board):

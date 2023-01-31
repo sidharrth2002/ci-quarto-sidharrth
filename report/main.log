@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2022/dev) (preloaded format=pdflatex 2021.11.1)  31 JAN 2023 00:34
+This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2022/dev) (preloaded format=pdflatex 2021.11.1)  31 JAN 2023 01:48
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -920,7 +920,7 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.55 ...r Solving the Problem}{96}{subsection.5.2}
+l.56 ...{5.1}Acknowledgements}{98}{subsection.5.1}
                                                   % [1])
 \tf@toc=\write9
 \openout9 = `main.toc'.
@@ -952,7 +952,7 @@ LaTeX Font Info:    Trying to load font information for TS1+cmtt on input line 1
  (/usr/local/texlive/2021/texmf-dist/tex/latex/base/ts1cmtt.fd
 File: ts1cmtt.fd 2019/12/16 v2.5j Standard LaTeX font definitions
 )) [6] [7] [8]
-<images/astar.png, id=374, 186.6975pt x 264.99pt>
+<images/astar.png, id=384, 186.6975pt x 264.99pt>
 File: images/astar.png Graphic file (type png)
 <use images/astar.png>
 Package pdftex.def Info: images/astar.png  used on input line 219.
@@ -1019,12 +1019,12 @@ Overfull \hbox (69.4322pt too wide) in paragraph at lines 213--213
 \openout10 = `main.listing'.
 
  (./_minted-main/31253B2810EA49E5580753F71839587EECA43E68929C128CBEDBF6B90FA12E36.pygtex) [31]
-Underfull \hbox (badness 10000) in paragraph at lines 540--542
+Underfull \hbox (badness 10000) in paragraph at lines 544--546
 []\T1/cmr/m/n/14.4 In the README, I was won-der-ing if the func-tion
  []
 
 
-Underfull \hbox (badness 1997) in paragraph at lines 540--542
+Underfull \hbox (badness 1997) in paragraph at lines 544--546
 \OML/cmm/m/it/14.4 return[]best[]genome$\T1/cmr/m/n/14.4 ($\OML/cmm/m/it/14.4 modified[]genome$\T1/cmr/m/n/14.4 , genome) might dis-turb the
  []
 
@@ -1037,7 +1037,7 @@ Underfull \hbox (badness 1997) in paragraph at lines 540--542
 \openout10 = `main.listing'.
 
  (./_minted-main/BD37F6BB0AA108C9C5567E252E216E60ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [35]
-Underfull \hbox (badness 10000) in paragraph at lines 684--685
+Underfull \hbox (badness 10000) in paragraph at lines 688--689
 
  []
 
@@ -1074,7 +1074,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 684--685
 \openout2 = `lab3.aux'.
 
  (./lab3.tex
-<images/rules.png, id=575, 542.025pt x 612.2875pt>
+<images/rules.png, id=586, 542.025pt x 612.2875pt>
 File: images/rules.png Graphic file (type png)
 <use images/rules.png>
 Package pdftex.def Info: images/rules.png  used on input line 33.
@@ -1143,39 +1143,41 @@ Underfull \hbox (badness 10000) in paragraph at lines 1947--1948
 
  []
 
-) [95]
+\openout10 = `main.listing'.
+
+(./_minted-main/2DACBB99608F4CAA58158EAE5C78CDC1ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [95] [96]) [97]
 \openout2 = `final-project.aux'.
 
- (./final-project.tex [96
+ (./final-project.tex [98
 
 
 
 ]
-<images/mcts.png, id=815, 1284.8pt x 722.7pt>
+<images/mcts.png, id=833, 1284.8pt x 722.7pt>
 File: images/mcts.png Graphic file (type png)
 <use images/mcts.png>
-Package pdftex.def Info: images/mcts.png  used on input line 49.
+Package pdftex.def Info: images/mcts.png  used on input line 50.
 (pdftex.def)             Requested size: 241.84843pt x 136.03523pt.
- [97]
-Underfull \hbox (badness 10000) in paragraph at lines 61--63
+ [99]
+Underfull \hbox (badness 10000) in paragraph at lines 62--64
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 72--74
+Underfull \hbox (badness 10000) in paragraph at lines 73--75
 
  []
 
-[98 <./images/mcts.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 82--83
+[100 <./images/mcts.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 83--84
 
  []
 
-[99]
-<images/methodology.drawio.png, id=836, 834.11626pt x 382.42876pt>
+[101]
+<images/methodology.drawio.png, id=854, 834.11626pt x 382.42876pt>
 File: images/methodology.drawio.png Graphic file (type png)
 <use images/methodology.drawio.png>
-Package pdftex.def Info: images/methodology.drawio.png  used on input line 98.
+Package pdftex.def Info: images/methodology.drawio.png  used on input line 99.
 (pdftex.def)             Requested size: 435.32422pt x 199.5935pt.
 \openout6 = `main.pyg'.
 
@@ -1183,8 +1185,8 @@ Package pdftex.def Info: images/methodology.drawio.png  used on input line 98.
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <12> not available
 (Font)              Font shape `T1/cmtt/m/n' tried instead on input line 3.
 )
-Package hyperref Info: bookmark level for unknown listing defaults to 0 on input line 119.
- [100 <./images/methodology.drawio.png>]
+Package hyperref Info: bookmark level for unknown listing defaults to 0 on input line 120.
+ [102 <./images/methodology.drawio.png>]
 \openout6 = `main.pyg'.
 
  (./_minted-main/66C83310F0F2BCB566ECB72B50836E7059903D0DCC0BD27D24705E832EFCA227.pygtex
@@ -1218,16 +1220,16 @@ Overfull \hbox (101.48186pt too wide) in paragraph at lines 346--346
 \T1/cmtt/m/it/10.95 self.current_state.check_if_move_valid(self.current_state.get_selected_piece(), 
  []
 
-) [101] [102] [103] [104] [105] [106] [107] [108] [109]
+) [103] [104] [105] [106] [107] [108] [109] [110] [111]
 \openout10 = `main.listing'.
 
- (./_minted-main/2B5F569630C2154EC927082B6FB73D4AECA43E68929C128CBEDBF6B90FA12E36.pygtex) [110] [111]
+ (./_minted-main/2B5F569630C2154EC927082B6FB73D4AECA43E68929C128CBEDBF6B90FA12E36.pygtex) [112] [113]
 \openout10 = `main.listing'.
 
- (./_minted-main/D6E1CC981B2DC70DC543891066E783B3ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [112] [113] [114]
+ (./_minted-main/D6E1CC981B2DC70DC543891066E783B3ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [114] [115] [116]
 \openout10 = `main.listing'.
 
- (./_minted-main/BF44E4661ECA12C711F45879D5FD0161ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [115] [116] [117] [118] [119]
+ (./_minted-main/BF44E4661ECA12C711F45879D5FD0161ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [117] [118] [119] [120] [121]
 \openout10 = `main.listing'.
 
  (./_minted-main/4905636E7864661570BA2AB0E9ADC1FCECA43E68929C128CBEDBF6B90FA12E36.pygtex
@@ -1235,37 +1237,37 @@ Overfull \hbox (33.5814pt too wide) in paragraph at lines 207--207
 []\T1/cmtt/m/n/10.95 self[][].[]board[].[]check_if_move_valid([]self[][].[]board[].[]get_selected_piece(), 
  []
 
-) [120] [121] [122] [123] [124] [125]
+) [122] [123] [124] [125] [126] [127]
 \openout10 = `main.listing'.
 
- (./_minted-main/236E99A356D9EC48A765CE8523431698ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [126]
+ (./_minted-main/236E99A356D9EC48A765CE8523431698ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [128]
 \openout10 = `main.listing'.
 
- (./_minted-main/9C69E1D5D6220A4F3B2DEF6AF162CE70ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [127] [128] [129] [130] [131] [132] [133] [134] [135] [136]
+ (./_minted-main/9C69E1D5D6220A4F3B2DEF6AF162CE70ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [129] [130] [131] [132] [133] [134] [135] [136] [137] [138]
 \openout10 = `main.listing'.
 
- (./_minted-main/420173D8269AC905D2D08016A1B543B7ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [137] [138] [139] [140] [141] [142]) [143] [144
+ (./_minted-main/420173D8269AC905D2D08016A1B543B7ECA43E68929C128CBEDBF6B90FA12E36.pygtex) [139] [140] [141] [142] [143] [144]) [145] [146
 
 
 ] (./main.aux (./lab1.aux) (./lab2.aux) (./lab3.aux) (./final-project.aux))
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: C046C1AC79EADE883924F0DCB6FD710A;9452.
+(rerunfilecheck)             Checksum: 58704CEC1A53838DA21105BFC38EAE23;9677.
 runsystem(rm main.pyg)...executed.
 
  ) 
 Here is how much of TeX's memory you used:
- 34793 strings out of 478579
- 688428 string characters out of 5853443
- 1198442 words of memory out of 5000000
- 51608 multiletter control sequences out of 15000+600000
+ 34807 strings out of 478579
+ 689037 string characters out of 5853443
+ 1198515 words of memory out of 5000000
+ 51615 multiletter control sequences out of 15000+600000
  426752 words of font info for 85 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  99i,13n,117p,1025b,1514s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}{/usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}</usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1728.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx2488.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfcc1728.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfcc2074.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfit1095.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm0600.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1440.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfti1440.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sftt1095.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sftt1200.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sftt1440.pfb>
-Output written on main.pdf (145 pages, 1020160 bytes).
+Output written on main.pdf (147 pages, 1024335 bytes).
 PDF statistics:
- 1212 PDF objects out of 1440 (max. 8388607)
- 996 compressed objects within 10 object streams
- 273 named destinations out of 1000 (max. 500000)
- 513 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1232 PDF objects out of 1440 (max. 8388607)
+ 1013 compressed objects within 11 object streams
+ 277 named destinations out of 1000 (max. 500000)
+ 529 words of extra memory for PDF output out of 10000 (max. 10000000)
 

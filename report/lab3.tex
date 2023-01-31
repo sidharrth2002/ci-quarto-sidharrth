@@ -1951,6 +1951,76 @@ Sidharrth
 
 \subsubsection{Jaco}
 
+Jaco's code
+
+\begin{mintedbox}{python}
+tree=None
+
+def minmax_agent(state: Nim) -> Nimply:
+
+    global tree
+    nodes=[[node for node in children] for children in LevelOrderGroupIter(tree,maxlevel=2)]
+
+    #CHECK IF TREE IS UP TO DATE
+
+    root=nodes[0][0]
+    root_name=root.name[0]
+    nim_root=Nim(0)
+    nim_root.fromString(root_name)
+    if(state.__eq__(nim_root)):
+        pass
+    else:
+        for i in nodes[1]:
+            F=Nim(0)
+            F.fromString(i.name[0])
+            if(state.__eq__(F)):
+                i.parent=None
+                tree=i
+                break
+
+
+    #CHECK BEST MOVE
+    nodes=[[node for node in children] for children in LevelOrderGroupIter(tree,maxlevel=2)]
+
+    #Final-move check
+
+    root=nodes[0][0]
+    root_name=root.name[0]
+    nim_root=Nim(0)
+    nim_root.fromString(root_name)
+    if(nim_root.last_move()):
+        for i,j in enumerate(nim_root.rows):
+            if j>0:
+                return Nimply(i,j)
+
+
+    lower=np.inf
+    lowerNode=None
+
+    for i in nodes[1]:
+        if(i.name[1]<lower):
+            lowerNode=i
+            lower=i.name[1]
+
+    nim_temp=Nim(0)
+
+    nim_temp.fromString(lowerNode.name[0])
+
+    move=state.moveFromOtherNim(nim_temp)
+
+    #update tree
+
+    tree=make_tree(nim_temp)
+
+    '''
+    print("tree2=")
+    print(RenderTree(tree, style=DoubleStyle))
+    print("\n\n")
+    print("---------------------------------------------")
+    '''
+    return move
+\end{mintedbox}
+
 Hi Jaco, here's my review of your lab 3. I watched your presentation in class.
 
 Notable points:

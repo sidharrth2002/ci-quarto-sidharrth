@@ -45,11 +45,11 @@ class FinalPlayer(Player):
     3. QL-MCTS
     '''
 
-    def __init__(self, quarto: Quarto = None):
+    def __init__(self, quarto: Quarto = None, agent_position: int = 0):
         if quarto is None:
             quarto = Quarto()
         super().__init__(quarto)
-        self.ql_mcts = QLearningPlayer(quarto)
+        self.ql_mcts = QLearningPlayer(quarto, agent_position=agent_position)
         self.hardcoded = HardcodedPlayer(quarto)
         self.random_player = RandomPlayer(quarto)
         self.BOARD_SIDE = 4
@@ -58,7 +58,7 @@ class FinalPlayer(Player):
         self.thresholds = {
             'random': 1.090773081612301,
             'hardcoded': 2.790328881747581,
-            'ql-mcts': 6.251997327518943
+            'ql-mcts': 7.251997327518943
         }
         self.ql_mcts_next_piece = -1
 
@@ -361,14 +361,14 @@ class FinalPlayer(Player):
                 return action[0], action[1]
 
     def test_thresholds(self):
-        win_rate = self.play_game(self.thresholds, num_games=5)
+        win_rate = self.play_game(self.thresholds, num_games=100)
         print(f"Win rate: {win_rate}")
         return win_rate
 
 if __name__ == "__main__":
     final_player = FinalPlayer()
     average_win_rate = 0
-    for i in range(10):
+    for i in range(1):
         win_rate = final_player.test_thresholds()
         average_win_rate += win_rate
     print(f"Average win rate: {average_win_rate}")

@@ -9,10 +9,12 @@ def main():
     wins = 0
     for game in range(10):
         game = Quarto()
-        game.set_players((HardcodedPlayer(game), RandomPlayer(game)))
+        # 0 if plays first, 1 if plays second
+        agent_position = 1
+        game.set_players((RandomPlayer(game), FinalPlayer(game, agent_position=agent_position)))
         winner = game.run()
         print(f"main: Winner: player {winner}")
-        if winner == 0:
+        if winner == 1:
             wins += 1
     print(f"main: Wins: {wins}/10")
 
