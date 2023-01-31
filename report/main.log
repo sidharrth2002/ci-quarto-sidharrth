@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2022/dev) (preloaded format=pdflatex 2021.11.1)  31 JAN 2023 02:03
+This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2022/dev) (preloaded format=pdflatex 2021.11.1)  31 JAN 2023 02:17
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -1173,6 +1173,11 @@ Underfull \hbox (badness 10000) in paragraph at lines 83--84
 
  []
 
+
+Underfull \hbox (badness 10000) in paragraph at lines 83--84
+
+ []
+
 [101]
 <images/methodology.drawio.png, id=855, 834.11626pt x 382.42876pt>
 File: images/methodology.drawio.png Graphic file (type png)
@@ -1192,7 +1197,7 @@ Package hyperref Info: bookmark level for unknown listing defaults to 0 on input
  (./_minted-main/66C83310F0F2BCB566ECB72B50836E7059903D0DCC0BD27D24705E832EFCA227.pygtex
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <14.4> not available
 (Font)              Font shape `T1/cmtt/m/n' tried instead on input line 3.
-)
+) [103]
 \openout10 = `main.listing'.
 
  (./_minted-main/AF95237770DA017C313D5910487B3AF4ECA43E68929C128CBEDBF6B90FA12E36.pygtex
@@ -1220,7 +1225,7 @@ Overfull \hbox (101.48186pt too wide) in paragraph at lines 346--346
 \T1/cmtt/m/it/10.95 self.current_state.check_if_move_valid(self.current_state.get_selected_piece(), 
  []
 
-) [103] [104] [105] [106] [107] [108] [109] [110] [111]
+) [104] [105] [106] [107] [108] [109] [110] [111]
 \openout10 = `main.listing'.
 
  (./_minted-main/2B5F569630C2154EC927082B6FB73D4AECA43E68929C128CBEDBF6B90FA12E36.pygtex) [112] [113]
@@ -1256,18 +1261,18 @@ runsystem(rm main.pyg)...executed.
 
  ) 
 Here is how much of TeX's memory you used:
- 34807 strings out of 478579
- 689037 string characters out of 5853443
+ 34806 strings out of 478579
+ 689020 string characters out of 5853443
  1198515 words of memory out of 5000000
- 51615 multiletter control sequences out of 15000+600000
+ 51614 multiletter control sequences out of 15000+600000
  426752 words of font info for 85 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  99i,13n,117p,1025b,1514s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}{/usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}</usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1728.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx2488.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfcc1728.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfcc2074.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfit1095.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm0600.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1440.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfti1440.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sftt1095.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sftt1200.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sftt1440.pfb>
-Output written on main.pdf (147 pages, 1024532 bytes).
+Output written on main.pdf (147 pages, 1025295 bytes).
 PDF statistics:
- 1233 PDF objects out of 1440 (max. 8388607)
- 1014 compressed objects within 11 object streams
+ 1234 PDF objects out of 1440 (max. 8388607)
+ 1015 compressed objects within 11 object streams
  277 named destinations out of 1000 (max. 500000)
  529 words of extra memory for PDF output out of 10000 (max. 10000000)
 

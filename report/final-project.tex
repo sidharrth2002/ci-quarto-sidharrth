@@ -44,7 +44,7 @@ The following algorithms are implemented and the \textbf{best performing ones ar
 
     \item \textbf{Q-Learning (Temporal Difference Learning)}: This agent uses a Q-table to store the Q-values. It uses a replay buffer to store the experience tuples and uses a target network to stabilize the training process. The agent uses an epsilon-greedy policy to balance exploration and exploitation.
 
-    \item \textbf{Monte Carlo Tree Search}: This agent uses a Monte Carlo Tree Search algorithm to select the best move. It uses a UCB1 formula to select the best child node at each iteration. The algorithm from \href{https://www.geeksforgeeks.org/ml-monte-carlo-tree-search-mcts/}{Geeks for Geeks} is shown in Figure \ref{fig:mcts}.
+    \item \textbf{Monte Carlo Tree Search}: This agent uses a Monte Carlo Tree Search algorithm to select the best move. It uses a UCB1 formula to select the best child node at each iteration. The algorithm from \href{https://www.geeksforgeeks.org/ml-monte-carlo-tree-search-mcts/}{Geeks for Geeks} is shown in Figure \ref{fig:mcts}. It is important to specify during the initialisation of the player the position in which it will play, as the reward function is inverted during backpropagation.
     \begin{figure}
         \centering
         \includegraphics[width=0.5\textwidth]{images/mcts.png}
@@ -80,10 +80,10 @@ The best performing algorithms were the hardcoded agent and Monte Carlo Tree Sea
 
 \begin{itemize}
     \item \textbf{Hardcoded Agent}: This agent is fast, but it is not efficient. It is only able to win the game if it is able to build a line of like pieces. If it cannot, it will return to a series of random moves that may/may not win the game.
-    \item \textbf{Monte Carlo Tree Search}: MCTS rolls out and computes the reward from each board state but it is slow. It appears that it is not worth using at the start of the game, where a terminal state is quite distant from the current board position. Furthermore, a major problem with MCTS is the tree size, which grows exponentially with game progression. \textbf{This makes rolling out at each subsequent move slower than the previous rollout.} \\
+    \item \textbf{Monte Carlo Tree Search}: MCTS rolls out and computes the reward from each board state but it is slow. It appears that it is not worth using at the start of the game, where a terminal state is quite distant from the current board position. Furthermore, a major problem with MCTS is the tree size, which grows exponentially with game progression. \textbf{This makes rolling out at each subsequent move slower than the previous rollout.} \\ We tried to solve this dilemma by trying to pre-train an extremely large tree and reload it every time, just as we would do for something like Q-learning. However, with the unreasonable number of states in Quarto, this was not feasible. \\ \\
 \end{itemize}
 
-Solution: Instead of keeping an extremely large tree, we record the result of each \textit{state, action} pair in a Q-table, updated using Temporal Difference Learning and the Bellman equation. On the off chance that a past board state is encountered, the Q-table can be used to find the best corresponding action, instead of having to iterate through the entire tree. I call this the \textbf{QL-MCTS} algorithm, with inspiration from Wang et al. (2018) approach to Monte-Carlo Q-Learning. QL-MCTS works by:
+Solution (Combine QL+MCTS): Instead of keeping an extremely large tree, we record the result of each \textit{state, action} pair in a Q-table, updated using Temporal Difference Learning and the Bellman equation. On the off chance that a past board state is encountered, the Q-table can be used to find the best corresponding action, instead of having to iterate through the entire tree. I call this the \textbf{QL-MCTS} algorithm, with inspiration from Wang et al. (2018) approach to Monte-Carlo Q-Learning. QL-MCTS works by:
 
 \begin{itemize}
     \item When training the Q-learning agent, use MCTS to find the best moves instead of using random in the epsilon-greedy policy.
@@ -1829,6 +1829,8 @@ if __name__ == "__main__":
 
 
 \subsubsection{Deep Q-Network}
+
+The Deep Q Network using a replay buffer and 2 neural networks is written in Tensorflow, and training is aided by a custom OpenAI Gym environment. Code can be found in my project repository. The implementation is based on this Github \href{https://github.com/mswang12/minDQN/blob/main/minDQN.py}{repository}.
 
 \begin{mintedbox}{python}
 """

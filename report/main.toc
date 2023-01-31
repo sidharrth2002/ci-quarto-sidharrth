@@ -57,10 +57,10 @@
 \contentsline {subsection}{\numberline {5.2}Strategy For Solving the Problem}{98}{subsection.5.2}%
 \contentsline {subsubsection}{\numberline {5.2.1}Step 1: Implement and Tune Multiple Search Algorithms}{98}{subsubsection.5.2.1}%
 \contentsline {subsubsection}{\numberline {5.2.2}Step 2: Analysing the Algorithms}{101}{subsubsection.5.2.2}%
-\contentsline {subsubsection}{\numberline {5.2.3}Step 3: Implementing the Hybrid Agent}{101}{subsubsection.5.2.3}%
+\contentsline {subsubsection}{\numberline {5.2.3}Step 3: Implementing the Hybrid Agent}{102}{subsubsection.5.2.3}%
 \contentsline {subsection}{\numberline {5.3}Results}{103}{subsection.5.3}%
 \contentsline {subsection}{\numberline {5.4}Code of Hybrid Agent and Sub Players}{103}{subsection.5.4}%
-\contentsline {subsubsection}{\numberline {5.4.1}Hybrid Player}{103}{subsubsection.5.4.1}%
+\contentsline {subsubsection}{\numberline {5.4.1}Hybrid Player}{104}{subsubsection.5.4.1}%
 \contentsline {subsubsection}{\numberline {5.4.2}Faster Version of MCTS}{112}{subsubsection.5.4.2}%
 \contentsline {subsubsection}{\numberline {5.4.3}Hardcoded Strategy}{117}{subsubsection.5.4.3}%
 \contentsline {subsubsection}{\numberline {5.4.4}Q-Learning + MCTS}{122}{subsubsection.5.4.4}%
