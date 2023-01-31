@@ -1,8 +1,6 @@
-# Chad Quarto Player
+# A Hybrid Quarto Agent
 
 Sidharrth Nagappan, 2023
-
-> Still reworking repository, not completed yet
 
 ### Player
 
@@ -19,3 +17,5 @@ Sidharrth Nagappan, 2023
 - `QLMCTS` contains a QL-agent backed by MCTS
 - `quarto` contains the Quarto game logic (Calabrese's class, my child class and custom OpenAI Gym environment)
 - `report` contains the report for this project
+
+To professor Calabrese, if there are any clarifications required about folder structure, I'll be happy to answer on Telegram, email or Github Issues, thanks!
