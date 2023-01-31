@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2022/dev) (preloaded format=pdflatex 2021.11.1)  31 JAN 2023 02:17
+This is pdfTeX, Version 3.141592653-2.6-1.40.23 (TeX Live 2022/dev) (preloaded format=pdflatex 2021.11.1)  31 JAN 2023 02:26
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -910,17 +910,17 @@ LaTeX Info: Redefining \BHBI on input line 130.
  [1
 
 {/usr/local/texlive/2021/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] (./main.toc
-LaTeX Font Info:    Trying to load font information for U+msa on input line 4.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 3.
  (/usr/local/texlive/2021/texmf-dist/tex/latex/amsfonts/umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 4.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 3.
  (/usr/local/texlive/2021/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.56 ...{5.1}Acknowledgements}{98}{subsection.5.1}
+l.56 ...umberline {5}Final Project}{98}{section.5}
                                                   % [1])
 \tf@toc=\write9
 \openout9 = `main.toc'.
@@ -952,7 +952,7 @@ LaTeX Font Info:    Trying to load font information for TS1+cmtt on input line 1
  (/usr/local/texlive/2021/texmf-dist/tex/latex/base/ts1cmtt.fd
 File: ts1cmtt.fd 2019/12/16 v2.5j Standard LaTeX font definitions
 )) [6] [7] [8]
-<images/astar.png, id=384, 186.6975pt x 264.99pt>
+<images/astar.png, id=392, 186.6975pt x 264.99pt>
 File: images/astar.png Graphic file (type png)
 <use images/astar.png>
 Package pdftex.def Info: images/astar.png  used on input line 219.
@@ -1074,7 +1074,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 688--689
 \openout2 = `lab3.aux'.
 
  (./lab3.tex
-<images/rules.png, id=587, 542.025pt x 612.2875pt>
+<images/rules.png, id=595, 542.025pt x 612.2875pt>
 File: images/rules.png Graphic file (type png)
 <use images/rules.png>
 Package pdftex.def Info: images/rules.png  used on input line 33.
@@ -1153,7 +1153,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 1947--1948
 
 
 ]
-<images/mcts.png, id=834, 1284.8pt x 722.7pt>
+<images/mcts.png, id=842, 1284.8pt x 722.7pt>
 File: images/mcts.png Graphic file (type png)
 <use images/mcts.png>
 Package pdftex.def Info: images/mcts.png  used on input line 50.
@@ -1179,7 +1179,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 83--84
  []
 
 [101]
-<images/methodology.drawio.png, id=855, 834.11626pt x 382.42876pt>
+<images/methodology.drawio.png, id=862, 834.11626pt x 382.42876pt>
 File: images/methodology.drawio.png Graphic file (type png)
 <use images/methodology.drawio.png>
 Package pdftex.def Info: images/methodology.drawio.png  used on input line 99.
@@ -1256,23 +1256,23 @@ Overfull \hbox (33.5814pt too wide) in paragraph at lines 207--207
 
 ] (./main.aux (./lab1.aux) (./lab2.aux) (./lab3.aux) (./final-project.aux))
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 58704CEC1A53838DA21105BFC38EAE23;9677.
+(rerunfilecheck)             Checksum: 0770C2E351193E89AE0A3A4A79988B18;9813.
 runsystem(rm main.pyg)...executed.
 
  ) 
 Here is how much of TeX's memory you used:
- 34806 strings out of 478579
- 689020 string characters out of 5853443
- 1198515 words of memory out of 5000000
- 51614 multiletter control sequences out of 15000+600000
+ 34808 strings out of 478579
+ 689050 string characters out of 5853443
+ 1198518 words of memory out of 5000000
+ 51615 multiletter control sequences out of 15000+600000
  426752 words of font info for 85 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  99i,13n,117p,1025b,1514s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}{/usr/local/texlive/2021/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}</usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx1728.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfbx2488.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfcc1728.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfcc2074.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfit1095.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm0600.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1440.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sfti1440.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sftt1095.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sftt1200.pfb></usr/local/texlive/2021/texmf-dist/fonts/type1/public/cm-super/sftt1440.pfb>
-Output written on main.pdf (147 pages, 1025295 bytes).
+Output written on main.pdf (147 pages, 1025818 bytes).
 PDF statistics:
- 1234 PDF objects out of 1440 (max. 8388607)
- 1015 compressed objects within 11 object streams
- 277 named destinations out of 1000 (max. 500000)
- 529 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 1241 PDF objects out of 1440 (max. 8388607)
+ 1022 compressed objects within 11 object streams
+ 278 named destinations out of 1000 (max. 500000)
+ 537 words of extra memory for PDF output out of 10000 (max. 10000000)
 
