@@ -12,7 +12,8 @@ Sidharrth Nagappan, 2023
 
 - `DeepQNetwork` generates a deep Q-network that can be trained to play Quarto
 - `GeneticAlgorithm` uses Genetic Algorithm to decide score thresholds for the hybrid player
-- `MCTS` contains the Monte Carlo Tree Search algorithm
+- `MCTS2` contains the final version of the Monte Carlo Tree Search algorithm
+- `MCTS` contains the first version of the Monte Carlo Tree Search algorithm
 - `lib` contains my utility functions, such as board transformation and scoring functions
 - `misc` for junk
 - `QLMCTS` contains a QL-agent backed by MCTS

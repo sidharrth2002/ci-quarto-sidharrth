@@ -10,6 +10,7 @@ def main():
     for game in range(10):
         game = Quarto()
         # 0 if plays first, 1 if plays second
+        # IMPORTANT: this must be set to make sure the MCTS reward function works correctly
         agent_position = 1
         game.set_players((RandomPlayer(game), FinalPlayer(game, agent_position=agent_position)))
         winner = game.run()
