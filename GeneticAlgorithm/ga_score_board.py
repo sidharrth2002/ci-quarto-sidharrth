@@ -45,7 +45,7 @@ class FinalPlayer(Player):
     3. QL-MCTS
     '''
 
-    def __init__(self, quarto: Quarto = None, agent_position: int = 0):
+    def __init__(self, quarto: Quarto = None, agent_position: int = 0, thresholds=None):
         if quarto is None:
             quarto = Quarto()
         super().__init__(quarto)
@@ -55,11 +55,14 @@ class FinalPlayer(Player):
         self.BOARD_SIDE = 4
         self.GENOME_VAL_UPPER_BOUND = 16
         self.GENOME_VAL_LOWER_BOUND = 0
-        self.thresholds = {
-            'random': 1.090773081612301,
-            'hardcoded': 2.790328881747581,
-            'ql-mcts': 7.251997327518943
-        }
+        if thresholds is not None:
+            self.thresholds = thresholds
+        else:
+            self.thresholds = {
+                'random': 1.090773081612301,
+                'hardcoded': 2.790328881747581,
+                'ql-mcts': 7.251997327518943
+            }
         self.ql_mcts_next_piece = -1
 
     def generate_population(self, population_size):
