@@ -1,5 +1,7 @@
 # A Hybrid Quarto Agent
 
+For tournament, please use FinalPlayer with the thresholds specified in `main.py`.
+
 Sidharrth Nagappan, 2023
 
 ### Player
