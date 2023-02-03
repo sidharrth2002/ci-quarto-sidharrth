@@ -7,7 +7,7 @@ from quarto.objects import Quarto
 THRESHOLDS_FOR_TOURNAMENT = {
     'random': 1000,
     'hardcoded': 2.790328881747581,
-    'ql-mcts': 8.0
+    'ql-mcts': 7.0
 }
 
 
