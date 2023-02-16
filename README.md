@@ -2,7 +2,7 @@
 
 For tournament, please use FinalPlayer with the thresholds specified in `main.py`.
 
-Sidharrth Nagappan, 2023
+Sidharrth Nagappan, 2023 in collaboration with Diego Gasco
 
 ### Player
 
